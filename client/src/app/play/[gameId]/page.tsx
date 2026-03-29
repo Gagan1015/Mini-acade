@@ -1,0 +1,52 @@
+import { getServerSession } from 'next-auth'
+import { notFound, redirect } from 'next/navigation'
+
+import { GAMES, type GameId } from '@mini-arcade/shared'
+
+import { RoomLobby } from '@/components/room/RoomLobby'
+import { authOptions } from '@/lib/auth'
+import { getOrCreateSoloRoomForUser, getRoomByCode } from '@/lib/rooms'
+
+function isSoloCapableGame(gameId: string): gameId is GameId {
+  return gameId in GAMES && GAMES[gameId as GameId].minPlayers <= 1
+}
+
+export default async function SoloPlayPage({
+  params,
+}: {
+  params: {
+    gameId: string
+  }
+}) {
+  if (!isSoloCapableGame(params.gameId)) {
+    notFound()
+  }
+
+  const session = await getServerSession(authOptions)
+
+  if (!session?.user) {
+    redirect(`/auth/signin?callbackUrl=${encodeURIComponent(`/play/${params.gameId}`)}`)
+  }
+
+  const soloSession = await getOrCreateSoloRoomForUser({
+    creatorId: session.user.id,
+    gameId: params.gameId,
+  })
+
+  const room = await getRoomByCode(soloSession.roomCode)
+
+  if (!room) {
+    notFound()
+  }
+
+  return (
+    <main className="min-h-screen px-6 py-12">
+      <RoomLobby
+        roomCode={room.code}
+        currentUserId={session.user.id}
+        initialRoom={room}
+        autoStartOnJoin
+      />
+    </main>
+  )
+}

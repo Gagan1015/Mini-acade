@@ -1,0 +1,228 @@
+import {
+  WORDEL_EVENTS,
+  type GameConfig,
+  type GameEventResult,
+  type WordelSubmitGuessPayload,
+  type UserId,
+} from '@mini-arcade/shared'
+import type { Server } from 'socket.io'
+
+import { RoomService } from '../../services/roomService'
+import { BaseGameRuntime } from '../BaseGameRuntime'
+import {
+  buildGuessResult,
+  isAllowedWordelGuess,
+  normalizeWordelGuess,
+  pickWord,
+} from './wordRules'
+import type { WordelGuessResult } from '@mini-arcade/shared'
+
+type PlayerWordelState = {
+  guesses: WordelGuessResult[]
+  solved: boolean
+  finished: boolean
+}
+
+export class WordelRuntime extends BaseGameRuntime {
+  private readonly maxAttempts = 6
+  private readonly wordLength = 5
+  private readonly playerState = new Map<UserId, PlayerWordelState>()
+  private secretWord = 'APPLE'
+
+  constructor(io: Server, config: GameConfig, roomService: RoomService) {
+    super(io, config, roomService)
+  }
+
+  async initialize() {
+    for (const player of this.players.values()) {
+      this.playerState.set(player.id, {
+        guesses: [],
+        solved: false,
+        finished: false,
+      })
+    }
+  }
+
+  async start(): Promise<GameEventResult> {
+    this.phase = 'playing'
+    this.currentRound = 1
+    this.secretWord = pickWord()
+    await this.updateRoomPresenceStatus('playing')
+
+    return {
+      success: true,
+      broadcast: [
+        {
+          event: WORDEL_EVENTS.ROUND_STARTED,
+          to: 'room',
+          data: {
+            roundNumber: this.currentRound,
+            totalRounds: this.totalRounds,
+            wordLength: this.wordLength,
+            maxAttempts: this.maxAttempts,
+            correctWord: this.secretWord,
+          },
+        },
+      ],
+    }
+  }
+
+  async onClientEvent(
+    playerId: UserId,
+    eventName: string,
+    payload: unknown
+  ): Promise<GameEventResult> {
+    if (eventName !== WORDEL_EVENTS.SUBMIT_GUESS) {
+      return {
+        success: false,
+        error: `Unsupported event ${eventName} for Wordel.`,
+      }
+    }
+
+    if (this.phase !== 'playing') {
+      return {
+        success: false,
+        error: 'Wordel is not accepting guesses right now.',
+      }
+    }
+
+    const playerState = this.playerState.get(playerId)
+    if (!playerState) {
+      return {
+        success: false,
+        error: 'Player is not part of this game.',
+      }
+    }
+
+    if (playerState.finished) {
+      return {
+        success: false,
+        error: 'You already finished this Wordel round.',
+      }
+    }
+
+    const guess = normalizeWordelGuess((payload as WordelSubmitGuessPayload).guess)
+    if (guess.length !== this.wordLength) {
+      return {
+        success: false,
+        error: 'Guesses must be 5 letters.',
+      }
+    }
+
+    if (!isAllowedWordelGuess(guess)) {
+      return {
+        success: false,
+        error: 'That word is not in the current Wordel dictionary.',
+      }
+    }
+
+    if (playerState.guesses.some((attempt) => attempt.guess === guess)) {
+      return {
+        success: false,
+        error: 'You already tried that word.',
+      }
+    }
+
+    const guessResult = buildGuessResult(guess, this.secretWord, playerState.guesses.length + 1)
+    playerState.guesses.push(guessResult)
+
+    if (guessResult.isCorrect) {
+      playerState.solved = true
+      playerState.finished = true
+      this.setPlayerScore(playerId, this.maxAttempts - guessResult.attemptsUsed + 1)
+    } else if (guessResult.attemptsUsed >= this.maxAttempts) {
+      playerState.finished = true
+      this.setPlayerScore(playerId, 0)
+    }
+
+    const result: GameEventResult = {
+      success: true,
+      broadcast: [
+        {
+          event: WORDEL_EVENTS.GUESS_RESULT,
+          to: 'player',
+          playerId,
+          data: guessResult,
+        },
+        {
+          event: WORDEL_EVENTS.OPPONENT_PROGRESS,
+          to: 'room',
+          data: {
+            playerId,
+            attemptCount: playerState.guesses.length,
+            solved: playerState.solved,
+          },
+        },
+      ],
+    }
+
+    if (this.allPlayersFinished()) {
+      this.phase = 'roundEnd'
+
+      result.broadcast?.push({
+        event: WORDEL_EVENTS.ROUND_ENDED,
+        to: 'room',
+        data: {
+          correctWord: this.secretWord,
+          playerResults: Array.from(this.playerState.entries()).map(([activePlayerId, state]) => ({
+            playerId: activePlayerId,
+            solved: state.solved,
+            attempts: state.guesses.length,
+            pointsEarned: this.scores.get(activePlayerId) ?? 0,
+          })),
+        },
+      })
+
+      const endResult = await this.end()
+      result.broadcast?.push(...(endResult.broadcast ?? []))
+    }
+
+    await this.updateRoomPresenceStatus(this.phase)
+    return result
+  }
+
+  async end(): Promise<GameEventResult> {
+    const baseResult = await super.end()
+
+    return {
+      success: true,
+      broadcast: [
+        ...(baseResult.broadcast ?? []),
+        {
+          event: WORDEL_EVENTS.GAME_ENDED,
+          to: 'room',
+          data: {
+            finalScores: this.getFinalScores(),
+          },
+        },
+      ],
+    }
+  }
+
+  getPlayerSyncData(playerId: UserId) {
+    const state = this.playerState.get(playerId)
+
+    return {
+      phase: this.phase,
+      currentRound: this.currentRound,
+      totalRounds: this.totalRounds,
+      wordLength: this.wordLength,
+      maxAttempts: this.maxAttempts,
+      guesses: state?.guesses ?? [],
+      playerStatuses: Array.from(this.playerState.entries()).map(([activePlayerId, playerState]) => ({
+        playerId: activePlayerId,
+        attemptCount: playerState.guesses.length,
+        solved: playerState.solved,
+        finished: playerState.finished,
+        score: this.scores.get(activePlayerId) ?? 0,
+      })),
+      scores: Object.fromEntries(this.scores),
+      finalScores: this.phase === 'gameEnd' ? this.getFinalScores() : undefined,
+      correctWord: this.secretWord,
+    }
+  }
+
+  private allPlayersFinished() {
+    return Array.from(this.playerState.values()).every((state) => state.finished)
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "@mini-arcade/db",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "prisma"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "lint": "eslint src --ext .ts",
+    "test": "node -e \"console.log('No tests yet for @mini-arcade/db')\"",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.1",
+    "prisma": "^6.19.2",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
+  }
+}
