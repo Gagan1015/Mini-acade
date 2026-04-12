@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { motion, AnimatePresence } from 'motion/react'
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 
 /* ── Inline SVG Icons (no emojis) ── */
 
@@ -91,7 +91,7 @@ function IconX({ size = 20 }: { size?: number }) {
 }
 
 /* ── Nav Link with animated underline ── */
-function NavLink({ href, children, onClick }: { href: string; children: React.ReactNode; onClick?: () => void }) {
+function NavLink({ href, children, onClick }: { href: string; children: ReactNode; onClick?: () => void }) {
   return (
     <Link
       href={href}

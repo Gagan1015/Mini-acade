@@ -5,7 +5,6 @@ import { useState } from 'react'
 import {
   FileText,
   Search,
-  Clock,
   Shield,
   User,
   Activity,
@@ -14,7 +13,6 @@ import {
   UserCog,
   Settings,
   Trash2,
-  Eye,
 } from 'lucide-react'
 import { staggerContainer, staggerItem } from '@/lib/motion'
 
@@ -62,17 +60,6 @@ function formatTimeAgo(dateString: string): string {
   if (hours < 24) return `${hours}h ago`
   const days = Math.floor(hours / 24)
   return `${days}d ago`
-}
-
-function formatFullDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    weekday: 'short',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
 }
 
 function getActionLabel(action: string): string {

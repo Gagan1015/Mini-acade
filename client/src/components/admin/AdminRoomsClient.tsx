@@ -9,9 +9,7 @@ import {
   Trophy,
   Clock,
   ChevronDown,
-  ExternalLink,
 } from 'lucide-react'
-import Link from 'next/link'
 import { staggerContainer, staggerItem } from '@/lib/motion'
 
 interface Room {

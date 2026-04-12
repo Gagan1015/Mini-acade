@@ -219,15 +219,34 @@ export class RoomService {
       return false
     }
 
+    for (const [playerId, player] of room.players.entries()) {
+      room.players.set(playerId, {
+        ...player,
+        score: 0,
+      })
+    }
+
     room.status = 'playing'
 
-    await prisma.room.update({
-      where: { id: room.id },
-      data: {
-        status: 'PLAYING',
-        startedAt: new Date(),
-      },
-    })
+    await prisma.$transaction([
+      prisma.room.update({
+        where: { id: room.id },
+        data: {
+          status: 'PLAYING',
+          startedAt: new Date(),
+          endedAt: null,
+        },
+      }),
+      prisma.roomPlayer.updateMany({
+        where: {
+          roomId: room.id,
+          leftAt: null,
+        },
+        data: {
+          score: 0,
+        },
+      }),
+    ])
 
     this.io.to(room.code).emit(ROOM_EVENTS.GAME_STARTED, { gameId: room.gameId })
     this.broadcastPresence(room)

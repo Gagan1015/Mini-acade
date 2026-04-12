@@ -86,6 +86,20 @@ test('WordelRuntime rejects guesses outside the bundled dictionary', async () =>
   assert.match(result.error ?? '', /dictionary/i)
 })
 
+test('WordelRuntime accepts valid five-letter words from the expanded dictionary', async () => {
+  const runtime = createRuntime()
+  await runtime.initialize()
+  await runtime.start()
+  runtime.setSecretWordForTest('APPLE')
+
+  const result = await runtime.onClientEvent('user-1', WORDEL_EVENTS.SUBMIT_GUESS, {
+    roomCode: 'ABC123',
+    guess: 'AAHED',
+  })
+
+  assert.equal(result.success, true)
+})
+
 test('WordelRuntime rejects duplicate guesses from the same player', async () => {
   const runtime = createRuntime()
   await runtime.initialize()

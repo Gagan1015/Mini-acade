@@ -13,6 +13,7 @@ import { getGameInfo } from '@/lib/games'
 import { LiveIndicator } from '@/components/ui/Animated'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { GameIcon } from '@/components/ui/GameIcons'
+import { Toast } from '@/components/ui/Toast'
 
 /* ── SVG Icons ── */
 
@@ -152,7 +153,7 @@ export function RoomLobby({
     isJoining,
     isConnected,
     isHost,
-    error,
+    notification,
     hasLeft,
     leave,
     startGame,
@@ -164,6 +165,7 @@ export function RoomLobby({
     skipFlagelRound,
     submitTriviaAnswer,
     submitWordelGuess,
+    dismissNotification,
   } = useRoom({
     roomCode,
     currentUserId,
@@ -175,6 +177,20 @@ export function RoomLobby({
   useEffect(() => {
     if (hasLeft) router.push('/')
   }, [hasLeft, router])
+
+  useEffect(() => {
+    if (!notification) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      dismissNotification()
+    }, 3200)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [dismissNotification, notification])
 
   useEffect(() => {
     if (!autoStartOnJoin || didAutoStart) {
@@ -212,6 +228,7 @@ export function RoomLobby({
           <WordelPlayArea
             currentUserId={currentUserId}
             players={players}
+            isHost={isHost}
             phase={wordel.phase}
             wordLength={wordel.wordLength}
             maxAttempts={wordel.maxAttempts}
@@ -220,6 +237,7 @@ export function RoomLobby({
             finalScores={wordel.finalScores}
             playerStatuses={wordel.playerStatuses}
             onSubmitGuess={submitWordelGuess}
+            onPlayAgain={startGame}
           />
         </motion.div>
       )}
@@ -275,22 +293,6 @@ export function RoomLobby({
         </motion.div>
       )}
     </>
-  )
-
-  /* ── Error display ── */
-  const ErrorBanner = () => (
-    <AnimatePresence>
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          className="mt-6 flex items-center gap-3 rounded-xl border border-[var(--error-500)]/20 bg-[var(--error-500)]/5 px-4 py-3 text-sm text-[var(--error-500)]"
-        >
-          {error}
-        </motion.div>
-      )}
-    </AnimatePresence>
   )
 
   /* ═══════════════════════════════════════════════
@@ -392,7 +394,7 @@ export function RoomLobby({
 
             {/* Actions */}
             <div className="space-y-3">
-              {isHost && activeRoom.status === 'waiting' && (
+              {isHost && activeRoom.status !== 'playing' && (
                 <motion.button
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
@@ -400,7 +402,7 @@ export function RoomLobby({
                   className="btn btn-primary w-full py-3.5 text-base"
                 >
                   <IconPlay size={18} />
-                  Start Playing
+                  {activeRoom.status === 'finished' ? 'Play Again' : 'Start Playing'}
                 </motion.button>
               )}
               <div className="flex gap-3">
@@ -421,8 +423,17 @@ export function RoomLobby({
             </div>
           </motion.div>
 
-          <ErrorBanner />
           <GamePlayArea />
+
+          <AnimatePresence>
+            {notification && (
+              <Toast
+                message={notification.message}
+                type={notification.type}
+                onClose={dismissNotification}
+              />
+            )}
+          </AnimatePresence>
         </div>
       </AppLayout>
     )
@@ -542,7 +553,6 @@ export function RoomLobby({
           </div>
         </motion.div>
 
-        <ErrorBanner />
         <GamePlayArea />
 
         {/* Divider */}
@@ -641,7 +651,7 @@ export function RoomLobby({
             </p>
 
             <div className="space-y-3">
-              {isHost && (
+              {isHost && activeRoom.status !== 'playing' && (
                 <motion.button
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
@@ -649,7 +659,7 @@ export function RoomLobby({
                   className="btn btn-primary w-full py-3"
                 >
                   <IconPlay size={18} />
-                  Start Game
+                  {activeRoom.status === 'finished' ? 'Play Again' : 'Start Game'}
                 </motion.button>
               )}
               <motion.button
@@ -664,6 +674,16 @@ export function RoomLobby({
             </div>
           </motion.aside>
         </div>
+
+        <AnimatePresence>
+          {notification && (
+            <Toast
+              message={notification.message}
+              type={notification.type}
+              onClose={dismissNotification}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </AppLayout>
   )

@@ -43,6 +43,12 @@ type UseRoomOptions = {
   initialRoom: Room
 }
 
+type RoomNotification = {
+  id: number
+  message: string
+  type: 'success' | 'error' | 'info'
+}
+
 type WordelUiState = {
   phase: 'waiting' | 'playing' | 'roundEnd' | 'gameEnd'
   currentRound: number
@@ -104,11 +110,13 @@ type FlagelUiState = {
 
 export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions) {
   const socketRef = useRef<AppSocket | null>(null)
+  const notificationIdRef = useRef(0)
 
   const [room, setRoom] = useState<Room | null>(initialRoom)
   const [isConnected, setIsConnected] = useState(false)
   const [isJoining, setIsJoining] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [notification, setNotification] = useState<RoomNotification | null>(null)
   const [hasLeft, setHasLeft] = useState(false)
   const [wasKicked, setWasKicked] = useState(false)
   const [wordel, setWordel] = useState<WordelUiState>({
@@ -169,6 +177,43 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     finalScores: [],
   })
 
+  const showNotification = useCallback(
+    (message: string, type: RoomNotification['type'] = 'error') => {
+      notificationIdRef.current += 1
+      setNotification({
+        id: notificationIdRef.current,
+        message,
+        type,
+      })
+    },
+    []
+  )
+
+  const dismissNotification = useCallback(() => {
+    setNotification(null)
+  }, [])
+
+  const createEmptyPlayerStatuses = useCallback(
+    (playerIds: string[]) =>
+      Object.fromEntries(
+        playerIds.map((playerId) => [
+          playerId,
+          {
+            attemptCount: 0,
+            solved: false,
+            finished: false,
+            score: 0,
+          },
+        ])
+      ),
+    []
+  )
+
+  const createEmptyScores = useCallback(
+    (playerIds: string[]) => Object.fromEntries(playerIds.map((playerId) => [playerId, 0])),
+    []
+  )
+
   useEffect(() => {
     const socket = createSocket()
     socketRef.current = socket
@@ -218,6 +263,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
         payload,
       })
       setError(payload.message)
+      showNotification(payload.message, 'error')
       setIsJoining(false)
     }
 
@@ -242,6 +288,11 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
         setWordel((previousState) => ({
           ...previousState,
           phase: 'playing',
+          guesses: [],
+          finalScores: [],
+          correctWord: undefined,
+          playerStatuses: createEmptyPlayerStatuses(Object.keys(previousState.playerStatuses)),
+          scores: createEmptyScores(Object.keys(previousState.playerStatuses)),
         }))
       } else if (payload.gameId === 'trivia') {
         setTrivia((previousState) => ({
@@ -288,6 +339,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
       setHasLeft(true)
       setRoom(null)
       setError('You were removed from the room.')
+      showNotification('You were removed from the room.', 'error')
     }
 
     const handleWordelRoundStarted = (payload: WordelRoundStarted) => {
@@ -305,6 +357,8 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
         wordLength: payload.wordLength ?? 5,
         maxAttempts: payload.maxAttempts ?? 6,
         guesses: [],
+        playerStatuses: createEmptyPlayerStatuses(Object.keys(previousState.playerStatuses)),
+        scores: createEmptyScores(Object.keys(previousState.playerStatuses)),
         correctWord: payload.correctWord,
         finalScores: [],
       }))
@@ -699,7 +753,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
       socket.disconnect()
       socketRef.current = null
     }
-  }, [currentUserId, roomCode])
+  }, [createEmptyPlayerStatuses, createEmptyScores, currentUserId, roomCode, showNotification])
 
   const leave = useCallback(() => {
     const socket = socketRef.current
@@ -803,11 +857,13 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     isJoining,
     isHost: room?.hostId === currentUserId,
     error,
+    notification,
     hasLeft,
     wasKicked,
     flagel,
     trivia,
     wordel,
+    dismissNotification,
     leave,
     startGame,
     kickPlayer,

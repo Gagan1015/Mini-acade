@@ -8,6 +8,7 @@ import type { Player, WordelGuessResult } from '@mini-arcade/shared'
 type WordelPlayAreaProps = {
   currentUserId: string
   players: Player[]
+  isHost: boolean
   phase: 'waiting' | 'playing' | 'roundEnd' | 'gameEnd'
   wordLength: number
   maxAttempts: number
@@ -28,6 +29,7 @@ type WordelPlayAreaProps = {
     }
   >
   onSubmitGuess: (guess: string) => void
+  onPlayAgain: () => void
 }
 
 /* ── SVG Icons ── */
@@ -57,6 +59,7 @@ function IconSend({ size = 16 }: { size?: number }) {
 export function WordelPlayArea({
   currentUserId,
   players,
+  isHost,
   phase,
   wordLength,
   maxAttempts,
@@ -65,6 +68,7 @@ export function WordelPlayArea({
   finalScores,
   playerStatuses,
   onSubmitGuess,
+  onPlayAgain,
 }: WordelPlayAreaProps) {
   const [guess, setGuess] = useState('')
 
@@ -73,6 +77,8 @@ export function WordelPlayArea({
     phase === 'playing' &&
     guess.trim().length === wordLength &&
     !(activePlayerState?.finished ?? false)
+  const showCorrectWord = Boolean(correctWord && phase !== 'playing')
+  const canPlayAgain = phase === 'gameEnd' && isHost
 
   const rows = useMemo(() => {
     const paddedRows = [...guesses]
@@ -170,16 +176,34 @@ export function WordelPlayArea({
           </motion.button>
         </form>
 
-        {/* Correct word reveal */}
         <AnimatePresence>
-          {correctWord && (
+          {(showCorrectWord || canPlayAgain) && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="mx-auto w-full max-w-2xl rounded-xl border border-[var(--warning-500)]/25 bg-[var(--warning-500)]/8 px-4 py-3 text-sm text-[var(--warning-500)]"
+              className="mx-auto flex w-full max-w-2xl flex-col gap-4 rounded-2xl border border-[var(--warning-500)]/25 bg-[var(--warning-500)]/8 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
             >
-              <span className="font-semibold uppercase tracking-[0.14em]">Debug answer</span>
-              <span className="ml-3 font-mono font-semibold tracking-[0.2em]">{correctWord}</span>
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--warning-500)]/85">
+                  {phase === 'gameEnd' ? 'Round Complete' : 'Answer Revealed'}
+                </p>
+                {showCorrectWord && (
+                  <p className="font-mono text-lg font-semibold tracking-[0.18em] text-[var(--warning-500)]">
+                    {correctWord}
+                  </p>
+                )}
+              </div>
+              {canPlayAgain && (
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="button"
+                  onClick={onPlayAgain}
+                  className="btn btn-primary whitespace-nowrap px-5"
+                >
+                  Play again
+                </motion.button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

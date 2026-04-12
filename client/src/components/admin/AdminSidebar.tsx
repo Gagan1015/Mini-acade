@@ -48,7 +48,7 @@ export function useSidebar() {
   return useContext(SidebarContext)
 }
 
-export function AdminSidebar({ userName, userEmail, userImage, userRole }: AdminSidebarProps) {
+export function AdminSidebar({ userName, userEmail: _userEmail, userImage, userRole }: AdminSidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)

@@ -5,6 +5,7 @@ node_modules
 # Builds
 dist
 .next
+.next-dev
 out
 .turbo
 

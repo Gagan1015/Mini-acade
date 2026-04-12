@@ -18,7 +18,6 @@ import {
   AlertCircle,
   Info,
   AlertTriangle,
-  ChevronDown,
 } from 'lucide-react'
 import { staggerContainer, staggerItem } from '@/lib/motion'
 

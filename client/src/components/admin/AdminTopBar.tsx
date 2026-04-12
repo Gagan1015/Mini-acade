@@ -8,7 +8,7 @@ interface AdminTopBarProps {
   userEmail: string
 }
 
-export function AdminTopBar({ userEmail }: AdminTopBarProps) {
+export function AdminTopBar({ userEmail: _userEmail }: AdminTopBarProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [refreshing, setRefreshing] = useState(false)
   const router = useRouter()

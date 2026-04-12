@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "node -e \"console.log('No tests yet for @mini-arcade/client')\"",
-    "clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true});require('fs').rmSync('out',{recursive:true,force:true})\""
+    "clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true});require('fs').rmSync('.next-dev',{recursive:true,force:true});require('fs').rmSync('out',{recursive:true,force:true})\""
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",

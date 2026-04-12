@@ -111,7 +111,7 @@ export function AdminDashboardClient({
   gameBreakdown,
   recentLogs,
   recentRooms,
-  topUsers,
+  topUsers: _topUsers,
 }: AdminDashboardClientProps) {
   const totalBreakdown = gameBreakdown.reduce((s, g) => s + g.count, 0)
 

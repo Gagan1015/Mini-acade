@@ -1,12 +1,12 @@
 import type { WordelGuessResult } from '@mini-arcade/shared'
 
-import { WORDEL_WORD_BANK } from './wordBank'
+import { WORDEL_ALLOWED_GUESSES, WORDEL_ANSWER_BANK } from './wordBank'
 
-const WORD_BANK_SET = new Set(WORDEL_WORD_BANK)
+const ALLOWED_GUESS_SET = new Set(WORDEL_ALLOWED_GUESSES)
 
 export function pickWord() {
-  const index = Math.floor(Math.random() * WORDEL_WORD_BANK.length)
-  return WORDEL_WORD_BANK[index]
+  const index = Math.floor(Math.random() * WORDEL_ANSWER_BANK.length)
+  return WORDEL_ANSWER_BANK[index]
 }
 
 export function normalizeWordelGuess(guess: string) {
@@ -14,7 +14,7 @@ export function normalizeWordelGuess(guess: string) {
 }
 
 export function isAllowedWordelGuess(guess: string) {
-  return WORD_BANK_SET.has(guess as (typeof WORDEL_WORD_BANK)[number])
+  return ALLOWED_GUESS_SET.has(guess)
 }
 
 export function buildGuessResult(

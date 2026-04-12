@@ -1,6 +1,6 @@
 'use client'
 
-import { type ReactNode } from 'react'
+import { type ComponentType, type CSSProperties, type ReactNode } from 'react'
 import { motion, type HTMLMotionProps } from 'motion/react'
 
 interface GameIconProps {
@@ -19,7 +19,7 @@ function IconWrapper({
 }: {
   animated: boolean
   className?: string
-  style?: React.CSSProperties
+  style?: CSSProperties
   children: ReactNode
 }) {
   if (!animated) {
@@ -159,7 +159,7 @@ export function FlagelIcon({ size = 32, className = '', color = 'var(--game-flag
 }
 
 // Map game IDs to icon components
-export const GAME_ICONS: Record<string, React.ComponentType<GameIconProps>> = {
+export const GAME_ICONS: Record<string, ComponentType<GameIconProps>> = {
   skribble: SkribbleIcon,
   trivia: TriviaIcon,
   wordel: WordelIcon,

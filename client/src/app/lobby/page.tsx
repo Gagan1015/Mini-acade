@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type FormEvent } from 'react'
+import { Suspense, useState, useEffect, type FormEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession, signIn } from 'next-auth/react'
 import { motion, AnimatePresence } from 'motion/react'
@@ -88,7 +88,7 @@ function IconUsers({ size = 16 }: { size?: number }) {
 type TabType = 'create' | 'join'
 type PlayMode = 'solo' | 'multiplayer'
 
-export default function LobbyPage() {
+function LobbyPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { status } = useSession()
@@ -562,5 +562,23 @@ export default function LobbyPage() {
         </motion.div>
       </div>
     </AppLayout>
+  )
+}
+
+function LobbyPageFallback() {
+  return (
+    <AppLayout>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Spinner size={32} color="var(--primary-500)" />
+      </div>
+    </AppLayout>
+  )
+}
+
+export default function LobbyPage() {
+  return (
+    <Suspense fallback={<LobbyPageFallback />}>
+      <LobbyPageContent />
+    </Suspense>
   )
 }

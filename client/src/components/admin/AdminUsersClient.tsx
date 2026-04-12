@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import {
   Users,
   Search,
@@ -240,7 +240,7 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
             </thead>
             <tbody>
               {filtered.length > 0 ? (
-                filtered.map((user, i) => {
+                filtered.map((user) => {
                   const roleInfo = ROLE_CONFIG[user.role] || ROLE_CONFIG.USER
                   const statusInfo = STATUS_CONFIG[user.status] || STATUS_CONFIG.ACTIVE
                   const RoleIcon = roleInfo.icon
