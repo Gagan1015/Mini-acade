@@ -42,10 +42,10 @@ export function GameCard({ game, index }: GameCardProps) {
         duration: 0.5,
         ease: [0, 0, 0.2, 1],
       }}
-      className="group"
+      className="group h-full"
     >
-      <Link href={`/lobby?game=${game.id}`} className="block">
-        <div className="relative overflow-hidden rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)]/40 backdrop-blur-sm transition-all duration-300 hover:border-[var(--border-strong)] hover:bg-[var(--surface)]/70">
+      <Link href={`/lobby?game=${game.id}`} className="block h-full">
+        <div className="relative h-full overflow-hidden rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)]/40 backdrop-blur-sm transition-all duration-300 hover:border-[var(--border-strong)] hover:bg-[var(--surface)]/70">
           {/* Animated accent line */}
           <motion.div
             className="absolute left-0 top-0 h-px w-full"
@@ -57,7 +57,7 @@ export function GameCard({ game, index }: GameCardProps) {
             transition={{ delay: index * 0.1 + 0.3, duration: 0.6 }}
           />
 
-          <div className="relative px-6 py-7">
+          <div className="relative flex h-full flex-col px-6 py-7">
             {/* Icon + title row */}
             <div className="flex items-start gap-4">
               <motion.div
@@ -79,7 +79,7 @@ export function GameCard({ game, index }: GameCardProps) {
             </div>
 
             {/* Feature tags */}
-            <div className="mt-5 flex flex-wrap gap-1.5">
+            <div className="mb-5 mt-5 flex flex-wrap gap-1.5">
               {game.features.map((feature) => (
                 <span
                   key={feature}
@@ -91,7 +91,7 @@ export function GameCard({ game, index }: GameCardProps) {
             </div>
 
             {/* Footer — players + play link */}
-            <div className="mt-5 flex items-center justify-between pt-4 border-t border-[var(--border)]/30">
+            <div className="mt-auto flex items-center justify-between border-t border-[var(--border)]/30 pt-4">
               <span className="flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
                 <IconUsers size={13} />
                 {game.minPlayers}–{game.maxPlayers} players

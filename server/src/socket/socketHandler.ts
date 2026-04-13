@@ -89,7 +89,7 @@ export function registerSocketHandlers(io: TypedIo, socket: TypedSocket) {
         }
       }
 
-      activeGameManager.syncPlayer(socket, payload.roomCode, socket.data.userId)
+      await activeGameManager.syncPlayer(socket, payload.roomCode, socket.data.userId)
     })
   )
 
@@ -241,6 +241,23 @@ export function registerSocketHandlers(io: TypedIo, socket: TypedSocket) {
       }
 
       await activeGameManager.handleGameEvent(socket, payload.roomCode, SKRIBBLE_EVENTS.GUESS, payload)
+    })
+  )
+
+  socket.on(
+    SKRIBBLE_EVENTS.CHOOSE_WORD,
+    withValidation(socket, SKRIBBLE_EVENTS.CHOOSE_WORD, async (payload) => {
+      if (!socket.data.userId) {
+        emitRoomError(socket, 'NOT_AUTHENTICATED', 'Please sign in before choosing a word.')
+        return
+      }
+
+      await activeGameManager.handleGameEvent(
+        socket,
+        payload.roomCode,
+        SKRIBBLE_EVENTS.CHOOSE_WORD,
+        payload
+      )
     })
   )
 

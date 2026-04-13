@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import { motion } from 'motion/react'
 import {
   Users,
@@ -34,6 +35,15 @@ interface GameBreakdown {
   count: number
 }
 
+interface RoomCreationPoint {
+  label: string
+  value: number
+}
+
+type AnalyticsRange = 'week' | 'month' | 'year'
+
+type RoomCreationAnalytics = Record<AnalyticsRange, RoomCreationPoint[]>
+
 interface RecentLog {
   id: string
   action: string
@@ -65,6 +75,7 @@ interface AdminDashboardClientProps {
   stats: DashboardStats
   gameConfigs: GameConfig[]
   gameBreakdown: GameBreakdown[]
+  roomCreationAnalytics: RoomCreationAnalytics
   recentLogs: RecentLog[]
   recentRooms: RecentRoom[]
   topUsers: TopUser[]
@@ -75,6 +86,14 @@ const GAME_COLORS: Record<string, string> = {
   trivia: 'var(--game-trivia)',
   wordel: 'var(--game-wordel)',
   flagel: 'var(--game-flagel)',
+}
+
+const ANALYTICS_RANGES: AnalyticsRange[] = ['week', 'month', 'year']
+
+const ANALYTICS_RANGE_LABELS: Record<AnalyticsRange, string> = {
+  week: 'This week',
+  month: 'This month',
+  year: 'This year',
 }
 
 const GAME_EMOJIS: Record<string, string> = {
@@ -109,11 +128,22 @@ export function AdminDashboardClient({
   stats,
   gameConfigs,
   gameBreakdown,
+  roomCreationAnalytics,
   recentLogs,
   recentRooms,
   topUsers: _topUsers,
 }: AdminDashboardClientProps) {
-  const totalBreakdown = gameBreakdown.reduce((s, g) => s + g.count, 0)
+  const [analyticsRange, setAnalyticsRange] = useState<AnalyticsRange>('week')
+  const analyticsData = roomCreationAnalytics[analyticsRange] ?? []
+  const maxAnalyticsValue = Math.max(...analyticsData.map((point) => point.value), 0)
+  const hasAnalyticsData = maxAnalyticsValue > 0
+  const sortedGameBreakdown = useMemo(
+    () => [...gameBreakdown].sort((left, right) => right.count - left.count || left.gameId.localeCompare(right.gameId)),
+    [gameBreakdown]
+  )
+  const totalBreakdown = sortedGameBreakdown.reduce((s, g) => s + g.count, 0)
+  const topGamePercent =
+    totalBreakdown > 0 ? Math.round(((sortedGameBreakdown[0]?.count ?? 0) / totalBreakdown) * 100) : null
 
   return (
     <div className="space-y-6">
@@ -220,46 +250,66 @@ export function AdminDashboardClient({
               <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">Room creation over time</p>
             </div>
             <div className="flex items-center gap-2">
-              <select className="input py-1.5 text-xs">
-                <option>This week</option>
-                <option>This month</option>
-                <option>This year</option>
+              <select
+                value={analyticsRange}
+                onChange={(event) => setAnalyticsRange(event.target.value as AnalyticsRange)}
+                className="input py-1.5 text-xs"
+                aria-label="Analytics range"
+              >
+                {ANALYTICS_RANGES.map((range) => (
+                  <option key={range} value={range}>
+                    {ANALYTICS_RANGE_LABELS[range]}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
 
-          {/* Bar Chart (CSS-only) */}
-          <div className="flex h-[240px] items-end gap-2">
-            {[35, 55, 40, 70, 45, 90, 65, 80, 50, 95, 75, 60].map((h, i) => (
-              <motion.div
-                key={i}
-                className="group relative flex-1 cursor-pointer rounded-t-md"
-                style={{
-                  background: i === 9
-                    ? 'var(--primary-500)'
-                    : `linear-gradient(to top, var(--primary-500)40, var(--primary-500)15)`,
-                  height: `${h}%`,
-                }}
-                initial={{ height: 0 }}
-                animate={{ height: `${h}%` }}
-                transition={{ delay: 0.4 + i * 0.04, duration: 0.5, ease: [0, 0, 0.2, 1] }}
-                whileHover={{ backgroundColor: 'var(--primary-500)', opacity: 1 }}
-              >
-                {/* Tooltip */}
-                <div className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-md bg-[var(--surface)] px-2 py-1 text-xs font-medium text-[var(--text-primary)] shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
-                  {h}
-                </div>
-              </motion.div>
-            ))}
+          <div className="relative flex h-[240px] items-end gap-2">
+            {analyticsData.map((point, index) => {
+              const height = maxAnalyticsValue > 0 ? (point.value / maxAnalyticsValue) * 100 : 0
+              const visibleHeight = point.value > 0 ? Math.max(height, 5) : 0
+              const isPeak = point.value === maxAnalyticsValue && hasAnalyticsData
+
+              return (
+                <motion.div
+                  key={`${analyticsRange}-${point.label}`}
+                  className="group relative flex-1 cursor-pointer rounded-t-md"
+                  style={{
+                    background: isPeak
+                      ? 'var(--primary-500)'
+                      : 'linear-gradient(to top, rgba(59, 130, 246, 0.52), rgba(59, 130, 246, 0.28))',
+                    height: `${visibleHeight}%`,
+                  }}
+                  initial={{ height: 0 }}
+                  animate={{ height: `${visibleHeight}%` }}
+                  transition={{ delay: 0.15 + index * 0.02, duration: 0.45, ease: [0, 0, 0.2, 1] }}
+                  whileHover={{ backgroundColor: 'var(--primary-500)', opacity: 1 }}
+                >
+                  <div className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-md bg-[var(--surface)] px-2 py-1 text-xs font-medium text-[var(--text-primary)] shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                    {point.label}: {point.value}
+                  </div>
+                </motion.div>
+              )
+            })}
+            {!hasAnalyticsData && (
+              <div className="absolute inset-0 flex items-center justify-center text-sm text-[var(--text-tertiary)]">
+                No rooms created in this range.
+              </div>
+            )}
           </div>
 
-          {/* X-axis labels */}
           <div className="mt-3 flex gap-2 text-[10px] text-[var(--text-tertiary)]">
-            {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map(
-              (m) => (
-                <span key={m} className="flex-1 text-center">{m}</span>
-              ),
-            )}
+            {analyticsData.map((point, index) => {
+              const shouldShowLabel =
+                analyticsData.length <= 12 || index % 5 === 0 || index === analyticsData.length - 1
+
+              return (
+                <span key={`${analyticsRange}-label-${point.label}`} className="flex-1 text-center">
+                  {shouldShowLabel ? point.label : ''}
+                </span>
+              )
+            })}
           </div>
         </motion.div>
 
@@ -282,10 +332,10 @@ export function AdminDashboardClient({
                 className="h-40 w-40 rounded-full"
                 style={{
                   background: totalBreakdown > 0
-                    ? `conic-gradient(${gameBreakdown
+                    ? `conic-gradient(${sortedGameBreakdown
                         .map((g, i) => {
                           const startPct =
-                            gameBreakdown.slice(0, i).reduce((s, x) => s + x.count, 0) /
+                            sortedGameBreakdown.slice(0, i).reduce((s, x) => s + x.count, 0) /
                             totalBreakdown *
                             100
                           const endPct = startPct + (g.count / totalBreakdown) * 100
@@ -298,7 +348,7 @@ export function AdminDashboardClient({
               {/* Inner circle for donut effect */}
               <div className="absolute inset-[30px] flex flex-col items-center justify-center rounded-full bg-[var(--background)]">
                 <p className="text-2xl font-bold text-[var(--text-primary)]">
-                  {totalBreakdown > 0 ? `${Math.round((gameBreakdown[0]?.count ?? 0) / totalBreakdown * 100)}%` : '—'}
+                  {topGamePercent !== null ? `${topGamePercent}%` : '—'}
                 </p>
                 <p className="text-[10px] text-[var(--text-tertiary)]">Top game</p>
               </div>
@@ -307,8 +357,8 @@ export function AdminDashboardClient({
 
           {/* Legend */}
           <div className="space-y-3">
-            {gameBreakdown.length > 0 ? (
-              gameBreakdown.map((g) => (
+            {sortedGameBreakdown.length > 0 ? (
+              sortedGameBreakdown.map((g) => (
                 <div key={g.gameId} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2.5">
                     <span

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { GAMES, type Room } from '@mini-arcade/shared'
 import { FlagelPlayArea } from '@/components/room/FlagelPlayArea'
+import { SkribblePlayArea } from '@/components/room/SkribblePlayArea'
 import { TriviaPlayArea } from '@/components/room/TriviaPlayArea'
 import { WordelPlayArea } from './WordelPlayArea'
 import { useRoom } from '@/hooks/useRoom'
@@ -162,10 +163,15 @@ export function RoomLobby({
     flagel,
     trivia,
     wordel,
+    skribble,
     submitFlagelGuess,
     skipFlagelRound,
     submitTriviaAnswer,
     submitWordelGuess,
+    sendSkribbleStrokes,
+    clearSkribbleCanvas,
+    submitSkribbleGuess,
+    chooseSkribbleWord,
     dismissNotification,
   } = useRoom({
     roomCode,
@@ -298,6 +304,40 @@ export function RoomLobby({
             scores={trivia.scores}
             finalScores={trivia.finalScores}
             onSubmitAnswer={submitTriviaAnswer}
+          />
+        </motion.div>
+      )}
+
+      {activeRoom.gameId === 'skribble' && activeRoom.status !== 'waiting' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-8"
+        >
+          <SkribblePlayArea
+            currentUserId={currentUserId}
+            players={players}
+            phase={skribble.phase}
+            currentRound={skribble.currentRound}
+            totalRounds={skribble.totalRounds}
+            drawerId={skribble.drawerId}
+            isDrawer={skribble.isDrawer}
+            word={skribble.word}
+            wordChoices={skribble.wordChoices}
+            wordHint={skribble.wordHint}
+            wordLength={skribble.wordLength}
+            strokes={skribble.strokes}
+            correctGuessers={skribble.correctGuessers}
+            roundEndsAt={skribble.roundEndsAt}
+            scores={skribble.scores}
+            guessResult={skribble.guessResult}
+            messages={skribble.messages}
+            correctGuessNotification={skribble.correctGuessNotification}
+            roundEndWord={skribble.roundEndWord}
+            onSendStrokes={sendSkribbleStrokes}
+            onClearCanvas={clearSkribbleCanvas}
+            onChooseWord={chooseSkribbleWord}
+            onSubmitGuess={submitSkribbleGuess}
           />
         </motion.div>
       )}

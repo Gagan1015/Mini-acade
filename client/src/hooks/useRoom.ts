@@ -3,11 +3,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import {
+  CHAT_EVENTS,
   CONNECTION_EVENTS,
   FLAGEL_EVENTS,
   ROOM_EVENTS,
+  SKRIBBLE_EVENTS,
   TRIVIA_EVENTS,
   WORDEL_EVENTS,
+  type ChatMessage,
+  type DrawCanvasClearedPayload,
+  type DrawCorrectGuessPayload,
+  type DrawGameEndedPayload,
+  type DrawRoundEndedPayload,
+  type DrawStrokeBroadcastPayload,
+  type DrawSyncPayload,
+  type DrawTurnStartedPayload,
+  type DrawWordChoicesPayload,
+  type DrawWordChoosingStartedPayload,
+  type DrawWordHintPayload,
   type FlagelGameEnded,
   type FlagelGuessResult,
   type FlagelOpponentProgressPayload,
@@ -20,6 +33,9 @@ import {
   type RoomHostChangedPayload,
   type RoomPlayerKickedPayload,
   type RoomPresence,
+  type SkribbleGuessResult,
+  type SkribbleRoundStarted,
+  type Stroke,
   type TriviaAnswerResultPayload,
   type TriviaGameEnded,
   type TriviaPlayerAnsweredPayload,
@@ -108,6 +124,26 @@ type FlagelUiState = {
   countryCode?: string
 }
 
+type SkribbleUiState = {
+  phase: 'waiting' | 'choosing' | 'playing' | 'roundEnd' | 'gameEnd'
+  currentRound: number
+  totalRounds: number
+  drawerId: string | null
+  isDrawer: boolean
+  word: string | null
+  wordChoices: string[]
+  wordHint: string | null
+  wordLength: number
+  strokes: Stroke[]
+  correctGuessers: string[]
+  roundEndsAt: string | null
+  scores: Record<string, number>
+  guessResult: SkribbleGuessResult | null
+  messages: ChatMessage[]
+  correctGuessNotification: DrawCorrectGuessPayload | null
+  roundEndWord: string | null
+}
+
 export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions) {
   const socketRef = useRef<AppSocket | null>(null)
   const notificationIdRef = useRef(0)
@@ -175,6 +211,25 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     ),
     scores: Object.fromEntries(initialRoom.players.map((player) => [player.id, player.score])),
     finalScores: [],
+  })
+  const [skribble, setSkribble] = useState<SkribbleUiState>({
+    phase: initialRoom.status === 'playing' ? 'playing' : 'waiting',
+    currentRound: 0,
+    totalRounds: 1,
+    drawerId: null,
+    isDrawer: false,
+    word: null,
+    wordChoices: [],
+    wordHint: null,
+    wordLength: 0,
+    strokes: [],
+    correctGuessers: [],
+    roundEndsAt: null,
+    scores: Object.fromEntries(initialRoom.players.map((player) => [player.id, player.score])),
+    guessResult: null,
+    messages: [],
+    correctGuessNotification: null,
+    roundEndWord: null,
   })
 
   const showNotification = useCallback(
@@ -303,6 +358,20 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
         setFlagel((previousState) => ({
           ...previousState,
           phase: 'playing',
+        }))
+      } else if (payload.gameId === 'skribble') {
+        setSkribble((previousState) => ({
+          ...previousState,
+          phase: 'playing',
+          strokes: [],
+          correctGuessers: [],
+          guessResult: null,
+          word: null,
+          wordChoices: [],
+          wordHint: null,
+          messages: [],
+          correctGuessNotification: null,
+          roundEndWord: null,
         }))
       }
     }
@@ -701,6 +770,172 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
       })
     }
 
+    /* ── Skribble event handlers ── */
+
+    const handleSkribbleWordChoosingStarted = (payload: DrawWordChoosingStartedPayload) => {
+      console.debug('[mini-arcade][skribble:wordChoosingStarted]', { roomCode, userId: currentUserId, payload })
+      setSkribble((prev) => ({
+        ...prev,
+        phase: 'choosing',
+        currentRound: payload.roundNumber,
+        totalRounds: payload.totalRounds,
+        drawerId: payload.drawerId,
+        isDrawer: payload.drawerId === currentUserId,
+        word: null,
+        wordChoices: [],
+        wordHint: null,
+        wordLength: 0,
+        strokes: [],
+        correctGuessers: [],
+        roundEndsAt: null,
+        guessResult: null,
+        correctGuessNotification: null,
+        roundEndWord: null,
+      }))
+    }
+
+    const handleSkribbleWordChoices = (payload: DrawWordChoicesPayload) => {
+      console.debug('[mini-arcade][skribble:wordChoices]', { roomCode, userId: currentUserId, payload })
+      setSkribble((prev) => ({
+        ...prev,
+        phase: 'choosing',
+        currentRound: payload.roundNumber,
+        totalRounds: payload.totalRounds,
+        drawerId: payload.drawerId,
+        isDrawer: payload.drawerId === currentUserId,
+        wordChoices: payload.words,
+      }))
+    }
+
+    const handleSkribbleRoundStarted = (payload: SkribbleRoundStarted) => {
+      console.debug('[mini-arcade][skribble:roundStarted]', { roomCode, userId: currentUserId, payload })
+      setSkribble((prev) => ({
+        ...prev,
+        phase: 'playing',
+        currentRound: payload.roundNumber,
+        totalRounds: payload.totalRounds,
+        drawerId: payload.drawerId,
+        isDrawer: payload.drawerId === currentUserId,
+        word: payload.drawerId === currentUserId ? prev.word : null,
+        wordChoices: [],
+        wordHint: payload.wordHint ?? null,
+        wordLength: payload.wordLength,
+        strokes: [],
+        correctGuessers: [],
+        roundEndsAt: payload.roundEndsAt,
+        guessResult: null,
+        correctGuessNotification: null,
+        roundEndWord: null,
+      }))
+    }
+
+    const handleSkribbleTurnStarted = (payload: DrawTurnStartedPayload) => {
+      console.debug('[mini-arcade][skribble:turnStarted]', { roomCode, userId: currentUserId, payload })
+      setSkribble((prev) => ({
+        ...prev,
+        phase: 'playing',
+        word: payload.word ?? null,
+        wordChoices: [],
+        wordHint: payload.wordHint ?? prev.wordHint,
+        wordLength: payload.wordLength ?? prev.wordLength,
+        isDrawer: payload.drawerId === currentUserId,
+        drawerId: payload.drawerId,
+      }))
+    }
+
+    const handleSkribbleStrokeBroadcast = (payload: DrawStrokeBroadcastPayload) => {
+      // Don't re-add our own strokes (we already draw locally)
+      if (payload.playerId === currentUserId) return
+      setSkribble((prev) => ({
+        ...prev,
+        strokes: [...prev.strokes, ...payload.strokes],
+      }))
+    }
+
+    const handleSkribbleCanvasCleared = (_payload: DrawCanvasClearedPayload) => {
+      setSkribble((prev) => ({
+        ...prev,
+        strokes: [],
+      }))
+    }
+
+    const handleSkribbleGuessResult = (payload: SkribbleGuessResult) => {
+      setSkribble((prev) => ({
+        ...prev,
+        guessResult: payload,
+      }))
+    }
+
+    const handleSkribbleCorrectGuess = (payload: DrawCorrectGuessPayload) => {
+      setSkribble((prev) => ({
+        ...prev,
+        correctGuessers: prev.correctGuessers.includes(payload.playerId)
+          ? prev.correctGuessers
+          : [...prev.correctGuessers, payload.playerId],
+        correctGuessNotification: payload,
+      }))
+    }
+
+    const handleSkribbleWordHint = (payload: DrawWordHintPayload) => {
+      setSkribble((prev) => ({
+        ...prev,
+        wordHint: payload.hint,
+      }))
+    }
+
+    const handleSkribbleRoundEnded = (payload: DrawRoundEndedPayload) => {
+      setSkribble((prev) => ({
+        ...prev,
+        phase: 'roundEnd',
+        roundEndWord: payload.word,
+        roundEndsAt: null,
+        wordChoices: [],
+        scores: payload.scores,
+      }))
+    }
+
+    const handleSkribbleGameEnded = (payload: DrawGameEndedPayload) => {
+      setSkribble((prev) => ({
+        ...prev,
+        phase: 'gameEnd',
+        roundEndsAt: null,
+        wordChoices: [],
+        scores: Object.fromEntries(payload.finalScores.map((score) => [score.playerId, score.score])),
+      }))
+      setRoom((previousRoom) =>
+        previousRoom
+          ? {
+              ...previousRoom,
+              status: 'finished',
+            }
+          : null
+      )
+    }
+
+    const handleSkribbleSync = (payload: DrawSyncPayload) => {
+      console.debug('[mini-arcade][skribble:sync]', { roomCode, userId: currentUserId, payload })
+      setSkribble((prev) => ({
+        ...prev,
+        phase: payload.isChoosing ? 'choosing' : prev.phase,
+        strokes: payload.strokes,
+        drawerId: payload.drawerId,
+        isDrawer: payload.drawerId === currentUserId,
+        wordHint: payload.wordHint ?? null,
+        wordLength: payload.wordLength ?? prev.wordLength,
+        correctGuessers: payload.correctGuessers ?? [],
+        roundEndsAt: payload.roundEndsAt ?? null,
+        word: payload.word ?? null,
+        wordChoices: payload.wordChoices ?? [],
+      }))
+    }
+
+    const handleChatMessage = (payload: ChatMessage) => {
+      setSkribble((prev) => ({
+        ...prev,
+        messages: [...prev.messages, payload],
+      }))
+    }
+
     socket.on(CONNECTION_EVENTS.CONNECT, handleConnect)
     socket.on(CONNECTION_EVENTS.DISCONNECT, handleDisconnect)
     socket.on(ROOM_EVENTS.JOINED, handleJoined)
@@ -729,6 +964,19 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     socket.on(WORDEL_EVENTS.ROUND_ENDED, handleWordelRoundEnded)
     socket.on(WORDEL_EVENTS.GAME_ENDED, handleWordelGameEnded)
     socket.on(WORDEL_EVENTS.SYNC, handleWordelSync)
+    socket.on(SKRIBBLE_EVENTS.WORD_CHOOSING_STARTED, handleSkribbleWordChoosingStarted)
+    socket.on(SKRIBBLE_EVENTS.WORD_CHOICES, handleSkribbleWordChoices)
+    socket.on(SKRIBBLE_EVENTS.ROUND_STARTED, handleSkribbleRoundStarted)
+    socket.on(SKRIBBLE_EVENTS.TURN_STARTED, handleSkribbleTurnStarted)
+    socket.on(SKRIBBLE_EVENTS.STROKE_BROADCAST, handleSkribbleStrokeBroadcast)
+    socket.on(SKRIBBLE_EVENTS.CANVAS_CLEARED, handleSkribbleCanvasCleared)
+    socket.on(SKRIBBLE_EVENTS.GUESS_RESULT, handleSkribbleGuessResult)
+    socket.on(SKRIBBLE_EVENTS.CORRECT_GUESS, handleSkribbleCorrectGuess)
+    socket.on(SKRIBBLE_EVENTS.WORD_HINT, handleSkribbleWordHint)
+    socket.on(SKRIBBLE_EVENTS.ROUND_ENDED, handleSkribbleRoundEnded)
+    socket.on(SKRIBBLE_EVENTS.GAME_ENDED, handleSkribbleGameEnded)
+    socket.on(SKRIBBLE_EVENTS.SYNC, handleSkribbleSync)
+    socket.on(CHAT_EVENTS.MESSAGE, handleChatMessage)
 
     socket.connect()
 
@@ -761,6 +1009,19 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
       socket.off(WORDEL_EVENTS.ROUND_ENDED, handleWordelRoundEnded)
       socket.off(WORDEL_EVENTS.GAME_ENDED, handleWordelGameEnded)
       socket.off(WORDEL_EVENTS.SYNC, handleWordelSync)
+      socket.off(SKRIBBLE_EVENTS.WORD_CHOOSING_STARTED, handleSkribbleWordChoosingStarted)
+      socket.off(SKRIBBLE_EVENTS.WORD_CHOICES, handleSkribbleWordChoices)
+      socket.off(SKRIBBLE_EVENTS.ROUND_STARTED, handleSkribbleRoundStarted)
+      socket.off(SKRIBBLE_EVENTS.TURN_STARTED, handleSkribbleTurnStarted)
+      socket.off(SKRIBBLE_EVENTS.STROKE_BROADCAST, handleSkribbleStrokeBroadcast)
+      socket.off(SKRIBBLE_EVENTS.CANVAS_CLEARED, handleSkribbleCanvasCleared)
+      socket.off(SKRIBBLE_EVENTS.GUESS_RESULT, handleSkribbleGuessResult)
+      socket.off(SKRIBBLE_EVENTS.CORRECT_GUESS, handleSkribbleCorrectGuess)
+      socket.off(SKRIBBLE_EVENTS.WORD_HINT, handleSkribbleWordHint)
+      socket.off(SKRIBBLE_EVENTS.ROUND_ENDED, handleSkribbleRoundEnded)
+      socket.off(SKRIBBLE_EVENTS.GAME_ENDED, handleSkribbleGameEnded)
+      socket.off(SKRIBBLE_EVENTS.SYNC, handleSkribbleSync)
+      socket.off(CHAT_EVENTS.MESSAGE, handleChatMessage)
       socket.disconnect()
       socketRef.current = null
     }
@@ -862,6 +1123,73 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     })
   }, [roomCode])
 
+  /* ── Skribble actions ── */
+
+  const sendSkribbleStrokes = useCallback(
+    (strokes: Stroke[]) => {
+      const socket = socketRef.current
+      if (!socket) return
+
+      // Add strokes locally for instant feedback
+      setSkribble((prev) => ({
+        ...prev,
+        strokes: [...prev.strokes, ...strokes],
+      }))
+
+      socket.emit(SKRIBBLE_EVENTS.STROKE_BATCH, {
+        roomCode,
+        strokes,
+        timestamp: Date.now(),
+      })
+    },
+    [roomCode]
+  )
+
+  const clearSkribbleCanvas = useCallback(() => {
+    const socket = socketRef.current
+    if (!socket) return
+
+    setSkribble((prev) => ({
+      ...prev,
+      strokes: [],
+    }))
+
+    socket.emit(SKRIBBLE_EVENTS.CLEAR_CANVAS, { roomCode })
+  }, [roomCode])
+
+  const submitSkribbleGuess = useCallback(
+    (guess: string) => {
+      const socket = socketRef.current
+      if (!socket) return
+
+      socket.emit(SKRIBBLE_EVENTS.GUESS, {
+        roomCode,
+        guess,
+      })
+    },
+    [roomCode]
+  )
+
+  const chooseSkribbleWord = useCallback(
+    (word: string) => {
+      const socket = socketRef.current
+      if (!socket) return
+
+      socket.emit(SKRIBBLE_EVENTS.CHOOSE_WORD, {
+        roomCode,
+        word,
+      })
+    },
+    [roomCode]
+  )
+
+  const requestSkribbleSync = useCallback(() => {
+    const socket = socketRef.current
+    if (!socket) return
+
+    socket.emit(SKRIBBLE_EVENTS.REQUEST_SYNC, { roomCode })
+  }, [roomCode])
+
   return {
     room,
     players: room?.players ?? [],
@@ -875,6 +1203,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     flagel,
     trivia,
     wordel,
+    skribble,
     dismissNotification,
     leave,
     startGame,
@@ -883,5 +1212,10 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     skipFlagelRound,
     submitTriviaAnswer,
     submitWordelGuess,
+    sendSkribbleStrokes,
+    clearSkribbleCanvas,
+    submitSkribbleGuess,
+    chooseSkribbleWord,
+    requestSkribbleSync,
   }
 }

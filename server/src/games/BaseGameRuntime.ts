@@ -137,6 +137,33 @@ export abstract class BaseGameRuntime implements IGameRuntime {
     })
   }
 
+  /**
+   * Self-dispatch broadcasts using the io instance directly.
+   * Used for timer-triggered events where there is no triggering client socket.
+   */
+  protected async broadcastToRoom(result: GameEventResult) {
+    if (!result.broadcast) return
+
+    for (const broadcast of result.broadcast) {
+      if (broadcast.to === 'room') {
+        this.io.to(this.roomCode).emit(broadcast.event as string, broadcast.data)
+        continue
+      }
+
+      if (broadcast.to === 'player' && broadcast.playerId) {
+        try {
+          const roomSockets = await this.io.in(this.roomCode).fetchSockets()
+          const target = roomSockets.find((s) => s.data.userId === broadcast.playerId)
+          if (target) {
+            target.emit(broadcast.event as string, broadcast.data as never)
+          }
+        } catch {
+          // Socket lookup failed — player may have disconnected
+        }
+      }
+    }
+  }
+
   protected getFinalScores() {
     return this.getResults().map((result) => ({
       playerId: result.playerId,

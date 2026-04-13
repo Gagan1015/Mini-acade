@@ -11,6 +11,7 @@ import {
 } from './socketEvents'
 import {
   chatMessagePayloadSchema,
+  chooseSkribbleWordPayloadSchema,
   clearCanvasPayloadSchema,
   flagelSkipPayloadSchema,
   flagelSubmitGuessPayloadSchema,
@@ -42,6 +43,7 @@ export const eventSchemas: Record<ClientEventName, ZodTypeAny> = {
   [SKRIBBLE_EVENTS.STROKE_BATCH]: strokeBatchPayloadSchema,
   [SKRIBBLE_EVENTS.CLEAR_CANVAS]: clearCanvasPayloadSchema,
   [SKRIBBLE_EVENTS.GUESS]: guessPayloadSchema,
+  [SKRIBBLE_EVENTS.CHOOSE_WORD]: chooseSkribbleWordPayloadSchema,
   [SKRIBBLE_EVENTS.REQUEST_SYNC]: requestSyncPayloadSchema,
   [TRIVIA_EVENTS.SUBMIT_ANSWER]: triviaSubmitAnswerPayloadSchema,
   [WORDEL_EVENTS.SUBMIT_GUESS]: wordelSubmitGuessPayloadSchema,

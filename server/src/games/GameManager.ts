@@ -55,11 +55,15 @@ export class GameManager {
 
     const existingGame = this.games.get(room.code)
     if (existingGame) {
-      this.logDebug('createGame:existing', {
-        roomCode: room.code,
-        gameId: room.gameId,
-      })
-      return { success: true }
+      if (existingGame.getSnapshot().phase === 'gameEnd') {
+        this.games.delete(room.code)
+      } else {
+        this.logDebug('createGame:existing', {
+          roomCode: room.code,
+          gameId: room.gameId,
+        })
+        return { success: true }
+      }
     }
 
     const runtime =
@@ -133,7 +137,7 @@ export class GameManager {
       success: result.success,
       error: result.success ? null : result.error,
     })
-    this.dispatchRuntimeResult(result, room.code)
+    await this.dispatchRuntimeResult(result, room.code)
     return result
   }
 
@@ -161,14 +165,14 @@ export class GameManager {
     }
 
     const result = await runtime.onClientEvent(socket.data.userId, eventName, payload)
-    this.dispatchRuntimeResult(result, roomCode, socket)
+    await this.dispatchRuntimeResult(result, roomCode, socket)
 
     if (runtime.getSnapshot().phase === 'gameEnd') {
       this.games.delete(roomCode)
     }
   }
 
-  syncPlayer(socket: TypedSocket, roomCode: string, userId: UserId) {
+  async syncPlayer(socket: TypedSocket, roomCode: string, userId: UserId) {
     const runtime = this.games.get(roomCode)
     if (!runtime) {
       this.logDebug('syncPlayer:missingRuntime', {
@@ -184,7 +188,7 @@ export class GameManager {
       phase: runtime.getSnapshot().phase,
     })
     const result = runtime.onPlayerReconnect(userId)
-    this.dispatchRuntimeResult(result, roomCode, socket)
+    await this.dispatchRuntimeResult(result, roomCode, socket)
   }
 
   handlePlayerLeave(roomCode: string | undefined, userId: UserId | undefined) {
@@ -200,7 +204,7 @@ export class GameManager {
     runtime.onPlayerLeave(userId)
   }
 
-  private dispatchRuntimeResult(
+  async dispatchRuntimeResult(
     result: GameEventResult,
     roomCode: string,
     socket?: TypedSocket
@@ -230,8 +234,32 @@ export class GameManager {
         continue
       }
 
-      if (broadcast.to === 'player' && socket && socket.data.userId === broadcast.playerId) {
-        socket.emit(broadcast.event as keyof ServerToClientEvents, broadcast.data as never)
+      if (broadcast.to === 'player' && broadcast.playerId) {
+        // First try the provided socket if it matches the target player
+        if (socket && socket.data.userId === broadcast.playerId) {
+          socket.emit(broadcast.event as keyof ServerToClientEvents, broadcast.data as never)
+          continue
+        }
+
+        // Otherwise find the target player's socket in the room
+        try {
+          const roomSockets = await this.io.in(roomCode).fetchSockets()
+          const targetSocket = roomSockets.find(
+            (s) => s.data.userId === broadcast.playerId
+          )
+          if (targetSocket) {
+            targetSocket.emit(
+              broadcast.event as keyof ServerToClientEvents,
+              broadcast.data as never
+            )
+          }
+        } catch (err) {
+          this.logDebug('dispatchRuntimeResult:fetchSockets:error', {
+            roomCode,
+            playerId: broadcast.playerId,
+            error: err instanceof Error ? err.message : 'Unknown error',
+          })
+        }
       }
     }
   }

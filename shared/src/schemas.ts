@@ -120,6 +120,11 @@ export const guessPayloadSchema = z.object({
   guess: z.string().trim().min(1).max(100),
 })
 
+export const chooseSkribbleWordPayloadSchema = z.object({
+  roomCode: roomCodeSchema,
+  word: z.string().trim().min(1).max(100),
+})
+
 export const requestSyncPayloadSchema = z.object({
   roomCode: roomCodeSchema,
 })
@@ -140,6 +145,16 @@ export const skribbleRoundStartedSchema = z.object({
   wordLength: z.number().int().min(1),
   wordHint: z.string().optional(),
   roundEndsAt: isoDateTimeSchema,
+})
+
+export const drawWordChoosingStartedSchema = z.object({
+  roundNumber: z.number().int().min(1),
+  totalRounds: z.number().int().min(1),
+  drawerId: userIdSchema,
+})
+
+export const drawWordChoicesSchema = drawWordChoosingStartedSchema.extend({
+  words: z.array(z.string().min(1)).min(1).max(5),
 })
 
 export const skribbleGuessResultSchema = z.object({
@@ -164,11 +179,23 @@ export const drawSyncSchema = z.object({
   correctGuessers: z.array(userIdSchema).optional(),
   roundEndsAt: isoDateTimeSchema.optional(),
   word: z.string().optional(),
+  isChoosing: z.boolean().optional(),
+  wordChoices: z.array(z.string().min(1)).optional(),
 })
 
 export const drawRoundEndedSchema = z.object({
   word: z.string().min(1),
   scores: z.record(z.string(), z.number().int()),
+})
+
+export const drawGameEndedSchema = z.object({
+  finalScores: z.array(
+    z.object({
+      playerId: userIdSchema,
+      score: z.number().int(),
+      rank: z.number().int().min(1),
+    })
+  ),
 })
 
 export const drawTurnStartedSchema = z.object({

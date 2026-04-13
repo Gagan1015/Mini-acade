@@ -11,6 +11,15 @@ class TestSkribbleRuntime extends SkribbleRuntime {
     mutableThis.phase = 'gameEnd'
     return {
       success: true,
+      broadcast: [
+        {
+          event: SKRIBBLE_EVENTS.GAME_ENDED,
+          to: 'room',
+          data: {
+            finalScores: [],
+          },
+        },
+      ],
     }
   }
 
@@ -72,14 +81,29 @@ function createRuntime() {
   return new TestSkribbleRuntime(io, config, roomService)
 }
 
+async function startRoundWithChosenWord(runtime: TestSkribbleRuntime, word = 'rocket') {
+  const startResult = await runtime.start()
+  const choosingStarted = startResult.broadcast?.find(
+    (entry) => entry.event === SKRIBBLE_EVENTS.WORD_CHOOSING_STARTED
+  )
+  assert.ok(choosingStarted)
+
+  const drawerId = (choosingStarted.data as { drawerId: string }).drawerId
+  await runtime.onClientEvent(drawerId, SKRIBBLE_EVENTS.CHOOSE_WORD, {
+    roomCode: 'ABC123',
+    word: ((startResult.broadcast?.find((entry) => entry.event === SKRIBBLE_EVENTS.WORD_CHOICES)?.data as {
+      words?: string[]
+    })?.words?.[0] ?? word),
+  })
+  runtime.setRoundWordForTest(word)
+
+  return drawerId
+}
+
 test('SkribbleRuntime only allows the active drawer to submit strokes', async () => {
   const runtime = createRuntime()
   await runtime.initialize()
-  const startResult = await runtime.start()
-
-  const roomBroadcast = startResult.broadcast?.find((entry) => entry.event === SKRIBBLE_EVENTS.ROUND_STARTED)
-  assert.ok(roomBroadcast)
-  const drawerId = (roomBroadcast.data as { drawerId: string }).drawerId
+  const drawerId = await startRoundWithChosenWord(runtime)
   const nonDrawerId = ['user-1', 'user-2', 'user-3'].find((playerId) => playerId !== drawerId) ?? 'user-2'
 
   const denied = await runtime.onClientEvent(nonDrawerId, SKRIBBLE_EVENTS.STROKE_BATCH, {
@@ -102,14 +126,8 @@ test('SkribbleRuntime only allows the active drawer to submit strokes', async ()
 test('SkribbleRuntime scores the first correct guess and marks the player as correct', async () => {
   const runtime = createRuntime()
   await runtime.initialize()
-  const startResult = await runtime.start()
-
-  const roomBroadcast = startResult.broadcast?.find((entry) => entry.event === SKRIBBLE_EVENTS.ROUND_STARTED)
-  assert.ok(roomBroadcast)
-  const drawerId = (roomBroadcast.data as { drawerId: string }).drawerId
+  const drawerId = await startRoundWithChosenWord(runtime)
   const guesserId = ['user-1', 'user-2', 'user-3'].find((playerId) => playerId !== drawerId) ?? 'user-2'
-
-  runtime.setRoundWordForTest('rocket')
 
   const result = await runtime.onClientEvent(guesserId, SKRIBBLE_EVENTS.GUESS, {
     roomCode: 'ABC123',
@@ -136,17 +154,11 @@ test('SkribbleRuntime scores the first correct guess and marks the player as cor
   assert.deepEqual(syncPayload.correctGuessers, [guesserId])
 })
 
-test('SkribbleRuntime ends the game once every guesser has guessed correctly', async () => {
+test('SkribbleRuntime ends the round once every guesser has guessed correctly', async () => {
   const runtime = createRuntime()
   await runtime.initialize()
-  const startResult = await runtime.start()
-
-  const roomBroadcast = startResult.broadcast?.find((entry) => entry.event === SKRIBBLE_EVENTS.ROUND_STARTED)
-  assert.ok(roomBroadcast)
-  const drawerId = (roomBroadcast.data as { drawerId: string }).drawerId
+  const drawerId = await startRoundWithChosenWord(runtime)
   const guessers = ['user-1', 'user-2', 'user-3'].filter((playerId) => playerId !== drawerId)
-
-  runtime.setRoundWordForTest('rocket')
 
   const first = await runtime.onClientEvent(guessers[0], SKRIBBLE_EVENTS.GUESS, {
     roomCode: 'ABC123',
@@ -159,8 +171,17 @@ test('SkribbleRuntime ends the game once every guesser has guessed correctly', a
 
   assert.equal(first.success, true)
   assert.equal(second.success, true)
-  assert.equal(runtime.getSnapshot().phase, 'gameEnd')
+  assert.equal(runtime.getSnapshot().phase, 'roundEnd')
 
   const roundEnded = second.broadcast?.find((entry) => entry.event === SKRIBBLE_EVENTS.ROUND_ENDED)
   assert.ok(roundEnded)
+})
+
+test('SkribbleRuntime emits game ended payload', async () => {
+  const runtime = createRuntime()
+  await runtime.initialize()
+
+  const result = await runtime.end()
+  const gameEnded = result.broadcast?.find((entry) => entry.event === SKRIBBLE_EVENTS.GAME_ENDED)
+  assert.ok(gameEnded)
 })

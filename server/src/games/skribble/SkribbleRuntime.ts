@@ -1,6 +1,7 @@
 import {
   CHAT_EVENTS,
   SKRIBBLE_EVENTS,
+  type ChooseSkribbleWordPayload,
   type GameConfig,
   type GameEventResult,
   type GuessPayload,
@@ -18,6 +19,7 @@ type SkribbleRoundState = {
   drawerId: UserId
   word: string
   wordHint: string
+  wordOptions: string[]
   strokes: Stroke[]
   correctGuessers: Set<UserId>
   guessOrder: UserId[]
@@ -29,12 +31,16 @@ const POINTS_FIRST = 100
 const POINTS_DECREASE = 10
 const POINTS_MIN = 70
 const DRAWER_POINTS_PER_GUESS = 10
+const WORD_CHOICE_COUNT = 3
+const WORD_CHOICE_SECONDS = 20
+const ROUND_DELAY_MS = 3000
 
 export class SkribbleRuntime extends BaseGameRuntime {
   private roundState: SkribbleRoundState = {
     drawerId: '',
     word: '',
     wordHint: '',
+    wordOptions: [],
     strokes: [],
     correctGuessers: new Set<UserId>(),
     guessOrder: [],
@@ -60,7 +66,21 @@ export class SkribbleRuntime extends BaseGameRuntime {
 
   async end(): Promise<GameEventResult> {
     this.clearTimers()
-    return super.end()
+    const baseResult = await super.end()
+
+    return {
+      success: true,
+      broadcast: [
+        ...(baseResult.broadcast ?? []),
+        {
+          event: SKRIBBLE_EVENTS.GAME_ENDED,
+          to: 'room',
+          data: {
+            finalScores: this.getFinalScores(),
+          },
+        },
+      ],
+    }
   }
 
   async onClientEvent(
@@ -78,6 +98,10 @@ export class SkribbleRuntime extends BaseGameRuntime {
 
     if (eventName === SKRIBBLE_EVENTS.GUESS) {
       return this.handleGuess(playerId, payload as GuessPayload)
+    }
+
+    if (eventName === SKRIBBLE_EVENTS.CHOOSE_WORD) {
+      return this.handleChooseWord(playerId, payload as ChooseSkribbleWordPayload)
     }
 
     if (eventName === SKRIBBLE_EVENTS.REQUEST_SYNC) {
@@ -104,7 +128,8 @@ export class SkribbleRuntime extends BaseGameRuntime {
     const baseResult = super.onPlayerLeave(playerId)
 
     if (playerId === this.roundState.drawerId && this.phase === 'playing') {
-      void this.finishRound()
+      // Drawer left — self-dispatch since there's no triggering socket
+      void this.finishRound(true)
     }
 
     return baseResult
@@ -133,6 +158,8 @@ export class SkribbleRuntime extends BaseGameRuntime {
   }
 
   getPlayerSyncData(playerId: UserId) {
+    const isChoosing = this.phase === 'playing' && !this.roundState.word
+
     return {
       strokes: this.roundState.strokes,
       drawerId: this.roundState.drawerId,
@@ -140,7 +167,12 @@ export class SkribbleRuntime extends BaseGameRuntime {
       wordLength: this.roundState.word.length || undefined,
       correctGuessers: Array.from(this.roundState.correctGuessers),
       roundEndsAt: this.roundEndsAt?.toISOString(),
-      word: playerId === this.roundState.drawerId ? this.roundState.word : undefined,
+      word:
+        playerId === this.roundState.drawerId && this.roundState.word
+          ? this.roundState.word
+          : undefined,
+      isChoosing,
+      wordChoices: isChoosing && playerId === this.roundState.drawerId ? this.roundState.wordOptions : undefined,
     }
   }
 
@@ -152,11 +184,99 @@ export class SkribbleRuntime extends BaseGameRuntime {
     }
 
     const drawerId = this.drawerOrder[(this.currentRound - 1) % this.drawerOrder.length]
-    const word = getRandomWords(1, 'medium')[0]
+    const wordOptions = getRandomWords(WORD_CHOICE_COUNT, 'medium')
 
     this.phase = 'playing'
     this.roundState = {
       drawerId,
+      word: '',
+      wordHint: '',
+      wordOptions,
+      strokes: [],
+      correctGuessers: new Set<UserId>(),
+      guessOrder: [],
+      roundStartedAt: null,
+    }
+
+    this.clearTimers()
+    this.roundTimer = setTimeout(() => {
+      if (this.roundState.word || !this.roundState.wordOptions[0]) {
+        return
+      }
+
+      void this.broadcastToRoom(this.startDrawingRound(this.roundState.wordOptions[0]))
+    }, WORD_CHOICE_SECONDS * 1000)
+    this.unrefRoundTimer()
+
+    await this.updateRoomPresenceStatus('playing')
+
+    return {
+      success: true,
+      broadcast: [
+        {
+          event: SKRIBBLE_EVENTS.WORD_CHOOSING_STARTED,
+          to: 'room',
+          data: {
+            roundNumber: this.currentRound,
+            totalRounds: this.totalRounds,
+            drawerId,
+          },
+        },
+        {
+          event: SKRIBBLE_EVENTS.WORD_CHOICES,
+          to: 'player',
+          playerId: drawerId,
+          data: {
+            roundNumber: this.currentRound,
+            totalRounds: this.totalRounds,
+            drawerId,
+            words: wordOptions,
+          },
+        },
+      ],
+    }
+  }
+
+  private handleChooseWord(playerId: UserId, payload: ChooseSkribbleWordPayload): GameEventResult {
+    if (this.phase !== 'playing' || !this.roundState.drawerId) {
+      return {
+        success: false,
+        error: 'There is no active Skribble round right now.',
+      }
+    }
+
+    if (playerId !== this.roundState.drawerId) {
+      return {
+        success: false,
+        error: 'Only the current drawer can choose the word.',
+      }
+    }
+
+    if (this.roundState.word) {
+      return {
+        success: false,
+        error: 'A word has already been chosen for this round.',
+      }
+    }
+
+    const selectedWord = payload.word.trim()
+    const word = this.roundState.wordOptions.find(
+      (option) => option.toLowerCase() === selectedWord.toLowerCase()
+    )
+
+    if (!word) {
+      return {
+        success: false,
+        error: 'Choose one of the offered words.',
+      }
+    }
+
+    return this.startDrawingRound(word)
+  }
+
+  private startDrawingRound(word: string): GameEventResult {
+    this.roundState = {
+      ...this.roundState,
       word,
       wordHint: generateWordHint(word),
       strokes: [],
@@ -168,10 +288,9 @@ export class SkribbleRuntime extends BaseGameRuntime {
     this.clearTimers()
     this.roundEndsAt = new Date(Date.now() + ROUND_TIME_SECONDS * 1000)
     this.roundTimer = setTimeout(() => {
-      void this.finishRound()
+      void this.finishRound(true)
     }, ROUND_TIME_SECONDS * 1000)
-
-    await this.updateRoomPresenceStatus('playing')
+    this.unrefRoundTimer()
 
     return {
       success: true,
@@ -182,7 +301,7 @@ export class SkribbleRuntime extends BaseGameRuntime {
           data: {
             roundNumber: this.currentRound,
             totalRounds: this.totalRounds,
-            drawerId,
+            drawerId: this.roundState.drawerId,
             wordLength: word.length,
             wordHint: this.roundState.wordHint,
             roundEndsAt: this.roundEndsAt.toISOString(),
@@ -191,10 +310,12 @@ export class SkribbleRuntime extends BaseGameRuntime {
         {
           event: SKRIBBLE_EVENTS.TURN_STARTED,
           to: 'player',
-          playerId: drawerId,
+          playerId: this.roundState.drawerId,
           data: {
-            drawerId,
+            drawerId: this.roundState.drawerId,
             word,
+            wordLength: word.length,
+            wordHint: this.roundState.wordHint,
           },
         },
       ],
@@ -206,6 +327,13 @@ export class SkribbleRuntime extends BaseGameRuntime {
       return {
         success: false,
         error: 'Skribble is not accepting drawing input right now.',
+      }
+    }
+
+    if (!this.roundState.word) {
+      return {
+        success: false,
+        error: 'Choose a word before drawing.',
       }
     }
 
@@ -237,6 +365,13 @@ export class SkribbleRuntime extends BaseGameRuntime {
   }
 
   private handleClearCanvas(playerId: UserId): GameEventResult {
+    if (!this.roundState.word) {
+      return {
+        success: false,
+        error: 'Choose a word before clearing the canvas.',
+      }
+    }
+
     if (playerId !== this.roundState.drawerId) {
       return {
         success: false,
@@ -265,6 +400,13 @@ export class SkribbleRuntime extends BaseGameRuntime {
       return {
         success: false,
         error: 'Skribble is not accepting guesses right now.',
+      }
+    }
+
+    if (!this.roundState.word) {
+      return {
+        success: false,
+        error: 'The drawer is still choosing a word.',
       }
     }
 
@@ -321,7 +463,7 @@ export class SkribbleRuntime extends BaseGameRuntime {
       }
 
       if (this.allGuessersFinished()) {
-        const roundEndResult = await this.finishRound()
+        const roundEndResult = await this.finishRound(false)
         result.broadcast?.push(...(roundEndResult.broadcast ?? []))
       }
 
@@ -361,9 +503,19 @@ export class SkribbleRuntime extends BaseGameRuntime {
     }
   }
 
-  private async finishRound(): Promise<GameEventResult> {
+  private async finishRound(selfDispatch = false): Promise<GameEventResult> {
     if (this.phase === 'roundEnd' || this.phase === 'gameEnd') {
       return { success: true }
+    }
+
+    if (!this.roundState.word) {
+      const nextResult = await this.startNextRound()
+      if (selfDispatch) {
+        await this.broadcastToRoom(nextResult)
+        return { success: true }
+      }
+
+      return nextResult
     }
 
     this.phase = 'roundEnd'
@@ -377,7 +529,7 @@ export class SkribbleRuntime extends BaseGameRuntime {
       )
     }
 
-    const result: GameEventResult = {
+    const roundEndResult: GameEventResult = {
       success: true,
       broadcast: [
         {
@@ -391,15 +543,22 @@ export class SkribbleRuntime extends BaseGameRuntime {
       ],
     }
 
-    if (this.currentRound >= this.totalRounds) {
-      const endResult = await this.end()
-      result.broadcast?.push(...(endResult.broadcast ?? []))
-    } else {
-      const nextRoundResult = await this.startNextRound()
-      result.broadcast?.push(...(nextRoundResult.broadcast ?? []))
+    await this.updateRoomPresenceStatus('playing')
+
+    if (selfDispatch) {
+      await this.broadcastToRoom(roundEndResult)
     }
 
-    return result
+    this.roundTimer = setTimeout(() => {
+      void (async () => {
+        const nextResult =
+          this.currentRound >= this.totalRounds ? await this.end() : await this.startNextRound()
+        await this.broadcastToRoom(nextResult)
+      })()
+    }, ROUND_DELAY_MS)
+    this.unrefRoundTimer()
+
+    return roundEndResult
   }
 
   private allGuessersFinished() {
@@ -414,6 +573,10 @@ export class SkribbleRuntime extends BaseGameRuntime {
       this.roundTimer = null
     }
     this.roundEndsAt = null
+  }
+
+  private unrefRoundTimer() {
+    ;(this.roundTimer as { unref?: () => void } | null)?.unref?.()
   }
 }
 

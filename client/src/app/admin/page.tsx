@@ -1,7 +1,81 @@
 import { prisma } from '@mini-arcade/db'
 import { AdminDashboardClient } from '@/components/admin/AdminDashboardClient'
 
+type RoomCreationPoint = {
+  label: string
+  value: number
+}
+
+type RoomCreationAnalytics = {
+  week: RoomCreationPoint[]
+  month: RoomCreationPoint[]
+  year: RoomCreationPoint[]
+}
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+function addDays(date: Date, days: number) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days)
+}
+
+function startOfWeek(date: Date) {
+  const day = date.getDay()
+  const daysSinceMonday = (day + 6) % 7
+  return addDays(startOfDay(date), -daysSinceMonday)
+}
+
+function dateKey(date: Date) {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+}
+
+function countRoomsByDay(rooms: Array<{ createdAt: Date }>, start: Date, days: number): RoomCreationPoint[] {
+  const counts = new Map<string, number>()
+  rooms.forEach((room) => {
+    counts.set(dateKey(room.createdAt), (counts.get(dateKey(room.createdAt)) ?? 0) + 1)
+  })
+
+  return Array.from({ length: days }, (_, index) => {
+    const date = addDays(start, index)
+    return {
+      label: date.toLocaleDateString('en-US', days <= 7 ? { weekday: 'short' } : { day: 'numeric' }),
+      value: counts.get(dateKey(date)) ?? 0,
+    }
+  })
+}
+
+function buildRoomCreationAnalytics(rooms: Array<{ createdAt: Date }>, now = new Date()): RoomCreationAnalytics {
+  const weekStart = startOfWeek(now)
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+
+  return {
+    week: countRoomsByDay(
+      rooms.filter((room) => room.createdAt >= weekStart && room.createdAt < addDays(weekStart, 7)),
+      weekStart,
+      7
+    ),
+    month: countRoomsByDay(
+      rooms.filter((room) => room.createdAt >= monthStart && room.createdAt < addDays(monthStart, daysInMonth)),
+      monthStart,
+      daysInMonth
+    ),
+    year: Array.from({ length: 12 }, (_, month) => {
+      const start = new Date(now.getFullYear(), month, 1)
+      const end = new Date(now.getFullYear(), month + 1, 1)
+      return {
+        label: start.toLocaleDateString('en-US', { month: 'short' }),
+        value: rooms.filter((room) => room.createdAt >= start && room.createdAt < end).length,
+      }
+    }),
+  }
+}
+
 export default async function AdminOverviewPage() {
+  const now = new Date()
+  const analyticsStart = new Date(now.getFullYear(), 0, 1)
+  const analyticsEnd = new Date(now.getFullYear() + 1, 0, 1)
   const [
     totalUsers,
     activeRooms,
@@ -11,6 +85,7 @@ export default async function AdminOverviewPage() {
     recentLogs,
     recentRooms,
     topUsers,
+    roomCreationRooms,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.room.count({ where: { status: { in: ['WAITING', 'PLAYING'] } } }),
@@ -45,6 +120,17 @@ export default async function AdminOverviewPage() {
         image: true,
       },
     }),
+    prisma.room.findMany({
+      where: {
+        createdAt: {
+          gte: analyticsStart,
+          lt: analyticsEnd,
+        },
+      },
+      select: {
+        createdAt: true,
+      },
+    }),
   ])
 
   // Per-game room counts
@@ -57,6 +143,7 @@ export default async function AdminOverviewPage() {
     gameId: r.gameId,
     count: r._count.id,
   }))
+  const roomCreationAnalytics = buildRoomCreationAnalytics(roomCreationRooms, now)
 
   return (
     <AdminDashboardClient
@@ -73,6 +160,7 @@ export default async function AdminOverviewPage() {
         isEnabled: g.isEnabled,
       }))}
       gameBreakdown={gameBreakdown}
+      roomCreationAnalytics={roomCreationAnalytics}
       recentLogs={recentLogs.map((log) => ({
         id: log.id,
         action: log.action,

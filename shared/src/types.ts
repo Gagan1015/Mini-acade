@@ -17,14 +17,18 @@ import {
   chatMessagePayloadSchema,
   chatMessageSchema,
   chatSystemMessageSchema,
+  chooseSkribbleWordPayloadSchema,
   clearCanvasPayloadSchema,
   drawCanvasClearedSchema,
   drawCorrectGuessSchema,
+  drawGameEndedSchema,
   drawRoundEndedSchema,
   drawStrokeBroadcastSchema,
   drawSyncSchema,
   drawTurnStartedSchema,
   drawWordHintSchema,
+  drawWordChoicesSchema,
+  drawWordChoosingStartedSchema,
   flagelGameEndedSchema,
   flagelGuessResultSchema,
   flagelOpponentProgressSchema,
@@ -102,6 +106,7 @@ export type Stroke = z.infer<typeof strokeSchema>
 export type StrokeBatchPayload = z.infer<typeof strokeBatchPayloadSchema>
 export type ClearCanvasPayload = z.infer<typeof clearCanvasPayloadSchema>
 export type GuessPayload = z.infer<typeof guessPayloadSchema>
+export type ChooseSkribbleWordPayload = z.infer<typeof chooseSkribbleWordPayloadSchema>
 export type RequestSyncPayload = z.infer<typeof requestSyncPayloadSchema>
 export type DrawStrokeBroadcastPayload = z.infer<typeof drawStrokeBroadcastSchema>
 export type DrawCanvasClearedPayload = z.infer<typeof drawCanvasClearedSchema>
@@ -110,8 +115,11 @@ export type SkribbleGuessResult = z.infer<typeof skribbleGuessResultSchema>
 export type DrawCorrectGuessPayload = z.infer<typeof drawCorrectGuessSchema>
 export type DrawSyncPayload = z.infer<typeof drawSyncSchema>
 export type DrawRoundEndedPayload = z.infer<typeof drawRoundEndedSchema>
+export type DrawGameEndedPayload = z.infer<typeof drawGameEndedSchema>
 export type DrawTurnStartedPayload = z.infer<typeof drawTurnStartedSchema>
 export type DrawWordHintPayload = z.infer<typeof drawWordHintSchema>
+export type DrawWordChoicesPayload = z.infer<typeof drawWordChoicesSchema>
+export type DrawWordChoosingStartedPayload = z.infer<typeof drawWordChoosingStartedSchema>
 
 export type TriviaQuestion = z.infer<typeof triviaQuestionSchema>
 export type TriviaSubmitAnswerPayload = z.infer<typeof triviaSubmitAnswerPayloadSchema>
@@ -161,6 +169,7 @@ export interface ClientToServerEvents {
   [SKRIBBLE_EVENTS.STROKE_BATCH]: (payload: StrokeBatchPayload) => void
   [SKRIBBLE_EVENTS.CLEAR_CANVAS]: (payload: ClearCanvasPayload) => void
   [SKRIBBLE_EVENTS.GUESS]: (payload: GuessPayload) => void
+  [SKRIBBLE_EVENTS.CHOOSE_WORD]: (payload: ChooseSkribbleWordPayload) => void
   [SKRIBBLE_EVENTS.REQUEST_SYNC]: (payload: RequestSyncPayload) => void
   [TRIVIA_EVENTS.SUBMIT_ANSWER]: (payload: TriviaSubmitAnswerPayload) => void
   [WORDEL_EVENTS.SUBMIT_GUESS]: (payload: WordelSubmitGuessPayload) => void
@@ -186,8 +195,11 @@ export interface ServerToClientEvents {
   [SKRIBBLE_EVENTS.GUESS_RESULT]: (payload: SkribbleGuessResult) => void
   [SKRIBBLE_EVENTS.CORRECT_GUESS]: (payload: DrawCorrectGuessPayload) => void
   [SKRIBBLE_EVENTS.SYNC]: (payload: DrawSyncPayload) => void
+  [SKRIBBLE_EVENTS.WORD_CHOOSING_STARTED]: (payload: DrawWordChoosingStartedPayload) => void
+  [SKRIBBLE_EVENTS.WORD_CHOICES]: (payload: DrawWordChoicesPayload) => void
   [SKRIBBLE_EVENTS.ROUND_STARTED]: (payload: SkribbleRoundStarted) => void
   [SKRIBBLE_EVENTS.ROUND_ENDED]: (payload: DrawRoundEndedPayload) => void
+  [SKRIBBLE_EVENTS.GAME_ENDED]: (payload: DrawGameEndedPayload) => void
   [SKRIBBLE_EVENTS.TURN_STARTED]: (payload: DrawTurnStartedPayload) => void
   [SKRIBBLE_EVENTS.WORD_HINT]: (payload: DrawWordHintPayload) => void
   [TRIVIA_EVENTS.ROUND_STARTED]: (payload: TriviaRoundStarted) => void

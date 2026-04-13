@@ -44,6 +44,7 @@ type FlagelPlayAreaProps = {
 const FLAG_TILE_COLUMNS = 3
 const FLAG_TILE_ROWS = 2
 const FLAG_TILE_COUNT = FLAG_TILE_COLUMNS * FLAG_TILE_ROWS
+const FULL_FLAG_GRID_HIDE_DELAY_MS = 1100
 const DROPDOWN_LIMIT = 8
 
 const DIRECTION_ARROWS: Record<string, string> = {
@@ -216,6 +217,7 @@ export function FlagelPlayArea({
   const [guess, setGuess] = useState('')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [flagImageFailed, setFlagImageFailed] = useState(false)
+  const [showWholeFlag, setShowWholeFlag] = useState(false)
   const reducedMotion = useReducedMotion()
   const listboxId = useId()
 
@@ -231,6 +233,7 @@ export function FlagelPlayArea({
     phase === 'roundEnd' || phase === 'gameEnd' || solved || lastGuess?.isCorrect
       ? FLAG_TILE_COUNT
       : Math.min(guesses.length, FLAG_TILE_COUNT)
+  const isFlagFullyRevealed = revealedTiles === FLAG_TILE_COUNT
   const remainingAttempts = Math.max(maxAttempts - usedAttempts, 0)
   const currentGuessNumber = Math.max(1, Math.min(usedAttempts + (finished ? 0 : 1), maxAttempts))
   const resolvedGuess = findFlagelCountryByGuess(guess)
@@ -262,6 +265,24 @@ export function FlagelPlayArea({
   useEffect(() => {
     setFlagImageFailed(false)
   }, [currentRound, effectiveFlagImageUrl])
+
+  useEffect(() => {
+    if (!isFlagFullyRevealed) {
+      setShowWholeFlag(false)
+      return
+    }
+
+    if (reducedMotion) {
+      setShowWholeFlag(true)
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setShowWholeFlag(true)
+    }, FULL_FLAG_GRID_HIDE_DELAY_MS)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [isFlagFullyRevealed, reducedMotion])
 
   return (
     <motion.section
@@ -297,7 +318,32 @@ export function FlagelPlayArea({
 
       <div className="border border-white/22 bg-[linear-gradient(180deg,rgba(15,21,36,0.96),rgba(8,12,22,0.98))] p-4 shadow-[0_20px_56px_rgba(0,0,0,0.24)]">
         <div className="border border-white/28 bg-[var(--background)]/65">
-          <div className="grid grid-cols-3 gap-[2px] overflow-hidden bg-[rgba(185,196,224,0.58)]">
+          {showWholeFlag ? (
+            <div className="relative aspect-[2/1] overflow-hidden bg-[rgba(42,51,79,0.98)]">
+              {shouldUseFlagImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={effectiveFlagImageUrl}
+                  alt=""
+                  draggable={false}
+                  onError={() => {
+                    console.warn('[mini-arcade][flagel:image-error]', {
+                      flagEmoji,
+                      flagImageUrl,
+                      effectiveFlagImageUrl,
+                    })
+                    setFlagImageFailed(true)
+                  }}
+                  className="pointer-events-none h-full w-full select-none object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,rgba(54,62,90,0.95),rgba(20,26,42,0.98))] text-[clamp(18px,2.8vw,32px)] font-semibold uppercase tracking-[0.08em] text-white/92">
+                  {fallbackFlagLabel}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-[2px] overflow-hidden bg-[rgba(185,196,224,0.58)]">
               {Array.from({ length: FLAG_TILE_COUNT }, (_, index) => {
                 const isRevealed = index < revealedTiles
                 return (
@@ -345,11 +391,12 @@ export function FlagelPlayArea({
                   </div>
                 )
               })}
-          </div>
+            </div>
+          )}
         </div>
 
         <p className="mt-3 text-center text-[13px] text-[var(--text-secondary)]">
-          {revealedTiles === FLAG_TILE_COUNT
+          {isFlagFullyRevealed
             ? 'The full flag is uncovered.'
             : `${revealedTiles} of ${FLAG_TILE_COUNT} flag panels uncovered.`}
         </p>
