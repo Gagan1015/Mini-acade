@@ -61,7 +61,7 @@ export function RoomActionsPanel() {
   async function handleCreateRoom() {
     try {
       if (GAMES[gameId].minPlayers <= 1 && Number(maxPlayers) === 1) {
-        router.push(`/play/${gameId}`)
+        router.push(`/play/${gameId}?session=${Date.now()}`)
         return
       }
 

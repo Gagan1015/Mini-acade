@@ -365,6 +365,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
 
     const handleWordelGuessResult = (payload: WordelGuessResult) => {
+      setError(null)
       setWordel((previousState) => {
         const nextStatuses = {
           ...previousState.playerStatuses,
@@ -573,6 +574,11 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
 
     const handleFlagelRoundStarted = (payload: FlagelRoundStarted) => {
+      console.debug('[mini-arcade][flagel:roundStarted]', {
+        roomCode,
+        userId: currentUserId,
+        payload,
+      })
       setFlagel((previousState) => ({
         ...previousState,
         phase: 'playing',
@@ -663,6 +669,11 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
 
     const handleFlagelSync = (payload: FlagelSyncPayload) => {
+      console.debug('[mini-arcade][flagel:sync]', {
+        roomCode,
+        userId: currentUserId,
+        payload,
+      })
       setFlagel({
         phase: payload.phase,
         currentRound: payload.currentRound,
@@ -795,6 +806,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
         return
       }
 
+      setError(null)
       socket.emit(WORDEL_EVENTS.SUBMIT_GUESS, {
         roomCode,
         guess,

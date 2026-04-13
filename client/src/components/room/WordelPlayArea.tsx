@@ -1,9 +1,9 @@
 'use client'
 
-import { type FormEvent, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 
-import type { Player, WordelGuessResult } from '@mini-arcade/shared'
+import type { Player, WordelGuessResult, WordelLetterResult } from '@mini-arcade/shared'
 
 type WordelPlayAreaProps = {
   currentUserId: string
@@ -19,6 +19,7 @@ type WordelPlayAreaProps = {
     score: number
     rank: number
   }>
+  submitError?: string | null
   playerStatuses: Record<
     string,
     {
@@ -32,7 +33,56 @@ type WordelPlayAreaProps = {
   onPlayAgain: () => void
 }
 
+/* ── Constants ── */
+
+const KEYBOARD_ROWS = [
+  ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+  ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+  ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACKSPACE'],
+]
+
+const FLIP_DURATION = 0.75 // seconds per tile
+const FLIP_STAGGER = 0.32 // seconds between tiles
+
+/* ── Color helpers ── */
+
+const COLORS = {
+  correct: '#538d4e',
+  present: '#b59f3b',
+  absent: '#3a3a3c',
+  tileEmpty: '#121213',
+  tileBorderEmpty: '#3a3a3c',
+  tileBorderFilled: '#565758',
+  keyDefault: '#818384',
+  white: '#ffffff',
+}
+
+function getTileBg(result?: WordelLetterResult): string {
+  if (!result) return COLORS.tileEmpty
+  return COLORS[result]
+}
+
+function getTileBorder(result?: WordelLetterResult, hasLetter?: boolean): string {
+  if (result) return COLORS[result]
+  return hasLetter ? COLORS.tileBorderFilled : COLORS.tileBorderEmpty
+}
+
+function getKeyBg(status?: WordelLetterResult): string {
+  if (!status) return COLORS.keyDefault
+  return COLORS[status]
+}
+
 /* ── SVG Icons ── */
+
+function IconBackspace({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+      <line x1="18" y1="9" x2="12" y2="15" />
+      <line x1="12" y1="9" x2="18" y2="15" />
+    </svg>
+  )
+}
 
 function IconTrophy({ size = 14 }: { size?: number }) {
   return (
@@ -47,14 +97,7 @@ function IconTrophy({ size = 14 }: { size?: number }) {
   )
 }
 
-function IconSend({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="22" y1="2" x2="11" y2="13" />
-      <polygon points="22 2 15 22 11 13 2 9 22 2" />
-    </svg>
-  )
-}
+/* ── Main component ── */
 
 export function WordelPlayArea({
   currentUserId,
@@ -66,215 +109,558 @@ export function WordelPlayArea({
   guesses,
   correctWord,
   finalScores,
+  submitError,
   playerStatuses,
   onSubmitGuess,
   onPlayAgain,
 }: WordelPlayAreaProps) {
-  const [guess, setGuess] = useState('')
+  const [currentGuess, setCurrentGuess] = useState('')
+  const [pendingGuess, setPendingGuess] = useState('')
+  const [shakeRow, setShakeRow] = useState(false)
+  const [popCol, setPopCol] = useState(-1)
+  const [isWaitingForResult, setIsWaitingForResult] = useState(false)
+
+  // ── Flip animation state ──
+  // Which row index is currently playing the flip animation (-1 = none)
+  const [flippingRow, setFlippingRow] = useState(-1)
+  // Which tiles in the flipping row have passed the 180° midpoint (color revealed)
+  const [revealedTiles, setRevealedTiles] = useState<Set<number>>(new Set())
+  // Is the full flip sequence still running?
+  const [isFlipAnimating, setIsFlipAnimating] = useState(false)
+  // Tracks previous guesses count so we detect new arrivals from the server
+  const prevGuessCountRef = useRef(guesses.length)
+  // Unique key to force framer-motion to re-mount and replay the flip
+  const [flipKey, setFlipKey] = useState(0)
 
   const activePlayerState = playerStatuses[currentUserId]
-  const canSubmit =
-    phase === 'playing' &&
-    guess.trim().length === wordLength &&
-    !(activePlayerState?.finished ?? false)
+  const isFinished = activePlayerState?.finished ?? false
+  const canType = phase === 'playing' && !isFinished && !isWaitingForResult && !isFlipAnimating
   const showCorrectWord = Boolean(correctWord && phase !== 'playing')
   const canPlayAgain = phase === 'gameEnd' && isHost
+  const isSolo = players.length <= 1
+  const pendingIncomingRow = guesses.length > prevGuessCountRef.current ? guesses.length - 1 : -1
+  const visualFlippingRow = pendingIncomingRow !== -1 ? pendingIncomingRow : flippingRow
+  const showPendingGuessInGrid = isWaitingForResult && pendingIncomingRow === -1
 
-  const rows = useMemo(() => {
-    const paddedRows = [...guesses]
-    while (paddedRows.length < maxAttempts) {
-      paddedRows.push(undefined as unknown as WordelGuessResult)
+  /* ────────────────────────────────────────────────────
+   * Detect when a NEW guess arrives from the server
+   * and kick off the sequential tile-flip animation.
+   * ──────────────────────────────────────────────────── */
+  useEffect(() => {
+    if (guesses.length < prevGuessCountRef.current) {
+      setFlippingRow(-1)
+      setRevealedTiles(new Set())
+      setIsFlipAnimating(false)
+      setIsWaitingForResult(false)
+      setPendingGuess('')
+      setCurrentGuess('')
+      prevGuessCountRef.current = guesses.length
+      return
     }
-    return paddedRows
-  }, [guesses, maxAttempts])
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!canSubmit) return
-    onSubmitGuess(guess.trim().toUpperCase())
-    setGuess('')
-  }
+    if (guesses.length > prevGuessCountRef.current) {
+      const newRowIndex = guesses.length - 1
 
+      // Start flip animation for the newly-arrived row
+      setFlippingRow(newRowIndex)
+      setRevealedTiles(new Set())
+      setIsFlipAnimating(true)
+      setIsWaitingForResult(false)
+      setPendingGuess('')
+      setCurrentGuess('')
+      setFlipKey((k) => k + 1) // force re-mount so animation replays
+
+      // Stagger color reveals at each tile's 180° midpoint
+      const timers: ReturnType<typeof setTimeout>[] = []
+      for (let i = 0; i < wordLength; i++) {
+        const midpointMs = (i * FLIP_STAGGER + FLIP_DURATION / 2) * 1000
+        timers.push(
+          setTimeout(() => {
+            setRevealedTiles((prev) => {
+              const next = new Set(prev)
+              next.add(i)
+              return next
+            })
+          }, midpointMs)
+        )
+      }
+
+      // Mark animation as complete after the last tile finishes
+      const totalAnimMs =
+        ((wordLength - 1) * FLIP_STAGGER + FLIP_DURATION) * 1000 + 50
+      timers.push(
+        setTimeout(() => {
+          setIsFlipAnimating(false)
+          setFlippingRow(-1)
+        }, totalAnimMs)
+      )
+
+      prevGuessCountRef.current = guesses.length
+      return () => timers.forEach(clearTimeout)
+    }
+
+    prevGuessCountRef.current = guesses.length
+  }, [guesses.length, wordLength])
+
+  useEffect(() => {
+    if (!isWaitingForResult || !submitError) {
+      return
+    }
+
+    setIsWaitingForResult(false)
+    setCurrentGuess(pendingGuess)
+    setPendingGuess('')
+    setShakeRow(true)
+    const timeoutId = window.setTimeout(() => setShakeRow(false), 450)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [isWaitingForResult, pendingGuess, submitError])
+
+  /* Build letter status map from all guesses for keyboard coloring.
+   * Only include tiles whose colors are actually visible on screen. */
+  const letterStatuses = useMemo(() => {
+    const map: Record<string, WordelLetterResult> = {}
+    for (let gi = 0; gi < guesses.length; gi++) {
+      const isRowFlipping = gi === visualFlippingRow
+      if (pendingIncomingRow === gi) continue
+
+      const g = guesses[gi]
+      const letters = g.guess.split('')
+      for (let i = 0; i < letters.length; i++) {
+        // If this row is mid-flip, only include tiles past the midpoint
+        if (isRowFlipping && !revealedTiles.has(i)) continue
+
+        const letter = letters[i]
+        const result = g.results[i]
+        const current = map[letter]
+        if (result === 'correct') {
+          map[letter] = 'correct'
+        } else if (result === 'present' && current !== 'correct') {
+          map[letter] = 'present'
+        } else if (result === 'absent' && !current) {
+          map[letter] = 'absent'
+        }
+      }
+    }
+    return map
+  }, [guesses, pendingIncomingRow, revealedTiles, visualFlippingRow])
+
+  /* Build the visual grid rows */
+  const rows = useMemo(() => {
+    const grid: Array<{
+      letters: string[]
+      results?: WordelLetterResult[]
+      isRevealed: boolean
+    }> = []
+
+    for (let i = 0; i < maxAttempts; i++) {
+      if (i < guesses.length) {
+        grid.push({
+          letters: guesses[i].guess.split(''),
+          results: guesses[i].results,
+          isRevealed: true,
+        })
+      } else if (i === guesses.length) {
+        const draftGuess = showPendingGuessInGrid ? pendingGuess : currentGuess
+        const padded = draftGuess.split('')
+        while (padded.length < wordLength) padded.push('')
+        grid.push({ letters: padded, isRevealed: false })
+      } else {
+        grid.push({ letters: Array(wordLength).fill(''), isRevealed: false })
+      }
+    }
+    return grid
+  }, [currentGuess, guesses, maxAttempts, pendingGuess, showPendingGuessInGrid, wordLength])
+
+  /* Handle virtual/physical keyboard input */
+  const handleKeyPress = useCallback(
+    (key: string) => {
+      if (!canType) return
+
+      if (key === 'ENTER') {
+        if (currentGuess.length === wordLength) {
+          // Send guess to server — don't clear or animate yet.
+          // The flip will start when the server response arrives.
+          const submittedGuess = currentGuess.toUpperCase()
+          setPendingGuess(submittedGuess)
+          setCurrentGuess('')
+          onSubmitGuess(submittedGuess)
+          setIsWaitingForResult(true)
+        } else {
+          setShakeRow(true)
+          setTimeout(() => setShakeRow(false), 600)
+        }
+        return
+      }
+
+      if (key === 'BACKSPACE') {
+        setCurrentGuess((prev) => prev.slice(0, -1))
+        return
+      }
+
+      if (currentGuess.length < wordLength && /^[A-Z]$/.test(key)) {
+        setPopCol(currentGuess.length)
+        setTimeout(() => setPopCol(-1), 100)
+        setCurrentGuess((prev) => prev + key)
+      }
+    },
+    [canType, currentGuess, wordLength, onSubmitGuess]
+  )
+
+  /* Physical keyboard listener */
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        handleKeyPress('ENTER')
+      } else if (e.key === 'Backspace') {
+        e.preventDefault()
+        handleKeyPress('BACKSPACE')
+      } else {
+        const letter = e.key.toUpperCase()
+        if (/^[A-Z]$/.test(letter)) {
+          e.preventDefault()
+          handleKeyPress(letter)
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyPress])
+
+  /* ── Render ── */
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]"
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '16px',
+        width: '100%',
+        padding: '8px 0',
+        userSelect: 'none',
+      }}
     >
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--game-wordel)]/80">Wordel Match</p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-[var(--text-primary)]">Solve the hidden word</h2>
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--text-secondary)]">
-              Everyone gets the same five-letter answer. Faster solves score higher.
-            </p>
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className={isSolo ? '' : 'grid gap-8 xl:grid-cols-[minmax(0,1fr)_280px]'}
+        style={{ width: '100%' }}
+      >
+        {/* ── Left: grid + keyboard ── */}
+        <div className="flex flex-col items-center">
+          {/* Attempt counter */}
+          <div className="mb-2">
+            <span className="text-xs font-medium uppercase tracking-[0.15em] text-[var(--text-tertiary)]">
+              Attempt {guesses.length} / {maxAttempts}
+            </span>
           </div>
-          <div className="text-sm text-[var(--text-secondary)]">
-            Attempts: <span className="font-semibold text-[var(--text-primary)]">{guesses.length}</span> / {maxAttempts}
-          </div>
-        </div>
 
-        {/* Word grid */}
-        <div className="mx-auto flex w-full max-w-md flex-col gap-2">
-          {rows.map((row, rowIndex) => (
-            <motion.div
-              key={`${row?.guess ?? 'row'}-${rowIndex}`}
-              initial={row ? { opacity: 0, y: 8 } : {}}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25 }}
-              className="flex justify-center gap-2"
-            >
-              {(row?.guess ?? ''.padEnd(wordLength, ' ')).split('').map((letter, cellIndex) => {
-                const result = row?.results?.[cellIndex]
-                const colorClass =
-                  result === 'correct'
-                    ? 'border-[var(--success-500)]/50 bg-[var(--success-500)]/12 text-[var(--success-500)]'
-                    : result === 'present'
-                      ? 'border-[var(--warning-500)]/50 bg-[var(--warning-500)]/12 text-[var(--warning-500)]'
-                      : result === 'absent'
-                        ? 'border-[var(--border)] bg-[var(--surface)]/60 text-[var(--text-tertiary)]'
-                        : 'border-[var(--border)]/50 bg-[var(--surface)]/20 text-[var(--text-tertiary)]'
-
-                return (
-                  <motion.div
-                    key={`${rowIndex}-${cellIndex}`}
-                    initial={result ? { rotateX: 90 } : {}}
-                    animate={{ rotateX: 0 }}
-                    transition={{ delay: cellIndex * 0.05, duration: 0.3 }}
-                    className={`flex h-14 w-14 items-center justify-center rounded-xl border font-mono text-xl font-semibold uppercase ${colorClass}`}
-                  >
-                    {letter.trim()}
-                  </motion.div>
-                )
-              })}
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Input form */}
-        <form onSubmit={handleSubmit} className="mx-auto flex w-full max-w-2xl flex-col gap-3 sm:flex-row">
-          <input
-            value={guess}
-            onChange={(event) => setGuess(event.target.value.toUpperCase())}
-            maxLength={wordLength}
-            disabled={phase !== 'playing' || activePlayerState?.finished}
-            placeholder="Type your guess"
-            className="input flex-1 font-mono tracking-[0.25em] uppercase"
-          />
-          <motion.button
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.98 }}
-            type="submit"
-            disabled={!canSubmit}
-            className="btn btn-primary gap-2 px-6"
-          >
-            <IconSend size={15} />
-            Submit guess
-          </motion.button>
-        </form>
-
-        <AnimatePresence>
-          {(showCorrectWord || canPlayAgain) && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mx-auto flex w-full max-w-2xl flex-col gap-4 rounded-2xl border border-[var(--warning-500)]/25 bg-[var(--warning-500)]/8 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="space-y-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--warning-500)]/85">
-                  {phase === 'gameEnd' ? 'Round Complete' : 'Answer Revealed'}
-                </p>
-                {showCorrectWord && (
-                  <p className="font-mono text-lg font-semibold tracking-[0.18em] text-[var(--warning-500)]">
-                    {correctWord}
-                  </p>
-                )}
-              </div>
-              {canPlayAgain && (
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="button"
-                  onClick={onPlayAgain}
-                  className="btn btn-primary whitespace-nowrap px-5"
-                >
-                  Play again
-                </motion.button>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      <div className="space-y-6">
-        <div>
-          <h3 className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-tertiary)]">Player Progress</h3>
-          <div className="space-y-2">
-            {players.map((player) => {
-              const status = playerStatuses[player.id]
+          {/* ── TILE GRID ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '10px 0' }}>
+            {rows.map((row, rowIndex) => {
+              const isCurrentRow = rowIndex === guesses.length && !row.isRevealed
               return (
-                <div
-                  key={player.id}
-                  className="flex items-center justify-between rounded-xl border border-[var(--border)]/40 bg-[var(--surface)]/30 px-4 py-3"
+                <motion.div
+                  key={rowIndex}
+                  style={{ display: 'flex', gap: '6px', justifyContent: 'center', perspective: '1000px' }}
+                  animate={isCurrentRow && shakeRow ? { x: [0, -4, 4, -4, 4, -2, 2, 0] } : {}}
+                  transition={{ duration: 0.5 }}
                 >
-                  <div>
-                    <p className="text-sm font-medium text-[var(--text-primary)]">
-                      {player.name}
-                      {player.id === currentUserId ? ' (You)' : ''}
-                    </p>
-                    <p className="mt-1 text-xs text-[var(--text-tertiary)]">
-                      Attempts: {status?.attemptCount ?? 0} / {maxAttempts}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-[var(--primary-400)]">{status?.score ?? 0} pts</p>
-                    <p className="mt-1 text-xs text-[var(--text-tertiary)]">
-                      {status?.solved
-                        ? 'Solved'
-                        : status?.finished
-                          ? 'Out of tries'
-                          : 'Still guessing'}
-                    </p>
-                  </div>
-                </div>
+                  {row.letters.map((letter, colIndex) => {
+                    const result = row.results?.[colIndex]
+                    const hasLetter = letter !== ''
+                    const isFlipping = rowIndex === visualFlippingRow
+                    // Show color ONLY if:
+                    // - row belongs to a finished guess, OR
+                    // - row is mid-flip AND this tile passed the 180° midpoint
+                    const tileColorRevealed =
+                      rowIndex < guesses.length &&
+                      (isFlipping
+                        ? pendingIncomingRow === rowIndex
+                          ? false
+                          : revealedTiles.has(colIndex)
+                        : true)
+
+                    // Color swaps at the 180° midpoint of the flip
+                    const bg = tileColorRevealed ? getTileBg(result) : COLORS.tileEmpty
+                    const border = tileColorRevealed
+                      ? getTileBorder(result)
+                      : getTileBorder(undefined, hasLetter)
+                    const textColor = COLORS.white
+                    const isPop = isCurrentRow && colIndex === popCol
+
+                    return (
+                      <motion.div
+                        // flipKey forces re-mount so framer replays the animation
+                        key={isFlipping ? `flip-${flipKey}-${colIndex}` : `${rowIndex}-${colIndex}`}
+                        style={{
+                          width: '62px',
+                          height: '62px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '2rem',
+                          fontWeight: 700,
+                          fontFamily: 'var(--font-sans)',
+                          textTransform: 'uppercase',
+                          border: `2px solid ${border}`,
+                          backgroundColor: bg,
+                          color: textColor,
+                          lineHeight: 1,
+                          boxSizing: 'border-box',
+                          transformStyle: 'preserve-3d',
+                          backfaceVisibility: 'hidden',
+                        }}
+                        animate={
+                          isPop
+                            ? { scale: [1, 1.1, 1] }
+                            : isFlipping
+                              ? { rotateX: [0, 180, 360] }
+                              : {}
+                        }
+                        transition={
+                          isPop
+                            ? { duration: 0.1 }
+                            : isFlipping
+                              ? {
+                                  delay: colIndex * FLIP_STAGGER,
+                                  duration: FLIP_DURATION,
+                                  ease: [0.45, 0, 0.55, 1],
+                                }
+                              : {}
+                        }
+                      >
+                        {letter}
+                      </motion.div>
+                    )
+                  })}
+                </motion.div>
               )
             })}
           </div>
-        </div>
 
-        <div>
-          <h3 className="mb-4 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-            <IconTrophy />
-            Final Scores
-          </h3>
-          <div className="space-y-2">
-            {finalScores.length > 0 ? (
-              finalScores.map((entry) => {
-                const player = players.find((candidate) => candidate.id === entry.playerId)
-                return (
-                  <div
-                    key={entry.playerId}
-                    className="flex items-center justify-between rounded-xl border border-[var(--border)]/40 bg-[var(--surface)]/30 px-4 py-3"
+          {/* ── Result banner ── */}
+          <AnimatePresence>
+            {(showCorrectWord || canPlayAgain) && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '20px 24px',
+                  borderRadius: '16px',
+                  border: `1px solid ${activePlayerState?.solved ? 'rgba(83,141,78,0.3)' : 'rgba(181,159,59,0.3)'}`,
+                  background: activePlayerState?.solved ? 'rgba(83,141,78,0.08)' : 'rgba(181,159,59,0.08)',
+                  textAlign: 'center',
+                  width: '100%',
+                  maxWidth: '420px',
+                  marginTop: '16px',
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.18em',
+                    color: activePlayerState?.solved ? COLORS.correct : COLORS.present,
+                    margin: 0,
+                  }}
+                >
+                  {activePlayerState?.solved
+                    ? phase === 'gameEnd' ? 'You Won!' : 'Correct!'
+                    : phase === 'gameEnd' ? 'Round Complete' : 'Answer Revealed'}
+                </p>
+                {showCorrectWord && (
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '1.25rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.18em',
+                      color: activePlayerState?.solved ? COLORS.correct : COLORS.present,
+                      margin: 0,
+                    }}
                   >
-                    <p className="text-sm text-[var(--text-primary)]">
-                      <span className="font-mono text-[var(--text-tertiary)]">#{entry.rank}</span>{' '}
-                      {player?.name ?? entry.playerId}
-                    </p>
-                    <p className="text-sm font-medium text-[var(--primary-400)]">{entry.score} pts</p>
-                  </div>
-                )
-              })
-            ) : (
-              <p className="text-sm text-[var(--text-tertiary)]">
-                Final standings will appear here when the round ends.
-              </p>
+                    {correctWord}
+                  </p>
+                )}
+                {canPlayAgain && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    type="button"
+                    onClick={onPlayAgain}
+                    className="btn btn-primary mt-2 px-8 py-2.5"
+                  >
+                    Play Again
+                  </motion.button>
+                )}
+              </motion.div>
             )}
+          </AnimatePresence>
+
+          {/* ── ON-SCREEN KEYBOARD ── */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              padding: '0 8px',
+              maxWidth: '500px',
+              width: '100%',
+              marginTop: '20px',
+            }}
+          >
+            {KEYBOARD_ROWS.map((row, rowIndex) => (
+              <div
+                key={rowIndex}
+                style={{
+                  display: 'flex',
+                  gap: '6px',
+                  justifyContent: 'center',
+                }}
+              >
+                {/* Spacer for middle row to center it */}
+                {rowIndex === 1 && <div style={{ flex: '0.5' }} />}
+                {row.map((key) => {
+                  const isWide = key === 'ENTER' || key === 'BACKSPACE'
+                  const status = letterStatuses[key]
+                  const bg = isWide ? COLORS.keyDefault : getKeyBg(status)
+
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => handleKeyPress(key)}
+                      disabled={!canType}
+                      aria-label={key === 'BACKSPACE' ? 'Delete' : key === 'ENTER' ? 'Submit' : key}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '58px',
+                        minWidth: isWide ? '65px' : '43px',
+                        maxWidth: isWide ? '65px' : undefined,
+                        flex: isWide ? 'none' : '1',
+                        borderRadius: '4px',
+                        border: 'none',
+                        fontSize: isWide ? '0.7rem' : '0.85rem',
+                        fontWeight: 700,
+                        fontFamily: 'var(--font-sans)',
+                        textTransform: 'uppercase',
+                        cursor: canType ? 'pointer' : 'not-allowed',
+                        padding: 0,
+                        backgroundColor: bg,
+                        color: COLORS.white,
+                        letterSpacing: isWide ? '0.05em' : '0.02em',
+                        opacity: canType ? 1 : 0.5,
+                        transition: 'opacity 0.1s ease',
+                      }}
+                    >
+                      {key === 'BACKSPACE' ? <IconBackspace size={20} /> : key}
+                    </button>
+                  )
+                })}
+                {rowIndex === 1 && <div style={{ flex: '0.5' }} />}
+              </div>
+            ))}
           </div>
         </div>
-      </div>
-    </motion.section>
+
+        {/* ── Right sidebar: Player Progress — multiplayer only ── */}
+        {!isSolo && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
+                Player Progress
+              </h3>
+              <div className="space-y-2">
+                {players.map((player) => {
+                  const status = playerStatuses[player.id]
+                  const isActive = (status?.attemptCount ?? 0) > 0 || status?.solved
+                  return (
+                    <div
+                      key={player.id}
+                      className="flex items-center justify-between rounded-xl px-4 py-3"
+                      style={{
+                        border: `1px solid ${isActive ? 'rgba(83,141,78,0.25)' : 'var(--border)'}`,
+                        background: isActive ? 'rgba(83,141,78,0.05)' : 'var(--surface)',
+                        opacity: isActive ? 1 : 0.5,
+                      }}
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-[var(--text-primary)]">
+                          {player.name}
+                          {player.id === currentUserId ? ' (You)' : ''}
+                        </p>
+                        <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+                          Attempts: {status?.attemptCount ?? 0} / {maxAttempts}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium" style={{ color: COLORS.correct }}>
+                          {status?.score ?? 0} pts
+                        </p>
+                        <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+                          {status?.solved
+                            ? '✓ Solved'
+                            : status?.finished
+                              ? '✗ Out'
+                              : 'Guessing…'}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Final scores */}
+            <div>
+              <h3 className="mb-4 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
+                <IconTrophy />
+                Final Scores
+              </h3>
+              <div className="space-y-2">
+                {finalScores.length > 0 ? (
+                  finalScores.map((entry) => {
+                    const player = players.find((p) => p.id === entry.playerId)
+                    return (
+                      <div
+                        key={entry.playerId}
+                        className="flex items-center justify-between rounded-xl px-4 py-3"
+                        style={{
+                          border: '1px solid rgba(83,141,78,0.25)',
+                          background: 'rgba(83,141,78,0.05)',
+                        }}
+                      >
+                        <p className="text-sm text-[var(--text-primary)]">
+                          <span className="font-mono text-[var(--text-tertiary)]">#{entry.rank}</span>{' '}
+                          {player?.name ?? entry.playerId}
+                        </p>
+                        <p className="text-sm font-medium" style={{ color: COLORS.correct }}>
+                          {entry.score} pts
+                        </p>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <p className="text-sm text-[var(--text-tertiary)]">
+                    Final standings appear when the round ends.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </motion.section>
+    </div>
   )
 }

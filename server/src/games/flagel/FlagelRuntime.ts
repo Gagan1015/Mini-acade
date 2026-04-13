@@ -49,6 +49,13 @@ export class FlagelRuntime extends BaseGameRuntime {
     this.phase = 'playing'
     this.currentRound = 1
     this.secretCountry = pickRandomCountry(this.usedCountryCodes)
+    console.info('[flagel] round started', {
+      roomCode: this.roomCode,
+      countryCode: this.secretCountry.code,
+      countryName: this.secretCountry.name,
+      flagImageUrl: this.secretCountry.flagImageUrl,
+      flagEmoji: this.secretCountry.flagEmoji,
+    })
     await this.updateRoomPresenceStatus('playing')
 
     return {
@@ -61,6 +68,7 @@ export class FlagelRuntime extends BaseGameRuntime {
             roundNumber: this.currentRound,
             totalRounds: this.totalRounds,
             flagEmoji: this.secretCountry.flagEmoji,
+            flagImageUrl: this.secretCountry.flagImageUrl,
             maxAttempts: MAX_ATTEMPTS,
             hintsAvailable: MAX_ATTEMPTS - 1,
           },
@@ -114,6 +122,7 @@ export class FlagelRuntime extends BaseGameRuntime {
       currentRound: this.currentRound,
       totalRounds: this.totalRounds,
       flagEmoji: this.secretCountry?.flagEmoji,
+      flagImageUrl: this.secretCountry?.flagImageUrl,
       maxAttempts: MAX_ATTEMPTS,
       hintsAvailable: Math.max(0, MAX_ATTEMPTS - (state?.guesses.length ?? 0) - 1),
       guesses: state?.guesses ?? [],
@@ -326,4 +335,3 @@ function createPlayerFlagelState(): PlayerFlagelState {
     skipped: false,
   }
 }
-

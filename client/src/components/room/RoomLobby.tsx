@@ -153,6 +153,7 @@ export function RoomLobby({
     isJoining,
     isConnected,
     isHost,
+    error,
     notification,
     hasLeft,
     leave,
@@ -175,7 +176,7 @@ export function RoomLobby({
   const activeRoom = room ?? initialRoom
 
   useEffect(() => {
-    if (hasLeft) router.push('/')
+    if (hasLeft) router.push('/lobby')
   }, [hasLeft, router])
 
   useEffect(() => {
@@ -197,13 +198,19 @@ export function RoomLobby({
       return
     }
 
-    if (!isConnected || !isHost || activeRoom.status !== 'waiting') {
+    if (
+      !isConnected ||
+      isJoining ||
+      room?.code !== roomCode ||
+      !isHost ||
+      activeRoom.status !== 'waiting'
+    ) {
       return
     }
 
     startGame()
     setDidAutoStart(true)
-  }, [activeRoom.status, autoStartOnJoin, didAutoStart, isConnected, isHost, startGame])
+  }, [activeRoom.status, autoStartOnJoin, didAutoStart, isConnected, isHost, isJoining, room?.code, roomCode, startGame])
   const game = getGameInfo(activeRoom.gameId)
   const sharedGame = GAMES[activeRoom.gameId]
   const connectedPlayers = players.filter((p) => p.isConnected).length
@@ -217,7 +224,7 @@ export function RoomLobby({
   }
 
   /* ── Game play areas ── */
-  const GamePlayArea = () => (
+  const gamePlayArea = (
     <>
       {activeRoom.gameId === 'wordel' && activeRoom.status !== 'waiting' && (
         <motion.div
@@ -236,6 +243,7 @@ export function RoomLobby({
             correctWord={wordel.correctWord}
             finalScores={wordel.finalScores}
             playerStatuses={wordel.playerStatuses}
+            submitError={error}
             onSubmitGuess={submitWordelGuess}
             onPlayAgain={startGame}
           />
@@ -255,6 +263,7 @@ export function RoomLobby({
             currentRound={flagel.currentRound}
             totalRounds={flagel.totalRounds}
             flagEmoji={flagel.flagEmoji}
+            flagImageUrl={flagel.flagImageUrl}
             maxAttempts={flagel.maxAttempts}
             guesses={flagel.guesses}
             playerStatuses={flagel.playerStatuses}
@@ -423,7 +432,7 @@ export function RoomLobby({
             </div>
           </motion.div>
 
-          <GamePlayArea />
+          {gamePlayArea}
 
           <AnimatePresence>
             {notification && (
@@ -553,7 +562,7 @@ export function RoomLobby({
           </div>
         </motion.div>
 
-        <GamePlayArea />
+        {gamePlayArea}
 
         {/* Divider */}
         <div className="mt-10 h-px bg-gradient-to-r from-transparent via-[var(--border)]/50 to-transparent" />

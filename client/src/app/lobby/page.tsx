@@ -124,7 +124,7 @@ function LobbyPageContent() {
     }
 
     if (playMode === 'solo') {
-      router.push(`/play/${selectedGame}`)
+      router.push(`/play/${selectedGame}?session=${Date.now()}`)
       return
     }
 

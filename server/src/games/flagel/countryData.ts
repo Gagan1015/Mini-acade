@@ -1,164 +1,69 @@
+import rawCountries from 'world-countries'
+
 export type Country = {
   code: string
+  alpha3Code?: string
   name: string
+  officialName?: string
   flagEmoji: string
+  flagImageUrl?: string
   capital: string
   continent: string
+  subregion?: string
   latitude: number
   longitude: number
   aliases?: string[]
 }
 
-const COUNTRIES: Country[] = [
-  {
-    code: 'FR',
-    name: 'France',
-    flagEmoji: '🇫🇷',
-    capital: 'Paris',
-    continent: 'Europe',
-    latitude: 46.2276,
-    longitude: 2.2137,
-    aliases: ['french republic'],
-  },
-  {
-    code: 'DE',
-    name: 'Germany',
-    flagEmoji: '🇩🇪',
-    capital: 'Berlin',
-    continent: 'Europe',
-    latitude: 51.1657,
-    longitude: 10.4515,
-  },
-  {
-    code: 'BR',
-    name: 'Brazil',
-    flagEmoji: '🇧🇷',
-    capital: 'Brasilia',
-    continent: 'South America',
-    latitude: -14.235,
-    longitude: -51.9253,
-  },
-  {
-    code: 'AR',
-    name: 'Argentina',
-    flagEmoji: '🇦🇷',
-    capital: 'Buenos Aires',
-    continent: 'South America',
-    latitude: -38.4161,
-    longitude: -63.6167,
-  },
-  {
-    code: 'US',
-    name: 'United States',
-    flagEmoji: '🇺🇸',
-    capital: 'Washington, D.C.',
-    continent: 'North America',
-    latitude: 37.0902,
-    longitude: -95.7129,
-    aliases: ['usa', 'united states of america', 'america'],
-  },
-  {
-    code: 'CA',
-    name: 'Canada',
-    flagEmoji: '🇨🇦',
-    capital: 'Ottawa',
-    continent: 'North America',
-    latitude: 56.1304,
-    longitude: -106.3468,
-  },
-  {
-    code: 'MX',
-    name: 'Mexico',
-    flagEmoji: '🇲🇽',
-    capital: 'Mexico City',
-    continent: 'North America',
-    latitude: 23.6345,
-    longitude: -102.5528,
-  },
-  {
-    code: 'NG',
-    name: 'Nigeria',
-    flagEmoji: '🇳🇬',
-    capital: 'Abuja',
-    continent: 'Africa',
-    latitude: 9.082,
-    longitude: 8.6753,
-  },
-  {
-    code: 'ZA',
-    name: 'South Africa',
-    flagEmoji: '🇿🇦',
-    capital: 'Pretoria',
-    continent: 'Africa',
-    latitude: -30.5595,
-    longitude: 22.9375,
-  },
-  {
-    code: 'EG',
-    name: 'Egypt',
-    flagEmoji: '🇪🇬',
-    capital: 'Cairo',
-    continent: 'Africa',
-    latitude: 26.8206,
-    longitude: 30.8025,
-  },
-  {
-    code: 'IN',
-    name: 'India',
-    flagEmoji: '🇮🇳',
-    capital: 'New Delhi',
-    continent: 'Asia',
-    latitude: 20.5937,
-    longitude: 78.9629,
-  },
-  {
-    code: 'JP',
-    name: 'Japan',
-    flagEmoji: '🇯🇵',
-    capital: 'Tokyo',
-    continent: 'Asia',
-    latitude: 36.2048,
-    longitude: 138.2529,
-  },
-  {
-    code: 'KR',
-    name: 'South Korea',
-    flagEmoji: '🇰🇷',
-    capital: 'Seoul',
-    continent: 'Asia',
-    latitude: 35.9078,
-    longitude: 127.7669,
-    aliases: ['korea', 'republic of korea'],
-  },
-  {
-    code: 'AU',
-    name: 'Australia',
-    flagEmoji: '🇦🇺',
-    capital: 'Canberra',
-    continent: 'Oceania',
-    latitude: -25.2744,
-    longitude: 133.7751,
-  },
-  {
-    code: 'NZ',
-    name: 'New Zealand',
-    flagEmoji: '🇳🇿',
-    capital: 'Wellington',
-    continent: 'Oceania',
-    latitude: -40.9006,
-    longitude: 174.886,
-  },
-  {
-    code: 'GB',
-    name: 'United Kingdom',
-    flagEmoji: '🇬🇧',
-    capital: 'London',
-    continent: 'Europe',
-    latitude: 55.3781,
-    longitude: -3.436,
-    aliases: ['uk', 'great britain', 'britain'],
-  },
-]
+const EXTRA_PLAYABLE_COUNTRY_CODES = new Set(['PS', 'TW', 'XK'])
+
+export const COUNTRIES: Country[] = rawCountries
+  .filter((country) => {
+    if (!country.cca2 || country.latlng.length < 2) {
+      return false
+    }
+
+    return country.unMember || EXTRA_PLAYABLE_COUNTRY_CODES.has(country.cca2)
+  })
+  .map((country) => {
+    const code = country.cca2.toUpperCase()
+    const aliases = Array.from(
+      new Set(
+        [
+          country.name.common,
+          country.name.official,
+          ...country.altSpellings,
+          ...Object.values(country.translations ?? {}).flatMap((translation) => [
+            translation.common,
+            translation.official,
+          ]),
+          ...Object.values(country.name.native ?? {}).flatMap((translation) => [
+            translation.common,
+            translation.official,
+          ]),
+        ]
+          .filter((value): value is string => Boolean(value))
+          .map((value) => value.trim())
+          .filter(Boolean)
+      )
+    ).filter((value) => value !== country.name.common)
+
+    return {
+      code,
+      alpha3Code: country.cca3.toUpperCase(),
+      name: country.name.common,
+      officialName: country.name.official,
+      flagEmoji: country.flag,
+      flagImageUrl: `/api/flags/${code.toLowerCase()}`,
+      capital: country.capital?.[0] ?? 'Unknown',
+      continent: country.region || 'Other',
+      subregion: country.subregion || country.region || 'Other',
+      latitude: country.latlng[0] ?? 0,
+      longitude: country.latlng[1] ?? 0,
+      aliases,
+    }
+  })
+  .sort((left, right) => left.name.localeCompare(right.name))
 
 export function pickRandomCountry(usedCodes: Set<string>) {
   const available = COUNTRIES.filter((country) => !usedCodes.has(country.code))
@@ -168,23 +73,46 @@ export function pickRandomCountry(usedCodes: Set<string>) {
     return pickRandomCountry(usedCodes)
   }
 
-  const index = Math.floor(Math.random() * available.length)
-  const country = available[index]
+  const country = available[Math.floor(Math.random() * available.length)]
   usedCodes.add(country.code)
   return country
 }
 
 export function findCountryByGuess(guess: string) {
-  const normalizedGuess = normalizeCountryName(guess)
+  const normalizedGuess = normalizeCountryGuess(guess)
 
-  return (
-    COUNTRIES.find((country) => {
-      const aliases = country.aliases ?? []
-      return [country.name, country.code, ...aliases].some(
-        (candidate) => normalizeCountryName(candidate) === normalizedGuess
+  if (!normalizedGuess) {
+    return null
+  }
+
+  const exactMatch =
+    COUNTRIES.find((country) =>
+      getCountrySearchCandidates(country).some(
+        (candidate) => normalizeCountryGuess(candidate) === normalizedGuess
       )
-    }) ?? null
+    ) ?? null
+
+  if (exactMatch) {
+    return exactMatch
+  }
+
+  if (normalizedGuess.length < 3) {
+    return null
+  }
+
+  const fuzzyMatches = COUNTRIES.filter((country) =>
+    getCountrySearchCandidates(country).some((candidate) => {
+      const normalizedCandidate = normalizeCountryGuess(candidate)
+
+      return (
+        normalizedCandidate.startsWith(normalizedGuess) ||
+        normalizedCandidate.includes(` ${normalizedGuess}`) ||
+        normalizedGuess.startsWith(normalizedCandidate)
+      )
+    })
   )
+
+  return fuzzyMatches.length === 1 ? fuzzyMatches[0] : null
 }
 
 export function calculateDistanceKm(from: Country, to: Country) {
@@ -213,11 +141,28 @@ export function getDirectionHint(from: Country, to: Country) {
   return `${vertical}${horizontal}` || 'HERE'
 }
 
-function normalizeCountryName(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ')
+function getCountrySearchCandidates(country: Country) {
+  return [
+    country.name,
+    country.officialName,
+    country.code,
+    country.alpha3Code,
+    ...(country.aliases ?? []),
+  ].filter((value): value is string => Boolean(value))
+}
+
+function normalizeCountryGuess(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 function degreesToRadians(value: number) {
   return (value * Math.PI) / 180
 }
-
