@@ -6,7 +6,7 @@
    Mini Arcade Design System – CSS Custom Properties
    ──────────────────────────────────────────── */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
 
 :root {
   color-scheme: dark;
@@ -74,6 +74,7 @@
   /* ── Typography ── */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
 
   /* ── Shadows (Dark) ── */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
@@ -116,6 +117,129 @@
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.05);
 }
 
+.app-theme-marketing {
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
+  --marketing-accent: #ff5a1f;
+  --marketing-accent-strong: #e84d16;
+  --marketing-frame-offset: max(24px, calc((100vw - 80rem) / 2));
+}
+
+html[data-theme='light'] .app-theme-marketing {
+  color-scheme: light;
+
+  --background: #fbf8f3;
+  --background-subtle: #f4ede4;
+  --surface: rgba(255, 255, 255, 0.84);
+  --surface-hover: #ffffff;
+  --surface-active: #f8f3ec;
+
+  --border: #e7ddd1;
+  --border-subtle: #f0e9e0;
+  --border-strong: #d8cabd;
+
+  --text-primary: #242424;
+  --text-secondary: #6f6a62;
+  --text-tertiary: #9f9386;
+  --text-inverse: #ffffff;
+
+  --primary-400: #3c3935;
+  --primary-500: #242424;
+  --primary-600: #111111;
+  --primary-700: #000000;
+
+  --marketing-accent-soft: rgba(255, 90, 31, 0.1);
+  --marketing-card-bg: rgba(255, 255, 255, 0.76);
+  --marketing-panel-bg: rgba(255, 255, 255, 0.9);
+  --marketing-header-sticky-bg: rgba(255, 255, 255, 0.96);
+  --marketing-header-sticky-border: rgba(20, 20, 20, 0.2);
+  --marketing-rail: rgba(36, 36, 36, 0.1);
+  --marketing-hairline: rgba(36, 36, 36, 0.08);
+  --marketing-rail-band-fill: rgba(36, 36, 36, 0.02);
+  --marketing-rail-stripe: rgba(36, 36, 36, 0.1);
+  --marketing-rail-plus: rgba(36, 36, 36, 0.18);
+  --marketing-shadow:
+    0 1px 5px -4px rgba(19, 19, 22, 0.72),
+    0 0 0 1px rgba(34, 42, 53, 0.06),
+    0 18px 36px -24px rgba(36, 36, 36, 0.18);
+  --marketing-shadow-strong:
+    0 1px 5px -4px rgba(19, 19, 22, 0.72),
+    0 0 0 1px rgba(34, 42, 53, 0.08),
+    0 28px 60px -26px rgba(36, 36, 36, 0.22);
+
+  --shadow-sm: 0 1px 3px rgb(17 17 17 / 0.06);
+  --shadow-md: 0 6px 16px rgb(17 17 17 / 0.08);
+  --shadow-lg: 0 18px 36px rgb(17 17 17 / 0.1);
+  --shadow-xl: 0 28px 56px rgb(17 17 17 / 0.12);
+  --shadow-primary: 0 18px 32px -18px rgb(17 17 17 / 0.35);
+  --mascot-glow: rgba(255, 90, 31, 0.16);
+  --mascot-chip-bg: rgba(255, 255, 255, 0.9);
+  --mascot-shell: #ffffff;
+  --mascot-shell-stroke: #242424;
+  --mascot-shell-panel: rgba(36, 36, 36, 0.04);
+  --mascot-screen: #242424;
+  --mascot-eye: #ffffff;
+  --mascot-muted-button: rgba(36, 36, 36, 0.22);
+  --mascot-shadow: 0 24px 40px rgba(36, 36, 36, 0.12);
+}
+
+html[data-theme='dark'] .app-theme-marketing {
+  color-scheme: dark;
+
+  --background: #060b17;
+  --background-subtle: #0b1222;
+  --surface: rgba(7, 11, 23, 0.82);
+  --surface-hover: #0d1628;
+  --surface-active: #101b31;
+
+  --border: #182235;
+  --border-subtle: #11192b;
+  --border-strong: #28344d;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #9eabc1;
+  --text-tertiary: #66758d;
+  --text-inverse: #060b17;
+
+  --primary-400: #f8fafc;
+  --primary-500: #f8fafc;
+  --primary-600: #dbe4ee;
+  --primary-700: #c3ceda;
+
+  --marketing-accent-soft: rgba(255, 90, 31, 0.14);
+  --marketing-card-bg: rgba(9, 14, 28, 0.76);
+  --marketing-panel-bg: rgba(8, 14, 27, 0.92);
+  --marketing-header-sticky-bg: rgba(8, 14, 27, 0.88);
+  --marketing-header-sticky-border: rgba(148, 163, 184, 0.16);
+  --marketing-rail: rgba(148, 163, 184, 0.12);
+  --marketing-hairline: rgba(148, 163, 184, 0.08);
+  --marketing-rail-band-fill: rgba(148, 163, 184, 0.03);
+  --marketing-rail-stripe: rgba(148, 163, 184, 0.12);
+  --marketing-rail-plus: rgba(148, 163, 184, 0.22);
+  --marketing-shadow:
+    0 1px 5px -4px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(148, 163, 184, 0.06),
+    0 24px 46px -26px rgba(0, 0, 0, 0.48);
+  --marketing-shadow-strong:
+    0 1px 5px -4px rgba(0, 0, 0, 0.95),
+    0 0 0 1px rgba(148, 163, 184, 0.08),
+    0 32px 72px -28px rgba(0, 0, 0, 0.56);
+
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.24);
+  --shadow-md: 0 8px 20px rgb(0 0 0 / 0.28);
+  --shadow-lg: 0 20px 48px rgb(0 0 0 / 0.34);
+  --shadow-xl: 0 32px 64px rgb(0 0 0 / 0.4);
+  --shadow-primary: 0 18px 32px -18px rgb(248 250 252 / 0.32);
+  --mascot-glow: rgba(255, 90, 31, 0.22);
+  --mascot-chip-bg: rgba(8, 14, 27, 0.92);
+  --mascot-shell: #dbe4ef;
+  --mascot-shell-stroke: #152033;
+  --mascot-shell-panel: rgba(255, 255, 255, 0.05);
+  --mascot-screen: #101a2a;
+  --mascot-eye: #f8fafc;
+  --mascot-muted-button: rgba(148, 163, 184, 0.4);
+  --mascot-shadow: 0 30px 56px rgba(0, 0, 0, 0.36);
+}
+
 /* ────────────────────────────────────────────
    Reset & Base
    ──────────────────────────────────────────── */
@@ -127,6 +251,7 @@
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -136,6 +261,7 @@ body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   line-height: 1.5;
+  transition: background-color 180ms ease, color 180ms ease;
 }
 
 a {
@@ -175,12 +301,16 @@ a {
    ──────────────────────────────────────────── */
 
 @layer components {
+  .font-display {
+    font-family: var(--font-display);
+  }
+
   /* Buttons */
   .btn {
     @apply inline-flex items-center justify-center gap-2 font-medium transition-all duration-150;
     font-size: 0.875rem;
     letter-spacing: 0.025em;
-    border-radius: 8px;
+    border-radius: 12px;
     padding: 10px 16px;
     cursor: pointer;
     border: none;
@@ -321,6 +451,152 @@ a {
   .timer-warning {
     color: var(--error-500);
     animation: pulse-glow 1s ease-in-out infinite;
+  }
+
+  .marketing-card {
+    background: var(--marketing-card-bg);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    box-shadow: var(--marketing-shadow);
+    backdrop-filter: blur(12px);
+  }
+
+  .marketing-card-strong {
+    background: var(--marketing-panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 32px;
+    box-shadow: var(--marketing-shadow-strong);
+    backdrop-filter: blur(16px);
+  }
+
+  .marketing-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--marketing-card-bg);
+    padding: 0.55rem 0.9rem;
+    color: var(--text-primary);
+    box-shadow: var(--marketing-shadow);
+  }
+
+  .marketing-rail-layout {
+    position: relative;
+    isolation: isolate;
+    --marketing-rail-band-width: clamp(28px, 4vw, 42px);
+  }
+
+  .marketing-rail-layout::before,
+  .marketing-rail-layout::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: calc(var(--marketing-rail-band-width) + 1px);
+    pointer-events: none;
+    z-index: 0;
+    background-repeat: no-repeat;
+    background-size:
+      1px 100%,
+      var(--marketing-rail-band-width) 100%,
+      var(--marketing-rail-band-width) 100%,
+      1px 100%;
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      var(--marketing-rail-band-width) 0;
+  }
+
+  .marketing-rail-layout::before {
+    left: calc(var(--marketing-frame-offset) - var(--marketing-rail-band-width));
+    background-image:
+      linear-gradient(var(--marketing-rail), var(--marketing-rail)),
+      linear-gradient(var(--marketing-rail-band-fill), var(--marketing-rail-band-fill)),
+      repeating-linear-gradient(
+        135deg,
+        transparent 0 4px,
+        var(--marketing-rail-stripe) 4px 5px,
+        transparent 5px 8px
+      ),
+      linear-gradient(var(--marketing-rail), var(--marketing-rail));
+  }
+
+  .marketing-rail-layout::after {
+    right: calc(var(--marketing-frame-offset) - var(--marketing-rail-band-width));
+    background-image:
+      linear-gradient(var(--marketing-rail), var(--marketing-rail)),
+      linear-gradient(var(--marketing-rail-band-fill), var(--marketing-rail-band-fill)),
+      repeating-linear-gradient(
+        45deg,
+        transparent 0 4px,
+        var(--marketing-rail-stripe) 4px 5px,
+        transparent 5px 8px
+      ),
+      linear-gradient(var(--marketing-rail), var(--marketing-rail));
+  }
+
+  .marketing-rail-layout > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .marketing-h-line {
+    height: 1px;
+    background: var(--marketing-hairline);
+  }
+
+  .marketing-rail-section {
+    position: relative;
+  }
+
+  .marketing-hero-visual {
+    background:
+      radial-gradient(circle at top, var(--marketing-accent-soft), transparent 34%),
+      var(--marketing-panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 36px;
+    box-shadow: var(--marketing-shadow-strong);
+    backdrop-filter: blur(18px);
+  }
+
+  .marketing-orbit {
+    background:
+      radial-gradient(circle at center, transparent 33%, var(--marketing-hairline) 34%, transparent 35%),
+      radial-gradient(circle at center, transparent 48%, var(--marketing-hairline) 49%, transparent 50%);
+  }
+
+  .marketing-section-divider {
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(90deg, transparent, var(--marketing-hairline), transparent);
+  }
+
+  .marketing-dot {
+    position: relative;
+  }
+
+  .marketing-dot::before,
+  .marketing-dot::after {
+    content: '';
+    position: absolute;
+    background: var(--marketing-accent);
+    border-radius: 999px;
+  }
+
+  .marketing-dot::before {
+    width: 12px;
+    height: 2px;
+    left: -5px;
+    top: 0;
+  }
+
+  .marketing-dot::after {
+    width: 2px;
+    height: 12px;
+    left: 0;
+    top: -5px;
   }
 }
 

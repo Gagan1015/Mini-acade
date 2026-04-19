@@ -14,34 +14,59 @@ function LogoMarkSmall() {
   )
 }
 
-export function Footer() {
+interface FooterProps {
+  variant?: 'default' | 'marketing'
+}
+
+export function Footer({ variant = 'default' }: FooterProps) {
+  const isMarketing = variant === 'marketing'
+
   return (
     <motion.footer
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="border-t border-[var(--border)]/40"
+      className={`${isMarketing ? 'marketing-rail-layout' : ''} border-t border-[var(--border)]`}
     >
       <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
-        <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
-          <div className="flex items-center gap-2.5 text-[var(--text-tertiary)]">
-            <LogoMarkSmall />
-            <span className="text-sm font-medium tracking-tight">
-              &copy; {new Date().getFullYear()} Mini Arcade
-            </span>
+        <div className={`flex flex-col gap-8 ${isMarketing ? 'lg:flex-row lg:items-end lg:justify-between' : 'md:flex-row md:items-center md:justify-between'}`}>
+          <div className="max-w-md">
+            <div className="flex items-center gap-2.5 text-[var(--text-tertiary)]">
+              <LogoMarkSmall />
+              <span className="text-sm font-medium tracking-tight">
+                &copy; {new Date().getFullYear()} Mini Arcade
+              </span>
+            </div>
+            {isMarketing && (
+              <p className="mt-4 text-sm leading-relaxed text-[var(--text-secondary)]">
+                Multiplayer rooms that feel organized before the first round starts.
+                Share a code, rally your crew, and move from lobby to match in seconds.
+              </p>
+            )}
           </div>
-          <nav className="flex items-center gap-8 text-sm text-[var(--text-tertiary)]">
-            <Link href="/" className="transition-colors duration-200 hover:text-[var(--text-secondary)]">
+
+          <nav className="flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-[var(--text-tertiary)]">
+            <Link href="/" className="transition-colors duration-200 hover:text-[var(--text-primary)]">
               Home
             </Link>
-            <Link href="/lobby" className="transition-colors duration-200 hover:text-[var(--text-secondary)]">
+            <Link href="/lobby" className="transition-colors duration-200 hover:text-[var(--text-primary)]">
               Lobby
             </Link>
-            <a href="#" className="transition-colors duration-200 hover:text-[var(--text-secondary)]">
+            {isMarketing && (
+              <>
+                <Link href="/#games" className="transition-colors duration-200 hover:text-[var(--text-primary)]">
+                  Games
+                </Link>
+                <Link href="/#how-it-works" className="transition-colors duration-200 hover:text-[var(--text-primary)]">
+                  How It Works
+                </Link>
+              </>
+            )}
+            <a href="#" className="transition-colors duration-200 hover:text-[var(--text-primary)]">
               Privacy
             </a>
-            <a href="#" className="transition-colors duration-200 hover:text-[var(--text-secondary)]">
+            <a href="#" className="transition-colors duration-200 hover:text-[var(--text-primary)]">
               Terms
             </a>
           </nav>

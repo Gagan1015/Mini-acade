@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
+import Script from 'next/script'
 
 import { AuthProvider } from '@/components/providers/AuthProvider'
 
@@ -18,8 +19,23 @@ export default function RootLayout({
   children: ReactNode
 }>) {
   return (
-    <html lang="en" data-theme="dark">
+    <html lang="en" data-theme="light" suppressHydrationWarning>
       <body>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`
+            (function() {
+              try {
+                var storedTheme = localStorage.getItem('theme');
+                var theme = storedTheme === 'dark' || storedTheme === 'light' ? storedTheme : 'light';
+                document.documentElement.dataset.theme = theme;
+                document.documentElement.style.colorScheme = theme;
+              } catch (error) {
+                document.documentElement.dataset.theme = 'light';
+                document.documentElement.style.colorScheme = 'light';
+              }
+            })();
+          `}
+        </Script>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
