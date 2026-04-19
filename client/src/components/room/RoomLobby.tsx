@@ -132,6 +132,18 @@ function IconArrowLeft({ size = 16 }: { size?: number }) {
   )
 }
 
+function IconShare({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+    </svg>
+  )
+}
+
 type RoomLobbyProps = {
   roomCode: string
   currentUserId: string
@@ -222,6 +234,19 @@ export function RoomLobby({
   const connectedPlayers = players.filter((p) => p.isConnected).length
   const isSolo = activeRoom.maxPlayers === 1
 
+  function handlePlayAgain() {
+    if (isSolo) {
+      window.location.assign(`/play/${activeRoom.gameId}?session=${Date.now()}`)
+      return
+    }
+
+    startGame()
+  }
+
+  useEffect(() => {
+    setDidAutoStart(false)
+  }, [roomCode])
+
   async function handleCopyInvite() {
     const inviteUrl = `${window.location.origin}/rooms/${roomCode}`
     await navigator.clipboard.writeText(inviteUrl)
@@ -251,7 +276,7 @@ export function RoomLobby({
             playerStatuses={wordel.playerStatuses}
             submitError={error}
             onSubmitGuess={submitWordelGuess}
-            onPlayAgain={startGame}
+            onPlayAgain={handlePlayAgain}
           />
         </motion.div>
       )}
@@ -277,8 +302,11 @@ export function RoomLobby({
             finalScores={flagel.finalScores}
             correctCountry={flagel.correctCountry}
             countryCode={flagel.countryCode}
+            isSolo={isSolo}
+            isHost={isHost}
             onSubmitGuess={submitFlagelGuess}
             onSkip={skipFlagelRound}
+            onPlayAgain={handlePlayAgain}
           />
         </motion.div>
       )}
@@ -349,140 +377,130 @@ export function RoomLobby({
    * ═══════════════════════════════════════════════ */
   if (isSolo) {
     return (
-      <AppLayout showFooter={false}>
-        <div className="mx-auto max-w-5xl px-6 py-12">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="space-y-8"
-          >
-            {/* Top accent line */}
-            {game && (
+      <AppLayout variant="marketing" showFooter={false}>
+        <div className="marketing-rail-layout overflow-hidden bg-[var(--background)]">
+          <section className="marketing-rail-section">
+            <div className="mx-auto max-w-5xl px-6 py-12 lg:px-8">
               <motion.div
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ duration: 0.6, ease: [0, 0, 0.2, 1] }}
-                className="mx-auto h-px w-24"
-                style={{
-                  background: `linear-gradient(to right, transparent, ${game.color}, transparent)`,
-                }}
-              />
-            )}
-
-            {/* Solo mode badge + connection */}
-            <div className="flex items-center justify-between">
-              <span className="inline-flex items-center gap-2 rounded-full bg-[var(--primary-500)]/8 px-3 py-1.5 text-xs font-semibold text-[var(--primary-400)]">
-                <IconUser size={13} />
-                Solo Mode
-              </span>
-              <span className={`badge ${isConnected ? 'badge-success' : 'badge-warning'}`}>
-                {isConnected ? (
-                  <>
-                    <LiveIndicator />
-                    <span className="ml-2">Live</span>
-                  </>
-                ) : (
-                  <>
-                    <IconWifiOff />
-                    <span className="ml-1.5">Reconnecting</span>
-                  </>
-                )}
-              </span>
-            </div>
-
-            {/* Game info */}
-            <div className="flex items-center gap-5">
-              <div
-                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl"
-                style={{ backgroundColor: game ? `${game.colorHex}10` : 'var(--surface-hover)' }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="space-y-8"
               >
-                <GameIcon gameId={activeRoom.gameId} size={36} animated />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">
-                  {sharedGame.name}
-                </h1>
-                <p className="mt-1.5 text-sm text-[var(--text-secondary)] leading-relaxed">
-                  {sharedGame.description}
-                </p>
-              </div>
-            </div>
-
-            {/* Feature tags */}
-            {game && (
-              <div className="flex flex-wrap gap-2">
-                {game.features.map((feat) => (
-                  <span
-                    key={feat}
-                    className="rounded-md bg-[var(--background)]/80 px-2.5 py-1 text-[11px] font-medium text-[var(--text-tertiary)]"
-                  >
-                    {feat}
+                {/* Solo mode badge + connection */}
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3.5 py-1.5 text-xs font-semibold text-[var(--text-secondary)]">
+                    <IconUser size={13} />
+                    Solo Mode
                   </span>
-                ))}
-              </div>
-            )}
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium ${
+                    isConnected
+                      ? 'bg-[var(--success-500)]/10 text-[var(--success-500)]'
+                      : 'bg-[var(--warning-500)]/10 text-[var(--warning-500)]'
+                  }`}>
+                    {isConnected ? (
+                      <><LiveIndicator /><span>Live</span></>
+                    ) : (
+                      <><IconWifiOff /><span>Reconnecting</span></>
+                    )}
+                  </span>
+                </div>
 
-            {/* Solo info banner */}
-            {activeRoom.status === 'waiting' && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="flex items-center gap-3 rounded-xl border border-[var(--primary-500)]/12 bg-[var(--primary-500)]/4 px-4 py-3"
-              >
-                <IconZap size={18} />
-                <p className="text-sm text-[var(--text-secondary)]">
-                  Ready to play! Hit the button below to jump right into the game.
-                </p>
+                {/* Game info */}
+                <div className="flex items-center gap-5">
+                  <div
+                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl"
+                    style={{ backgroundColor: game ? `${game.colorHex}10` : 'var(--surface-hover)' }}
+                  >
+                    <GameIcon gameId={activeRoom.gameId} size={36} animated />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--text-primary)]">
+                      {sharedGame.name}
+                    </h1>
+                    <p className="mt-1.5 text-sm text-[var(--text-secondary)] leading-relaxed">
+                      {sharedGame.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Feature tags */}
+                {game && (
+                  <div className="flex flex-wrap gap-2">
+                    {game.features.map((feat) => (
+                      <span
+                        key={feat}
+                        className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1 text-[11px] font-medium text-[var(--text-secondary)]"
+                      >
+                        {feat}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Solo info banner */}
+                {activeRoom.status === 'waiting' && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="flex items-center gap-3 rounded-2xl border border-[var(--marketing-accent)]/15 bg-[var(--marketing-accent)]/5 px-5 py-4"
+                  >
+                    <IconZap size={18} className="text-[var(--marketing-accent)]" />
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      Ready to play! Hit the button below to jump right into the game.
+                    </p>
+                  </motion.div>
+                )}
+
+                {/* Divider */}
+                <div className="h-px bg-[var(--border)]" />
+
+                {/* Actions */}
+                <div className="space-y-3">
+                  {isHost && activeRoom.status !== 'playing' && (
+                    <motion.button
+                      whileHover={{ scale: 1.01, y: -1 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="button"
+                      onClick={handlePlayAgain}
+                      className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[var(--text-primary)] px-6 py-4 text-sm font-semibold text-[var(--text-inverse)] transition-all hover:shadow-lg cursor-pointer"
+                    >
+                      <IconPlay size={18} />
+                      {activeRoom.status === 'finished' ? 'Play Again' : 'Start Playing'}
+                    </motion.button>
+                  )}
+                  <div className="flex gap-3">
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={leave}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-hover)] cursor-pointer"
+                    >
+                      <IconArrowLeft size={15} />
+                      Back to Lobby
+                    </motion.button>
+                    <Link href="/" className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-hover)]">
+                      <IconHome size={15} />
+                      Home
+                    </Link>
+                  </div>
+                </div>
               </motion.div>
-            )}
 
-            {/* Divider */}
-            <div className="h-px bg-gradient-to-r from-transparent via-[var(--border)]/50 to-transparent" />
+              {gamePlayArea}
 
-            {/* Actions */}
-            <div className="space-y-3">
-              {isHost && activeRoom.status !== 'playing' && (
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={startGame}
-                  className="btn btn-primary w-full py-3.5 text-base"
-                >
-                  <IconPlay size={18} />
-                  {activeRoom.status === 'finished' ? 'Play Again' : 'Start Playing'}
-                </motion.button>
-              )}
-              <div className="flex gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={leave}
-                  className="btn btn-secondary flex-1 py-3"
-                >
-                  <IconArrowLeft size={15} />
-                  Back to Lobby
-                </motion.button>
-                <Link href="/" className="btn btn-secondary flex-1 py-3 justify-center">
-                  <IconHome size={15} />
-                  Home
-                </Link>
-              </div>
+              <AnimatePresence>
+                {notification && (
+                  <Toast
+                    message={notification.message}
+                    type={notification.type}
+                    onClose={dismissNotification}
+                  />
+                )}
+              </AnimatePresence>
             </div>
-          </motion.div>
-
-          {gamePlayArea}
-
-          <AnimatePresence>
-            {notification && (
-              <Toast
-                message={notification.message}
-                type={notification.type}
-                onClose={dismissNotification}
-              />
-            )}
-          </AnimatePresence>
+          </section>
         </div>
       </AppLayout>
     )
@@ -492,247 +510,303 @@ export function RoomLobby({
    *  MULTIPLAYER UI
    * ═══════════════════════════════════════════════ */
   return (
-    <AppLayout showFooter={false}>
-      <div className="mx-auto max-w-5xl px-6 py-12 lg:px-8">
-        {/* Room Header — open layout, no card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          {/* Top accent line */}
-          {game && (
+    <AppLayout variant="marketing" showFooter={false}>
+      <div className="marketing-rail-layout overflow-hidden bg-[var(--background)]">
+        <section className="marketing-rail-section">
+          <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+
+            {/* ── Room Header ── */}
             <motion.div
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 0.6, ease: [0, 0, 0.2, 1] }}
-              className="mb-8 h-px w-20"
-              style={{
-                background: `linear-gradient(to right, ${game.color}, transparent)`,
-              }}
-            />
-          )}
-
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <div className="flex items-center gap-4">
-                <div
-                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl"
-                  style={{ backgroundColor: game ? `${game.colorHex}10` : 'var(--surface-hover)' }}
-                >
-                  <GameIcon gameId={activeRoom.gameId} size={32} animated />
-                </div>
-                <div>
-                  <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-                    Private Room
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                {/* Left: Game info */}
+                <div className="max-w-2xl">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[var(--border)]"
+                      style={{ backgroundColor: game ? `${game.colorHex}10` : 'var(--surface-hover)' }}
+                    >
+                      <GameIcon gameId={activeRoom.gameId} size={30} animated />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--marketing-accent)]">
+                        Private Room
+                      </p>
+                      <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl">
+                        {sharedGame.name}
+                      </h1>
+                    </div>
+                  </div>
+                  <p className="mt-4 max-w-xl text-sm text-[var(--text-secondary)] leading-relaxed">
+                    {sharedGame.description}
                   </p>
-                  <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl">
-                    {sharedGame.name}
-                  </h1>
                 </div>
-              </div>
-              <p className="mt-4 max-w-xl text-sm text-[var(--text-secondary)] leading-relaxed">
-                {sharedGame.description}
-              </p>
 
-              {/* Status badges */}
-              <div className="mt-6 flex flex-wrap gap-2">
-                {/* Room code */}
-                <span className="room-code inline-flex items-center gap-2 text-base">
-                  {roomCode}
-                  <button
+                {/* Right: Action buttons */}
+                <div className="flex flex-shrink-0 flex-wrap gap-2">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => void handleCopyInvite()}
-                    className="rounded-md p-1 transition-colors hover:bg-[var(--surface-hover)]"
-                    aria-label="Copy invite link"
+                    className="inline-flex items-center gap-2 rounded-xl bg-[var(--text-primary)] px-5 py-2.5 text-sm font-semibold text-[var(--text-inverse)] transition-transform hover:-translate-y-0.5 cursor-pointer"
                   >
                     {copyLabel === 'copied' ? (
-                      <IconCheck size={14} />
+                      <><IconCheck size={14} /> Copied!</>
                     ) : (
-                      <IconCopy size={14} />
+                      <><IconShare size={14} /> Invite friends</>
                     )}
-                  </button>
-                </span>
+                  </motion.button>
+                  <Link href="/" className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-5 py-2.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-hover)]">
+                    <IconHome size={14} /> Home
+                  </Link>
+                </div>
+              </div>
 
-                {/* Status */}
-                <span className={`badge ${activeRoom.status === 'playing' ? 'badge-success' : 'badge-primary'}`}>
+              {/* Status badges row */}
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                {/* Room code */}
+                <button
+                  onClick={() => void handleCopyInvite()}
+                  className="inline-flex items-center gap-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 font-mono text-base font-bold tracking-[0.12em] text-[var(--text-primary)] transition-all hover:border-[var(--border-strong)] hover:bg-[var(--surface-hover)] cursor-pointer"
+                >
+                  {roomCode}
+                  <span className="text-[var(--text-tertiary)]">
+                    {copyLabel === 'copied' ? <IconCheck size={14} /> : <IconCopy size={14} />}
+                  </span>
+                </button>
+
+                {/* Status pill */}
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] ${
+                  activeRoom.status === 'playing'
+                    ? 'bg-[var(--success-500)]/10 text-[var(--success-500)]'
+                    : activeRoom.status === 'finished'
+                    ? 'bg-[var(--text-tertiary)]/10 text-[var(--text-tertiary)]'
+                    : 'bg-[var(--marketing-accent)]/10 text-[var(--marketing-accent)]'
+                }`}>
+                  {activeRoom.status === 'waiting' && <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--marketing-accent)] opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--marketing-accent)]" /></span>}
                   {activeRoom.status === 'waiting' ? 'Waiting' : activeRoom.status === 'playing' ? 'In Game' : 'Finished'}
                 </span>
 
-                {/* Players */}
-                <span className="badge badge-primary">
+                {/* Players count */}
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-[11px] font-medium text-[var(--text-secondary)]">
                   <IconUsers size={12} />
-                  <span className="ml-1.5">{connectedPlayers}/{activeRoom.maxPlayers}</span>
+                  {connectedPlayers}/{activeRoom.maxPlayers}
                 </span>
 
-                {/* Connection */}
-                <span className={`badge ${isConnected ? 'badge-success' : 'badge-warning'}`}>
-                  {isConnected ? (
-                    <>
-                      <LiveIndicator />
-                      <span className="ml-2">Live</span>
-                    </>
-                  ) : (
-                    <>
-                      <IconWifiOff />
-                      <span className="ml-1.5">Reconnecting</span>
-                    </>
-                  )}
+                {/* Connection indicator */}
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium ${
+                  isConnected
+                    ? 'bg-[var(--success-500)]/10 text-[var(--success-500)]'
+                    : 'bg-[var(--warning-500)]/10 text-[var(--warning-500)]'
+                }`}>
+                  {isConnected ? <><LiveIndicator /><span>Live</span></> : <><IconWifiOff /><span>Reconnecting</span></>}
                 </span>
               </div>
-            </div>
+            </motion.div>
 
-            {/* Action buttons */}
-            <div className="flex flex-shrink-0 flex-wrap gap-2">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => void handleCopyInvite()}
-                className="btn btn-primary btn-sm"
+            {gamePlayArea}
+
+            {/* Divider */}
+            <div className="mt-10 h-px bg-[var(--border)]" />
+
+            {/* ── Player list + Room controls ── */}
+            <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_340px]">
+
+              {/* Players section */}
+              <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
               >
-                {copyLabel === 'copied' ? (
-                  <><IconCheck size={14} /> Copied!</>
-                ) : (
-                  <><IconCopy size={14} /> Copy invite</>
-                )}
-              </motion.button>
-              <Link href="/" className="btn btn-secondary btn-sm">
-                <IconHome size={14} /> Home
-              </Link>
-            </div>
-          </div>
-        </motion.div>
+                <div className="mb-5 flex items-center justify-between">
+                  <h2 className="font-display text-lg font-bold text-[var(--text-primary)]">Players</h2>
+                  <span className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+                    {isJoining ? 'Joining room…' : `${connectedPlayers} connected`}
+                  </span>
+                </div>
 
-        {gamePlayArea}
+                <AnimatePresence mode="popLayout">
+                  <div className="space-y-2">
+                    {players.map((player, i) => (
+                      <motion.div
+                        key={player.id}
+                        layout
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 30, delay: i * 0.05 }}
+                        className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-[var(--surface)]/40 p-4 backdrop-blur-sm transition-colors hover:bg-[var(--surface)]/70"
+                      >
+                        <div className="flex items-center gap-3">
+                          {/* Avatar */}
+                          <div
+                            className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold text-white"
+                            style={{
+                              backgroundColor: game?.colorHex ?? 'var(--primary-500)',
+                              opacity: player.isConnected ? 1 : 0.5,
+                            }}
+                          >
+                            {player.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-[var(--text-primary)]">
+                                {player.name}
+                              </span>
+                              {player.id === currentUserId && (
+                                <span className="rounded-md bg-[var(--primary-500)]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--primary-400)]">
+                                  You
+                                </span>
+                              )}
+                              {player.isHost && (
+                                <span className="inline-flex items-center gap-1 rounded-md bg-[var(--marketing-accent)]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--marketing-accent)]">
+                                  <IconCrown size={9} />
+                                  Host
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-0.5 flex items-center gap-2 text-[11px] text-[var(--text-tertiary)]">
+                              <span>Score: {player.score}</span>
+                              {!player.isConnected && (
+                                <span className="flex items-center gap-1 text-[var(--warning-500)]">
+                                  <IconWifiOff />
+                                  Reconnecting
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
 
-        {/* Divider */}
-        <div className="mt-10 h-px bg-gradient-to-r from-transparent via-[var(--border)]/50 to-transparent" />
+                        {isHost && player.id !== currentUserId && (
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => kickPlayer(player.id)}
+                            className="flex items-center gap-1.5 rounded-lg border border-[var(--error-500)]/20 bg-[var(--error-500)]/5 px-3 py-1.5 text-xs font-medium text-[var(--error-500)] transition-colors hover:bg-[var(--error-500)]/10 cursor-pointer"
+                          >
+                            <IconUserX size={13} />
+                            Kick
+                          </motion.button>
+                        )}
+                      </motion.div>
+                    ))}
 
-        {/* Player list + Room controls */}
-        <div className="mt-10 grid gap-8 lg:grid-cols-[1.4fr_0.6fr]">
-          {/* Players section */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Players</h2>
-              <span className="text-sm text-[var(--text-tertiary)]">
-                {isJoining ? 'Joining room…' : `${connectedPlayers} connected`}
-              </span>
-            </div>
-
-            <AnimatePresence mode="popLayout">
-              <div className="space-y-2">
-                {players.map((player) => (
-                  <motion.div
-                    key={player.id}
-                    layout
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    className="flex items-center justify-between rounded-xl border border-[var(--border)]/40 bg-[var(--surface)]/30 p-4 transition-colors hover:bg-[var(--surface)]/50"
-                  >
-                    <div className="flex items-center gap-3">
-                      {/* Avatar */}
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary-500)]/10 text-sm font-bold text-[var(--primary-400)]">
-                        {player.name.charAt(0).toUpperCase()}
+                    {/* Empty slots */}
+                    {Array.from({ length: Math.max(0, activeRoom.maxPlayers - players.length) }).map((_, i) => (
+                      <div
+                        key={`empty-${i}`}
+                        className="flex items-center gap-3 rounded-2xl border border-dashed border-[var(--border)] p-4 opacity-40"
+                      >
+                        <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-[var(--border)]">
+                          <IconUser size={16} />
+                        </div>
+                        <span className="text-sm text-[var(--text-tertiary)]">Waiting for player…</span>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-[var(--text-primary)]">
-                            {player.name}
+                    ))}
+                  </div>
+                </AnimatePresence>
+              </motion.section>
+
+              {/* Room controls sidebar */}
+              <motion.aside
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="h-fit"
+              >
+                <div className="sticky top-24 space-y-5">
+                  {/* Controls card */}
+                  <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]/40 p-6 backdrop-blur-sm">
+                    <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--text-tertiary)] mb-3">
+                      Room Controls
+                    </h2>
+                    <p className="mb-6 text-sm leading-relaxed text-[var(--text-secondary)]">
+                      {isHost
+                        ? 'You are the host. Start the game when everyone is ready.'
+                        : 'The host controls when the game starts. Hang tight!'}
+                    </p>
+
+                    <div className="space-y-3">
+                      {isHost && activeRoom.status !== 'playing' && (
+                        <motion.button
+                          whileHover={{ scale: 1.01, y: -1 }}
+                          whileTap={{ scale: 0.98 }}
+                          type="button"
+                          onClick={handlePlayAgain}
+                          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--text-primary)] px-6 py-3.5 text-sm font-semibold text-[var(--text-inverse)] transition-all hover:shadow-lg cursor-pointer"
+                        >
+                          <IconPlay size={18} />
+                          {activeRoom.status === 'finished' ? 'Play Again' : 'Start Game'}
+                        </motion.button>
+                      )}
+                      <motion.button
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={leave}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-6 py-3 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-hover)] cursor-pointer"
+                      >
+                        <IconLogOut size={16} />
+                        Leave Room
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  {/* Game features */}
+                  {game && (
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]/40 p-6 backdrop-blur-sm">
+                      <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--text-tertiary)] mb-3">
+                        Game Features
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {game.features.map((feat) => (
+                          <span
+                            key={feat}
+                            className="rounded-full border border-[var(--border)] bg-[var(--background)] px-3 py-1 text-[11px] font-medium text-[var(--text-secondary)]"
+                          >
+                            {feat}
                           </span>
-                          {player.id === currentUserId && (
-                            <span className="badge badge-primary">You</span>
-                          )}
-                          {player.isHost && (
-                            <span className="badge badge-warning">
-                              <IconCrown size={10} />
-                              <span className="ml-1">Host</span>
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-0.5 flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
-                          <span>Score: {player.score}</span>
-                          {!player.isConnected && (
-                            <span className="flex items-center gap-1 text-[var(--warning-500)]">
-                              <IconWifiOff />
-                              Reconnecting
-                            </span>
-                          )}
-                        </div>
+                        ))}
                       </div>
                     </div>
+                  )}
 
-                    {isHost && player.id !== currentUserId && (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => kickPlayer(player.id)}
-                        className="btn btn-danger btn-sm"
-                      >
-                        <IconUserX size={14} />
-                        Kick
-                      </motion.button>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-            </AnimatePresence>
-          </motion.section>
-
-          {/* Room controls */}
-          <motion.aside
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="h-fit"
-          >
-            <h2 className="mb-3 text-lg font-semibold text-[var(--text-primary)]">
-              Room Controls
-            </h2>
-            <p className="mb-8 text-sm leading-relaxed text-[var(--text-secondary)]">
-              {isHost
-                ? 'You are the host. Start the game when everyone is ready.'
-                : 'The host controls when the game starts. Hang tight!'}
-            </p>
-
-            <div className="space-y-3">
-              {isHost && activeRoom.status !== 'playing' && (
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={startGame}
-                  className="btn btn-primary w-full py-3"
-                >
-                  <IconPlay size={18} />
-                  {activeRoom.status === 'finished' ? 'Play Again' : 'Start Game'}
-                </motion.button>
-              )}
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={leave}
-                className="btn btn-secondary w-full py-3"
-              >
-                <IconLogOut size={18} />
-                Leave Room
-              </motion.button>
+                  {/* Quick stats */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]/40 p-4 text-center backdrop-blur-sm">
+                      <p className="font-display text-2xl font-bold text-[var(--text-primary)]">
+                        {connectedPlayers}
+                      </p>
+                      <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
+                        Players
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]/40 p-4 text-center backdrop-blur-sm">
+                      <p className="font-display text-2xl font-bold text-[var(--text-primary)]">
+                        {activeRoom.maxPlayers}
+                      </p>
+                      <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
+                        Max
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.aside>
             </div>
-          </motion.aside>
-        </div>
 
-        <AnimatePresence>
-          {notification && (
-            <Toast
-              message={notification.message}
-              type={notification.type}
-              onClose={dismissNotification}
-            />
-          )}
-        </AnimatePresence>
+            <AnimatePresence>
+              {notification && (
+                <Toast
+                  message={notification.message}
+                  type={notification.type}
+                  onClose={dismissNotification}
+                />
+              )}
+            </AnimatePresence>
+          </div>
+        </section>
       </div>
     </AppLayout>
   )

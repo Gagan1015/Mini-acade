@@ -122,19 +122,20 @@ export function LandingPage({ isSignedIn }: LandingPageProps) {
     <AppLayout variant="marketing">
       <div className="marketing-rail-layout overflow-hidden bg-[var(--background)]">
         <section className="marketing-rail-section border-b border-[var(--marketing-hairline)]">
-          <div className="mx-auto max-w-7xl px-6 pb-20 pt-10 lg:px-8 lg:pb-28 lg:pt-14">
-            <div className="relative min-h-[560px] overflow-hidden py-2">
+          <div className="mx-auto max-w-7xl px-6 pb-10 pt-8 lg:px-8 lg:pb-16 lg:pt-10">
+            <div className="relative min-h-[420px] overflow-hidden lg:min-h-[520px]">
               <div className="pointer-events-none absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-[var(--marketing-hairline)]" />
-              <div className="pointer-events-none absolute right-[-4%] top-0 font-display text-[clamp(8rem,24vw,18rem)] font-bold leading-none tracking-[-0.08em] text-[var(--marketing-accent-soft)]">
+              <div className="pointer-events-none absolute right-[-4%] top-0 font-display text-[clamp(7rem,22vw,16rem)] font-bold leading-none tracking-[-0.08em] text-[var(--marketing-accent-soft)]">
                 PLAY
               </div>
 
-              <div className="relative z-10 max-w-4xl">
+              <div className="relative z-10 flex min-h-[inherit] items-center">
+                <div className="max-w-xl py-4 lg:max-w-2xl lg:py-8">
                 <motion.h1
                   initial={{ opacity: 0, y: 18 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.45 }}
-                  className="font-display mt-6 text-4xl font-bold leading-[0.92] tracking-[-0.065em] text-[var(--text-primary)] sm:text-5xl lg:text-6xl xl:text-[5.5rem]"
+                  className="font-display text-4xl font-bold leading-[0.92] tracking-[-0.065em] text-[var(--text-primary)] sm:text-5xl lg:text-6xl xl:text-[5.5rem]"
                 >
                   Start the room.
                   <span className="block text-[var(--marketing-accent)]">Own the moment.</span>
@@ -143,7 +144,7 @@ export function LandingPage({ isSignedIn }: LandingPageProps) {
                   initial={{ opacity: 0, y: 18 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.08, duration: 0.45 }}
-                  className="mt-6 max-w-xl text-base leading-7 text-[var(--text-secondary)]"
+                  className="mt-4 max-w-lg text-base leading-7 text-[var(--text-secondary)]"
                 >
                   Launch a room fast, pull everyone in, and make the first screen memorable.
                 </motion.p>
@@ -151,7 +152,7 @@ export function LandingPage({ isSignedIn }: LandingPageProps) {
                   initial={{ opacity: 0, y: 18 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.16, duration: 0.45 }}
-                  className="mt-10 flex flex-col gap-4 sm:flex-row"
+                  className="mt-6 flex flex-col gap-4 sm:flex-row"
                 >
                   <Link
                     href={isSignedIn ? '/lobby' : '/auth/signin'}
@@ -167,11 +168,14 @@ export function LandingPage({ isSignedIn }: LandingPageProps) {
                     Explore games
                   </Link>
                 </motion.div>
+                </div>
               </div>
 
-              <div className="absolute bottom-0 right-0 h-[420px] w-[420px] opacity-95">
-                <div className="absolute inset-0 rounded-full bg-[var(--marketing-accent-soft)] blur-3xl" />
-                <ArcadeMascot className="absolute inset-0 m-auto scale-[1.75] opacity-90" />
+              <div className="pointer-events-none absolute right-[8%] top-1/2 hidden -translate-y-1/2 lg:block">
+                <ArcadeMascot className="opacity-95" />
+              </div>
+              <div className="mt-4 flex justify-center lg:hidden">
+                <ArcadeMascot className="scale-[0.55] opacity-95" />
               </div>
             </div>
           </div>

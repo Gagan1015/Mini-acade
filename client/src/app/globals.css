@@ -71,6 +71,14 @@
   --game-wordel: #10B981;
   --game-flagel: #F59E0B;
 
+  /* ── Wordel Tile Colors (Dark) ── */
+  --wordel-absent: #3a3a3c;
+  --wordel-tile-empty: #121213;
+  --wordel-tile-border-empty: #3a3a3c;
+  --wordel-tile-border-filled: #565758;
+  --wordel-key-default: #818384;
+  --wordel-text: #ffffff;
+
   /* ── Typography ── */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
@@ -89,19 +97,19 @@
 [data-theme="light"] {
   color-scheme: light;
 
-  --background: #F7F9FC;
-  --background-subtle: #EEF1F6;
+  --background: #FAF8F5;
+  --background-subtle: #F3EFE9;
   --surface: #FFFFFF;
-  --surface-hover: #F0F3F8;
-  --surface-active: #E8ECF3;
+  --surface-hover: #F5F2ED;
+  --surface-active: #EDEBE6;
 
-  --border: #E2E6EE;
-  --border-subtle: #EBEEF4;
-  --border-strong: #D1D7E3;
+  --border: #E5DFD6;
+  --border-subtle: #EDE9E2;
+  --border-strong: #D6CFC4;
 
-  --text-primary: #0F172A;
-  --text-secondary: #475569;
-  --text-tertiary: #94A3B8;
+  --text-primary: #1A1A1A;
+  --text-secondary: #5C5850;
+  --text-tertiary: #9A9189;
   --text-inverse: #FFFFFF;
 
   --sidebar-bg: #0F172A;
@@ -115,6 +123,14 @@
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+
+  /* ── Wordel Tile Colors (Light) ── */
+  --wordel-absent: #787c7e;
+  --wordel-tile-empty: #ffffff;
+  --wordel-tile-border-empty: #d3d6da;
+  --wordel-tile-border-filled: #878a8c;
+  --wordel-key-default: #d3d6da;
+  --wordel-text: #1a1a1b;
 }
 
 .app-theme-marketing {

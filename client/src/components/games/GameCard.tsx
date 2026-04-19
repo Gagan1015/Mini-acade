@@ -7,7 +7,16 @@ import { GameIcon } from '@/components/ui/GameIcons'
 
 function IconUsers({ size = 16 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -18,7 +27,16 @@ function IconUsers({ size = 16 }: { size?: number }) {
 
 function IconArrowRight({ size = 16 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <line x1="5" y1="12" x2="19" y2="12" />
       <polyline points="12 5 19 12 12 19" />
     </svg>
@@ -45,13 +63,34 @@ function SkribbleGamePreview({ color }: { color: string }) {
       <svg viewBox="0 0 560 300" className="h-full min-h-[270px] w-full" aria-hidden="true">
         <defs>
           <pattern id="skribble-preview-grid" width="18" height="18" patternUnits="userSpaceOnUse">
-            <path d="M18 0H0V18" fill="none" stroke="currentColor" strokeOpacity="0.055" strokeWidth="1" />
+            <path
+              d="M18 0H0V18"
+              fill="none"
+              stroke="currentColor"
+              strokeOpacity="0.055"
+              strokeWidth="1"
+            />
           </pattern>
         </defs>
 
         <rect width="560" height="300" fill="var(--marketing-card-bg)" />
-        <rect x="18" y="18" width="524" height="34" rx="8" fill="var(--background)" stroke="var(--border)" />
-        <text x="34" y="40" fill="var(--text-tertiary)" fontFamily="var(--font-mono)" fontSize="11" fontWeight="600">
+        <rect
+          x="18"
+          y="18"
+          width="524"
+          height="34"
+          rx="8"
+          fill="var(--background)"
+          stroke="var(--border)"
+        />
+        <text
+          x="34"
+          y="40"
+          fill="var(--text-tertiary)"
+          fontFamily="var(--font-mono)"
+          fontSize="11"
+          fontWeight="600"
+        >
           drawing
         </text>
         {['_', '_', 't', '_', '_'].map((letter, letterIndex) => (
@@ -74,12 +113,38 @@ function SkribbleGamePreview({ color }: { color: string }) {
             </text>
           </motion.g>
         ))}
-        <rect x="476" y="25" width="48" height="20" rx="10" fill={color} fillOpacity="0.1" stroke={color} strokeOpacity="0.24" />
-        <text x="500" y="39" fill={color} fontFamily="var(--font-mono)" fontSize="10" fontWeight="700" textAnchor="middle">
+        <rect
+          x="476"
+          y="25"
+          width="48"
+          height="20"
+          rx="10"
+          fill={color}
+          fillOpacity="0.1"
+          stroke={color}
+          strokeOpacity="0.24"
+        />
+        <text
+          x="500"
+          y="39"
+          fill={color}
+          fontFamily="var(--font-mono)"
+          fontSize="10"
+          fontWeight="700"
+          textAnchor="middle"
+        >
           38s
         </text>
 
-        <rect x="18" y="66" width="346" height="182" rx="12" fill="var(--background)" stroke="var(--border)" />
+        <rect
+          x="18"
+          y="66"
+          width="346"
+          height="182"
+          rx="12"
+          fill="var(--background)"
+          stroke="var(--border)"
+        />
         <rect x="26" y="74" width="330" height="166" rx="8" fill="url(#skribble-preview-grid)" />
 
         <motion.path
@@ -90,7 +155,12 @@ function SkribbleGamePreview({ color }: { color: string }) {
           strokeLinecap="round"
           initial={{ pathLength: 0 }}
           animate={{ pathLength: [0, 1, 1] }}
-          transition={{ duration: 3.8, repeat: Infinity, times: [0, 0.72, 1], ease: [0.25, 1, 0.5, 1] }}
+          transition={{
+            duration: 3.8,
+            repeat: Infinity,
+            times: [0, 0.72, 1],
+            ease: [0.25, 1, 0.5, 1],
+          }}
         />
         <motion.path
           d="M160 108L145 78L178 98M220 98L239 78L234 114"
@@ -101,7 +171,13 @@ function SkribbleGamePreview({ color }: { color: string }) {
           strokeLinejoin="round"
           initial={{ pathLength: 0 }}
           animate={{ pathLength: [0, 1, 1] }}
-          transition={{ duration: 3.8, repeat: Infinity, delay: 0.35, times: [0, 0.72, 1], ease: [0.25, 1, 0.5, 1] }}
+          transition={{
+            duration: 3.8,
+            repeat: Infinity,
+            delay: 0.35,
+            times: [0, 0.72, 1],
+            ease: [0.25, 1, 0.5, 1],
+          }}
         />
         <motion.path
           d="M170 158H171M212 158H213M178 178C186 186 198 186 206 178M150 174H112M154 186H116M230 174H268M226 186H264"
@@ -111,7 +187,13 @@ function SkribbleGamePreview({ color }: { color: string }) {
           strokeLinecap="round"
           initial={{ pathLength: 0, opacity: 0.76 }}
           animate={{ pathLength: [0, 1, 1], opacity: [0.55, 0.82, 0.55] }}
-          transition={{ duration: 3.8, repeat: Infinity, delay: 0.75, times: [0, 0.72, 1], ease: [0.25, 1, 0.5, 1] }}
+          transition={{
+            duration: 3.8,
+            repeat: Infinity,
+            delay: 0.75,
+            times: [0, 0.72, 1],
+            ease: [0.25, 1, 0.5, 1],
+          }}
         />
 
         <motion.g
@@ -122,12 +204,25 @@ function SkribbleGamePreview({ color }: { color: string }) {
           }}
           transition={{ duration: 3.8, repeat: Infinity, ease: [0.25, 1, 0.5, 1] }}
         >
-          <path d="M286 202L303 167L314 175L292 206Z" fill="var(--background)" stroke="var(--text-primary)" strokeWidth="2" />
+          <path
+            d="M286 202L303 167L314 175L292 206Z"
+            fill="var(--background)"
+            stroke="var(--text-primary)"
+            strokeWidth="2"
+          />
           <path d="M303 167L310 154L323 164L314 175Z" fill={color} />
           <circle cx="289" cy="205" r="4" fill={color} />
         </motion.g>
 
-        <rect x="18" y="259" width="346" height="22" rx="11" fill="var(--background)" stroke="var(--border)" />
+        <rect
+          x="18"
+          y="259"
+          width="346"
+          height="22"
+          rx="11"
+          fill="var(--background)"
+          stroke="var(--border)"
+        />
         {['#242424', color, '#3B82F6', '#10B981', '#F59E0B'].map((swatch, swatchIndex) => (
           <motion.circle
             key={swatch}
@@ -145,8 +240,23 @@ function SkribbleGamePreview({ color }: { color: string }) {
         <path d="M302 266H340" stroke="var(--border)" strokeWidth="3" strokeLinecap="round" />
         <path d="M302 274H326" stroke="var(--border)" strokeWidth="3" strokeLinecap="round" />
 
-        <rect x="382" y="66" width="160" height="215" rx="12" fill="var(--background)" stroke="var(--border)" />
-        <text x="400" y="91" fill="var(--text-primary)" fontFamily="var(--font-sans)" fontSize="13" fontWeight="700">
+        <rect
+          x="382"
+          y="66"
+          width="160"
+          height="215"
+          rx="12"
+          fill="var(--background)"
+          stroke="var(--border)"
+        />
+        <text
+          x="400"
+          y="91"
+          fill="var(--text-primary)"
+          fontFamily="var(--font-sans)"
+          fontSize="13"
+          fontWeight="700"
+        >
           live guesses
         </text>
         {[
@@ -176,7 +286,14 @@ function SkribbleGamePreview({ color }: { color: string }) {
               fillOpacity={guess.active ? 0.13 : 1}
               stroke="var(--border)"
             />
-            <text x="411" y={guess.y - 3} fill={guess.active ? color : 'var(--text-secondary)'} fontFamily="var(--font-sans)" fontSize="11" fontWeight="600">
+            <text
+              x="411"
+              y={guess.y - 3}
+              fill={guess.active ? color : 'var(--text-secondary)'}
+              fontFamily="var(--font-sans)"
+              fontSize="11"
+              fontWeight="600"
+            >
               {guess.text}
             </text>
           </motion.g>
@@ -222,19 +339,59 @@ function WordelGamePreview({ color }: { color: string }) {
     >
       <svg viewBox="0 0 430 210" className="h-full min-h-[170px] w-full" aria-hidden="true">
         <rect width="430" height="210" fill="var(--marketing-card-bg)" />
-        <rect x="16" y="14" width="398" height="34" rx="10" fill="var(--background)" stroke="var(--border)" />
-        <text x="32" y="36" fill="var(--text-primary)" fontFamily="var(--font-display)" fontSize="13" fontWeight="700">
+        <rect
+          x="16"
+          y="14"
+          width="398"
+          height="34"
+          rx="10"
+          fill="var(--background)"
+          stroke="var(--border)"
+        />
+        <text
+          x="32"
+          y="36"
+          fill="var(--text-primary)"
+          fontFamily="var(--font-display)"
+          fontSize="13"
+          fontWeight="700"
+        >
           Wordel
         </text>
-        <text x="99" y="35" fill="var(--text-tertiary)" fontFamily="var(--font-mono)" fontSize="9" fontWeight="700">
+        <text
+          x="99"
+          y="35"
+          fill="var(--text-tertiary)"
+          fontFamily="var(--font-mono)"
+          fontSize="9"
+          fontWeight="700"
+        >
           attempt 3 / 6
         </text>
         <motion.g
           animate={{ opacity: [0, 0, 1, 1, 0] }}
           transition={{ duration: cycleDuration, repeat: Infinity, times: [0, 0.36, 0.42, 0.9, 1] }}
         >
-          <rect x="304" y="22" width="84" height="18" rx="9" fill={color} fillOpacity="0.1" stroke={color} strokeOpacity="0.2" />
-          <text x="346" y="35" fill={color} fontFamily="var(--font-mono)" fontSize="9" fontWeight="700" textAnchor="middle">
+          <rect
+            x="304"
+            y="22"
+            width="84"
+            height="18"
+            rx="9"
+            fill={color}
+            fillOpacity="0.1"
+            stroke={color}
+            strokeOpacity="0.2"
+          />
+          <text
+            x="346"
+            y="35"
+            fill={color}
+            fontFamily="var(--font-mono)"
+            fontSize="9"
+            fontWeight="700"
+            textAnchor="middle"
+          >
             checked
           </text>
         </motion.g>
@@ -257,7 +414,14 @@ function WordelGamePreview({ color }: { color: string }) {
                 transition={{
                   duration: cycleDuration,
                   repeat: Infinity,
-                  times: [0, typeStart, typeStart + 0.035, 0.46, flipStart, Math.min(flipStart + 0.11, 1)],
+                  times: [
+                    0,
+                    typeStart,
+                    typeStart + 0.035,
+                    0.46,
+                    flipStart,
+                    Math.min(flipStart + 0.11, 1),
+                  ],
                   ease: [0.45, 0, 0.55, 1],
                 }}
               >
@@ -269,13 +433,25 @@ function WordelGamePreview({ color }: { color: string }) {
                   rx="6"
                   strokeWidth="2"
                   animate={{
-                    fill: ['var(--background)', 'var(--background)', fill, fill, 'var(--background)'],
+                    fill: [
+                      'var(--background)',
+                      'var(--background)',
+                      fill,
+                      fill,
+                      'var(--background)',
+                    ],
                     stroke: ['var(--border)', 'var(--border)', fill, fill, 'var(--border)'],
                   }}
                   transition={{
                     duration: cycleDuration,
                     repeat: Infinity,
-                    times: [0, Math.min(revealStart - 0.05, 0.9), Math.min(revealStart, 0.92), 0.92, 1],
+                    times: [
+                      0,
+                      Math.min(revealStart - 0.05, 0.9),
+                      Math.min(revealStart, 0.92),
+                      0.92,
+                      1,
+                    ],
                     ease: [0.45, 0, 0.55, 1],
                   }}
                 />
@@ -288,7 +464,14 @@ function WordelGamePreview({ color }: { color: string }) {
                   textAnchor="middle"
                   animate={{
                     opacity: [0, 0, 1, 1, 1],
-                    fill: ['var(--text-primary)', 'var(--text-primary)', 'var(--text-primary)', 'var(--text-inverse)', 'var(--text-inverse)', 'var(--text-primary)'],
+                    fill: [
+                      'var(--text-primary)',
+                      'var(--text-primary)',
+                      'var(--text-primary)',
+                      'var(--text-inverse)',
+                      'var(--text-inverse)',
+                      'var(--text-primary)',
+                    ],
                   }}
                   transition={{
                     duration: cycleDuration,
@@ -306,16 +489,51 @@ function WordelGamePreview({ color }: { color: string }) {
 
         <motion.g
           animate={{ opacity: [0, 0, 1, 1, 0], x: [-5, -5, 0, 0, -5] }}
-          transition={{ duration: cycleDuration, repeat: Infinity, times: [0, 0.34, 0.4, 0.48, 0.56] }}
+          transition={{
+            duration: cycleDuration,
+            repeat: Infinity,
+            times: [0, 0.34, 0.4, 0.48, 0.56],
+          }}
         >
-          <rect x="157" y="124" width="116" height="20" rx="10" fill="var(--background)" stroke="var(--border)" />
-          <text x="215" y="138" fill="var(--text-tertiary)" fontFamily="var(--font-mono)" fontSize="9" fontWeight="700" textAnchor="middle">
+          <rect
+            x="157"
+            y="124"
+            width="116"
+            height="20"
+            rx="10"
+            fill="var(--background)"
+            stroke="var(--border)"
+          />
+          <text
+            x="215"
+            y="138"
+            fill="var(--text-tertiary)"
+            fontFamily="var(--font-mono)"
+            fontSize="9"
+            fontWeight="700"
+            textAnchor="middle"
+          >
             checking word
           </text>
         </motion.g>
 
-        <rect x="16" y="168" width="398" height="28" rx="10" fill="var(--background)" stroke="var(--border)" />
-        <text x="32" y="186" fill="var(--text-tertiary)" fontFamily="var(--font-mono)" fontSize="8" fontWeight="700">
+        <rect
+          x="16"
+          y="168"
+          width="398"
+          height="28"
+          rx="10"
+          fill="var(--background)"
+          stroke="var(--border)"
+        />
+        <text
+          x="32"
+          y="186"
+          fill="var(--text-tertiary)"
+          fontFamily="var(--font-mono)"
+          fontSize="8"
+          fontWeight="700"
+        >
           keyboard
         </text>
         {keyboard.map((keyItem, keyIndex) => {
@@ -325,35 +543,35 @@ function WordelGamePreview({ color }: { color: string }) {
           const x = [99, 127, 155, 183, 211, 239, 267, 328][keyIndex]
 
           return (
-          <motion.g
-            key={keyItem}
-            variants={{
-              rest: { y: 0 },
-              hover: { y: resultIndex !== -1 ? -2 : 0 },
-            }}
-            transition={{ duration: 0.18, delay: keyIndex * 0.015 }}
-          >
-            <rect
-              x={x - (isLong ? 22 : 10)}
-              y="177"
-              width={isLong ? 44 : 20}
-              height="12"
-              rx="6"
-              fill={tone}
-              fillOpacity={resultIndex !== -1 ? 0.2 : 0.1}
-            />
-            <text
-              x={x}
-              y="186"
-              fill={tone}
-              fontFamily="var(--font-mono)"
-              fontSize="7"
-              fontWeight="700"
-              textAnchor="middle"
+            <motion.g
+              key={keyItem}
+              variants={{
+                rest: { y: 0 },
+                hover: { y: resultIndex !== -1 ? -2 : 0 },
+              }}
+              transition={{ duration: 0.18, delay: keyIndex * 0.015 }}
             >
-              {keyItem.toLowerCase()}
-            </text>
-          </motion.g>
+              <rect
+                x={x - (isLong ? 22 : 10)}
+                y="177"
+                width={isLong ? 44 : 20}
+                height="12"
+                rx="6"
+                fill={tone}
+                fillOpacity={resultIndex !== -1 ? 0.2 : 0.1}
+              />
+              <text
+                x={x}
+                y="186"
+                fill={tone}
+                fontFamily="var(--font-mono)"
+                fontSize="7"
+                fontWeight="700"
+                textAnchor="middle"
+              >
+                {keyItem.toLowerCase()}
+              </text>
+            </motion.g>
           )
         })}
       </svg>
@@ -362,13 +580,25 @@ function WordelGamePreview({ color }: { color: string }) {
 }
 
 function FlagelGamePreview({ color }: { color: string }) {
-  const cycleDuration = 5.8
-  const panels = Array.from({ length: 6 }, (_, index) => index)
-  const revealedPanelCount = 6
+  const dur = 6.4
+
+  const flagW = 164
+  const flagH = 82
+  const tileC = 3
+  const tileR = 2
+  const tileW = flagW / tileC
+  const tileH = flagH / tileR
+
   const guesses = [
-    { label: 'France', value: '9,713 km', arrow: 'NE', percent: '42%', tone: 'var(--text-tertiary)' },
-    { label: 'Japan', value: '0 km', arrow: '✓', percent: '100%', tone: color },
+    { name: 'France', km: '9,713 km', dir: '↗', pct: 42 },
+    { name: 'Japan', km: '0 km', dir: '◎', pct: 100 },
   ]
+
+  const pctFill = (p: number) => {
+    if (p >= 85) return '#34d399'
+    if (p >= 35) return '#a5b4fc'
+    return '#94a3b8'
+  }
 
   return (
     <motion.div
@@ -379,135 +609,174 @@ function FlagelGamePreview({ color }: { color: string }) {
       }}
       transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
     >
-      <svg viewBox="0 0 560 210" className="h-full min-h-[170px] w-full" aria-hidden="true">
+      <svg viewBox="0 0 560 130" className="h-full min-h-[120px] w-full" aria-hidden="true">
         <defs>
-          <clipPath id="flagel-preview-flag-clip">
-            <rect x="0" y="0" width="198" height="96" rx="10" />
-          </clipPath>
+          <clipPath id="fp-flag"><rect width={flagW} height={flagH} rx="8" /></clipPath>
         </defs>
-        <rect width="560" height="210" fill="var(--marketing-card-bg)" />
-        <rect x="18" y="16" width="524" height="30" rx="10" fill="var(--background)" stroke="var(--border)" />
-        <text x="34" y="36" fill="var(--text-primary)" fontFamily="var(--font-display)" fontSize="13" fontWeight="700">
-          Flagel
-        </text>
-        <text x="94" y="35" fill="var(--text-tertiary)" fontFamily="var(--font-mono)" fontSize="9" fontWeight="700">
-          reveal 6 / 6
-        </text>
-        <motion.g
-          animate={{ opacity: [0.45, 1, 0.45] }}
-          transition={{ duration: 2.4, repeat: Infinity, ease: [0.25, 1, 0.5, 1] }}
-        >
-          <rect x="428" y="22" width="84" height="16" rx="8" fill={color} fillOpacity="0.1" stroke={color} strokeOpacity="0.22" />
-          <text x="470" y="34" fill={color} fontFamily="var(--font-mono)" fontSize="9" fontWeight="700" textAnchor="middle">
-            solved
-          </text>
-        </motion.g>
 
-        <g transform="translate(44 68)">
-          <rect x="-12" y="-12" width="222" height="120" rx="16" fill="var(--background)" stroke="var(--border)" />
-          <g clipPath="url(#flagel-preview-flag-clip)">
-            <rect width="198" height="96" fill="#ffffff" />
-            <circle cx="99" cy="48" r="27" fill="#EF4444" />
-            <path d="M0 0H198V96H0Z" fill="none" stroke="var(--border)" />
-            {panels.map((panelIndex) => {
-              const col = panelIndex % 3
-              const row = Math.floor(panelIndex / 3)
-              const x = col * 66
-              const y = row * 48
-              const isHidden = panelIndex >= revealedPanelCount
+        <rect width="560" height="130" fill="var(--marketing-card-bg)" />
+
+        {/* ───── Flag area (left) ───── */}
+        <g transform="translate(24 14)">
+          {/* Container */}
+          <rect x="-8" y="-8" width={flagW + 16} height={flagH + 16}
+            rx="12" fill="var(--background)" stroke="var(--border)" strokeWidth="0.5" />
+
+          {/* Flag with tile reveal */}
+          <g clipPath="url(#fp-flag)">
+            <rect width={flagW} height={flagH} fill="#ffffff" />
+            <circle cx={flagW / 2} cy={flagH / 2} r={flagH * 0.29} fill="#BC002D" />
+
+            {/* Tile covers */}
+            {Array.from({ length: tileC * tileR }, (_, i) => {
+              const cx = (i % tileC) * tileW
+              const cy = Math.floor(i / tileC) * tileH
+              const reveal = 0.06 + i * 0.052
 
               return (
-                <motion.g
-                  key={panelIndex}
-                  style={{ transformOrigin: `${x + 33}px ${y + 24}px` }}
-                  animate={{ y: 0, opacity: 1 }}
+                <motion.rect
+                  key={`cover-${i}`}
+                  x={cx} y={cy} width={tileW} height={tileH}
+                  fill="var(--surface-hover)"
+                  animate={{ opacity: [1, 1, 0, 0, 0, 1] }}
                   transition={{
-                    duration: 2.4,
-                    repeat: Infinity,
-                    ease: [0.25, 1, 0.5, 1],
+                    duration: dur, repeat: Infinity,
+                    times: [0, reveal, reveal + 0.045, 0.88, 0.94, 1],
+                    ease: [0.16, 1, 0.3, 1],
                   }}
-                >
-                  {isHidden && (
-                    <>
-                      <rect x={x} y={y} width="66" height="48" fill="var(--background)" />
-                      <rect x={x + 2} y={y + 2} width="62" height="44" rx="8" fill="var(--text-primary)" fillOpacity="0.9" />
-                      <path d={`M${x + 14} ${y + 15}H${x + 52}M${x + 14} ${y + 25}H${x + 45}M${x + 14} ${y + 35}H${x + 36}`} stroke="var(--background)" strokeOpacity="0.28" strokeWidth="2.2" strokeLinecap="round" />
-                    </>
-                  )}
-                </motion.g>
+                />
               )
             })}
+
+            {/* Grid lines — fade out on merge */}
+            <motion.g
+              animate={{ opacity: [0.5, 0.5, 0, 0, 0.5] }}
+              transition={{
+                duration: dur, repeat: Infinity,
+                times: [0, 0.36, 0.42, 0.88, 1],
+                ease: [0.22, 1, 0.36, 1],
+              }}
+            >
+              <line x1={tileW} y1="0" x2={tileW} y2={flagH}
+                stroke="var(--border)" strokeWidth="0.5" />
+              <line x1={tileW * 2} y1="0" x2={tileW * 2} y2={flagH}
+                stroke="var(--border)" strokeWidth="0.5" />
+              <line x1="0" y1={tileH} x2={flagW} y2={tileH}
+                stroke="var(--border)" strokeWidth="0.5" />
+            </motion.g>
           </g>
         </g>
 
-        <g transform="translate(298 68)">
-          <rect x="0" y="0" width="218" height="40" rx="11" fill="var(--background)" stroke="var(--border)" />
-          <text x="18" y="25" fill="var(--text-tertiary)" fontFamily="var(--font-mono)" fontSize="9" fontWeight="700">
+        {/* ───── Right panel ───── */}
+        <g transform="translate(220 14)">
+          {/* Search input */}
+          <rect x="0" y="0" width="316" height="30" rx="10"
+            fill="var(--background)" stroke="var(--border)" strokeWidth="0.5" />
+          {/* Search icon */}
+          <g transform="translate(11 9)" stroke="var(--text-tertiary)" strokeWidth="1.5" fill="none">
+            <circle cx="4.5" cy="4.5" r="4" />
+            <line x1="7.3" y1="7.3" x2="10" y2="10" />
+          </g>
+          <text x="27" y="19" fill="var(--text-tertiary)"
+            fontFamily="var(--font-mono)" fontSize="9" fontWeight="600">
             country
           </text>
-          {'JAPAN'.split('').map((letter, letterIndex) => {
-            const typeStart = 0.08 + letterIndex * 0.055
+
+          {/* Typing animation */}
+          {'JAPAN'.split('').map((ch, ci) => {
+            const t = 0.16 + ci * 0.035
             return (
               <motion.text
-                key={`${letter}-${letterIndex}`}
-                x={88 + letterIndex * 16}
-                y="26"
-                fill="var(--text-primary)"
-                fontFamily="var(--font-display)"
-                fontSize="14"
-                fontWeight="700"
-                textAnchor="middle"
+                key={`ch-${ci}`}
+                x={82 + ci * 13} y="19"
+                fill="var(--text-primary)" fontFamily="var(--font-display)"
+                fontSize="12" fontWeight="700" textAnchor="middle"
                 animate={{ opacity: [0, 0, 1, 1, 0] }}
                 transition={{
-                  duration: cycleDuration,
-                  repeat: Infinity,
-                  times: [0, typeStart, typeStart + 0.025, 0.82, 1],
+                  duration: dur, repeat: Infinity,
+                  times: [0, t, t + 0.018, 0.86, 0.94],
                   ease: [0.25, 1, 0.5, 1],
                 }}
               >
-                {letter}
+                {ch}
               </motion.text>
             )
           })}
 
-          <motion.g
-            animate={{ opacity: [0.72, 1, 1, 0.72], y: [2, 0, 0, 2] }}
-            transition={{ duration: cycleDuration, repeat: Infinity, times: [0, 0.28, 0.78, 1], ease: [0.22, 1, 0.36, 1] }}
-          >
-            <rect x="0" y="54" width="218" height="58" rx="12" fill="var(--background)" stroke="var(--border)" />
-            {guesses.map((guess, guessIndex) => (
-              <g key={guess.label} transform={`translate(14 ${74 + guessIndex * 24})`}>
-                <text x="0" y="0" fill={guess.tone} fontFamily="var(--font-sans)" fontSize="11" fontWeight="700">
-                  {guess.label}
-                </text>
-                <text x="78" y="0" fill="var(--text-secondary)" fontFamily="var(--font-mono)" fontSize="10" fontWeight="700">
-                  {guess.value}
-                </text>
-                <rect x="135" y="-13" width="28" height="18" rx="9" fill={guess.tone} fillOpacity={guessIndex === 1 ? 0.15 : 0.08} />
-                <text x="149" y="0" fill={guess.tone} fontFamily="var(--font-mono)" fontSize="9" fontWeight="800" textAnchor="middle">
-                  {guess.arrow}
-                </text>
-                <rect x="170" y="-13" width="36" height="18" rx="9" fill={guess.tone} fillOpacity={guessIndex === 1 ? 0.15 : 0.08} />
-                <text x="188" y="0" fill={guess.tone} fontFamily="var(--font-mono)" fontSize="9" fontWeight="800" textAnchor="middle">
-                  {guess.percent}
-                </text>
-              </g>
-            ))}
-          </motion.g>
-
-          <motion.path
-            d="M172 29L181 37L200 17"
-            fill="none"
-            stroke={color}
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: [0, 0, 1, 1, 0] }}
-            transition={{ duration: cycleDuration, repeat: Infinity, times: [0, 0.42, 0.52, 0.82, 1], ease: [0.25, 1, 0.5, 1] }}
+          {/* Cursor blink */}
+          <motion.rect
+            x="148" y="10" width="1" height="11" rx="0.5" fill={color}
+            animate={{ opacity: [0, 0, 1, 0, 1, 0, 0] }}
+            transition={{ duration: dur, repeat: Infinity,
+              times: [0, 0.15, 0.16, 0.28, 0.29, 0.42, 1] }}
           />
-        </g>
 
+          {/* Guess rows */}
+          {guesses.map((g, gi) => {
+            const ry = 38 + gi * 30
+            const isWin = g.pct === 100
+            const t0 = 0.22 + gi * 0.08
+
+            return (
+              <motion.g
+                key={g.name}
+                animate={{ opacity: [0, 0, 1, 1, 0], y: [4, 4, 0, 0, 4] }}
+                transition={{
+                  duration: dur, repeat: Infinity,
+                  times: [0, t0, t0 + 0.035, 0.86, 0.94],
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+              >
+                <rect x="0" y={ry} width="316" height="24" rx="7"
+                  fill={isWin ? `${color}06` : 'var(--background)'}
+                  stroke={isWin ? `${color}22` : 'var(--border)'}
+                  strokeWidth="0.5" />
+
+                <text x="10" y={ry + 16}
+                  fill={isWin ? color : 'var(--text-primary)'}
+                  fontFamily="var(--font-sans)" fontSize="11" fontWeight="700">
+                  {g.name}
+                </text>
+
+                <text x="80" y={ry + 16}
+                  fill="var(--text-secondary)"
+                  fontFamily="var(--font-mono)" fontSize="9" fontWeight="600">
+                  {g.km}
+                </text>
+
+                <rect x="200" y={ry + 3} width="24" height="18" rx="9"
+                  fill={isWin ? `${color}14` : 'var(--surface-hover)'} />
+                <text x="212" y={ry + 16}
+                  fill={isWin ? color : 'var(--text-primary)'}
+                  fontFamily="var(--font-mono)" fontSize="10" fontWeight="800"
+                  textAnchor="middle">
+                  {g.dir}
+                </text>
+
+                <rect x="232" y={ry + 3} width="38" height="18" rx="9"
+                  fill={`${pctFill(g.pct)}14`} />
+                <text x="251" y={ry + 16}
+                  fill={pctFill(g.pct)}
+                  fontFamily="var(--font-mono)" fontSize="9" fontWeight="800"
+                  textAnchor="middle">
+                  {g.pct}%
+                </text>
+
+                {isWin && (
+                  <rect x="278" y={ry + 6} width="24" height="12" rx="6"
+                    fill={color} fillOpacity="0.12" />
+                )}
+                {isWin && (
+                  <text x="290" y={ry + 16} fill={color}
+                    fontFamily="var(--font-mono)" fontSize="7" fontWeight="700"
+                    textAnchor="middle">
+                    ✓
+                  </text>
+                )}
+              </motion.g>
+            )
+          })}
+        </g>
       </svg>
     </motion.div>
   )
@@ -578,15 +847,21 @@ export function GameCard({ game, index, featured = false, compact = false }: Gam
           </div>
 
           <div className={`relative z-10 ${featured ? 'mt-10 max-w-md' : 'mt-6'}`}>
-            <h3 className={`font-display font-bold tracking-tight text-[var(--text-primary)] ${featured ? 'text-4xl' : 'text-2xl'}`}>
+            <h3
+              className={`font-display font-bold tracking-tight text-[var(--text-primary)] ${featured ? 'text-4xl' : 'text-2xl'}`}
+            >
               {game.name}
             </h3>
-            <p className={`${featured ? 'mt-4 text-base leading-8' : 'mt-3 text-sm leading-7'} text-[var(--text-secondary)]`}>
+            <p
+              className={`${featured ? 'mt-4 text-base leading-8' : 'mt-3 text-sm leading-7'} text-[var(--text-secondary)]`}
+            >
               {game.description}
             </p>
           </div>
 
-          <div className={`relative z-10 flex flex-wrap gap-2 ${featured ? 'mt-7 max-w-lg' : 'mt-5'}`}>
+          <div
+            className={`relative z-10 flex flex-wrap gap-2 ${featured ? 'mt-7 max-w-lg' : 'mt-5'}`}
+          >
             {game.features.map((feature) => (
               <span
                 key={feature}
@@ -597,7 +872,9 @@ export function GameCard({ game, index, featured = false, compact = false }: Gam
             ))}
           </div>
 
-          {(featured || game.id === 'wordel' || game.id === 'flagel') && <GamePreview game={game} />}
+          {(featured || game.id === 'wordel' || game.id === 'flagel') && (
+            <GamePreview game={game} />
+          )}
 
           <div className="relative z-10 mt-auto flex items-center justify-between border-t border-[var(--border)] pt-6">
             <span className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">

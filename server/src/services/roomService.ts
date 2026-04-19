@@ -44,7 +44,7 @@ export class RoomService {
   private readonly userRooms = new Map<UserId, RoomCode>()
   private readonly disconnectTimers = new Map<UserId, ReturnType<typeof setTimeout>>()
 
-  constructor(private readonly io: TypedIo) {}
+  constructor(private readonly io: TypedIo) { }
 
   async joinRoom(input: {
     socket: TypedSocket

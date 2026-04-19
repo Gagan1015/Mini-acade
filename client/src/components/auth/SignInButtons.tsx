@@ -35,7 +35,7 @@ const providers = [
 
 export function SignInButtons({ callbackUrl }: SignInButtonsProps) {
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {providers.map((provider, i) => (
         <motion.button
           key={provider.id}
@@ -45,12 +45,13 @@ export function SignInButtons({ callbackUrl }: SignInButtonsProps) {
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => void signIn(provider.id, { callbackUrl })}
-          className="btn btn-secondary w-full justify-start gap-3 py-3.5"
+          className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--border)] bg-[var(--surface)] px-6 py-3.5 text-sm font-medium text-[var(--text-primary)] transition-all duration-150 hover:border-[var(--border-strong)] hover:bg-[var(--surface-hover)] hover:shadow-sm cursor-pointer"
         >
-          <provider.Icon size={20} />
-          Continue with {provider.name}
+          Sign in with {provider.name}
+          <provider.Icon size={18} />
         </motion.button>
       ))}
     </div>
   )
 }
+

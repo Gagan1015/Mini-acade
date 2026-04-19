@@ -46,13 +46,12 @@ export default async function SoloPlayPage({
   }
 
   return (
-    <main className="min-h-screen px-6 py-12">
-      <RoomLobby
-        roomCode={room.code}
-        currentUserId={session.user.id}
-        initialRoom={room}
-        autoStartOnJoin
-      />
-    </main>
+    <RoomLobby
+      key={room.code}
+      roomCode={room.code}
+      currentUserId={session.user.id}
+      initialRoom={room}
+      autoStartOnJoin
+    />
   )
 }

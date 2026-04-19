@@ -49,12 +49,12 @@ const FLIP_STAGGER = 0.32 // seconds between tiles
 const COLORS = {
   correct: '#538d4e',
   present: '#b59f3b',
-  absent: '#3a3a3c',
-  tileEmpty: '#121213',
-  tileBorderEmpty: '#3a3a3c',
-  tileBorderFilled: '#565758',
-  keyDefault: '#818384',
-  white: '#ffffff',
+  absent: 'var(--wordel-absent)',
+  tileEmpty: 'var(--wordel-tile-empty)',
+  tileBorderEmpty: 'var(--wordel-tile-border-empty)',
+  tileBorderFilled: 'var(--wordel-tile-border-filled)',
+  keyDefault: 'var(--wordel-key-default)',
+  white: 'var(--wordel-text)',
 }
 
 function getTileBg(result?: WordelLetterResult): string {
@@ -71,6 +71,7 @@ function getKeyBg(status?: WordelLetterResult): string {
   if (!status) return COLORS.keyDefault
   return COLORS[status]
 }
+
 
 /* ── SVG Icons ── */
 
@@ -389,7 +390,7 @@ export function WordelPlayArea({
                     const border = tileColorRevealed
                       ? getTileBorder(result)
                       : getTileBorder(undefined, hasLetter)
-                    const textColor = COLORS.white
+                    const textColor = tileColorRevealed && result ? '#ffffff' : COLORS.white
                     const isPop = isCurrentRow && colIndex === popCol
 
                     return (
@@ -558,7 +559,7 @@ export function WordelPlayArea({
                         cursor: canType ? 'pointer' : 'not-allowed',
                         padding: 0,
                         backgroundColor: bg,
-                        color: COLORS.white,
+                        color: status ? '#ffffff' : COLORS.white,
                         letterSpacing: isWide ? '0.05em' : '0.02em',
                         opacity: canType ? 1 : 0.5,
                         transition: 'opacity 0.1s ease',

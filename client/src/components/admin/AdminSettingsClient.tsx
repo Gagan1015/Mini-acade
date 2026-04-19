@@ -20,6 +20,7 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { staggerContainer, staggerItem } from '@/lib/motion'
+import { GameIcon } from '@/components/ui/GameIcons'
 
 /* ── Types ── */
 
@@ -51,12 +52,7 @@ interface AdminSettingsClientProps {
   announcements: Announcement[]
 }
 
-const GAME_EMOJIS: Record<string, string> = {
-  skribble: '🎨',
-  trivia: '🧠',
-  wordel: '📝',
-  flagel: '🏳️',
-}
+
 
 const GAME_COLORS: Record<string, string> = {
   skribble: 'var(--game-skribble)',
@@ -308,7 +304,7 @@ export function AdminSettingsClient({ gameConfigs: initialGameConfigs, announcem
             >
               {gameConfigs.length > 0 ? (
                 gameConfigs.map((game) => {
-                  const emoji = GAME_EMOJIS[game.gameId] || '🎮'
+
                   const color = GAME_COLORS[game.gameId] || 'var(--primary-500)'
                   const isEditing = editingGame === game.gameId
                   const isSaving = savingGame === game.gameId
@@ -337,12 +333,12 @@ export function AdminSettingsClient({ gameConfigs: initialGameConfigs, announcem
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <div
-                            className="flex h-12 w-12 items-center justify-center rounded-xl text-2xl"
+                            className="flex h-12 w-12 items-center justify-center rounded-xl"
                             style={{
                               backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)`,
                             }}
                           >
-                            {emoji}
+                            <GameIcon gameId={game.gameId} size={28} />
                           </div>
                           <div>
                             <h3 className="text-base font-semibold text-[var(--text-primary)]">

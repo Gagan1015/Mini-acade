@@ -11,6 +11,7 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { staggerContainer, staggerItem } from '@/lib/motion'
+import { GameIcon } from '@/components/ui/GameIcons'
 
 interface Room {
   id: string
@@ -28,12 +29,7 @@ interface AdminRoomsClientProps {
   rooms: Room[]
 }
 
-const GAME_EMOJIS: Record<string, string> = {
-  skribble: '🎨',
-  trivia: '🧠',
-  wordel: '📝',
-  flagel: '🏳️',
-}
+
 
 const GAME_COLORS: Record<string, string> = {
   skribble: 'var(--game-skribble)',
@@ -159,7 +155,7 @@ export function AdminRoomsClient({ rooms }: AdminRoomsClientProps) {
               <option value="ALL">All Games</option>
               {uniqueGames.map((g) => (
                 <option key={g} value={g}>
-                  {GAME_EMOJIS[g] || '🎮'} {g}
+                  {g}
                 </option>
               ))}
             </select>
@@ -242,7 +238,7 @@ export function AdminRoomsClient({ rooms }: AdminRoomsClientProps) {
                       {/* Game */}
                       <td className="px-5 py-4">
                         <span className="flex items-center gap-2 text-[var(--text-secondary)]">
-                          <span className="text-base">{GAME_EMOJIS[room.gameId] || '🎮'}</span>
+                          <GameIcon gameId={room.gameId} size={18} />
                           <span className="capitalize">{room.gameId}</span>
                         </span>
                       </td>

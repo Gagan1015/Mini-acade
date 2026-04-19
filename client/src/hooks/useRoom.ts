@@ -358,6 +358,14 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
         setFlagel((previousState) => ({
           ...previousState,
           phase: 'playing',
+          guesses: [],
+          finalScores: [],
+          correctCountry: undefined,
+          countryCode: undefined,
+          flagEmoji: undefined,
+          flagImageUrl: undefined,
+          playerStatuses: createEmptyPlayerStatuses(Object.keys(previousState.playerStatuses)),
+          scores: createEmptyScores(Object.keys(previousState.playerStatuses)),
         }))
       } else if (payload.gameId === 'skribble') {
         setSkribble((previousState) => ({

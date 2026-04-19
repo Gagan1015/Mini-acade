@@ -1,16 +1,20 @@
-import Link from 'next/link'
-import { SignInButtons } from '@/components/auth/SignInButtons'
+'use client'
 
-export const dynamic = 'force-dynamic'
+import { Suspense } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { useSearchParams } from 'next/navigation'
+import { motion } from 'motion/react'
+import { SignInButtons } from '@/components/auth/SignInButtons'
 
 /* ── SVG Logo Icon ── */
 function LogoIcon() {
   return (
-    <svg viewBox="0 0 48 48" fill="none" width={32} height={32}>
-      <rect x="4" y="14" width="40" height="26" rx="8" stroke="var(--primary-400)" strokeWidth="2.5" fill="none" />
-      <circle cx="16" cy="27" r="2.5" fill="var(--primary-400)" opacity="0.7" />
-      <circle cx="32" cy="27" r="2.5" fill="var(--primary-400)" opacity="0.7" />
-      <path d="M18 6V14M30 6V14" stroke="var(--primary-400)" strokeWidth="2.5" strokeLinecap="round" />
+    <svg viewBox="0 0 48 48" fill="none" width={28} height={28}>
+      <rect x="4" y="14" width="40" height="26" rx="8" stroke="currentColor" strokeWidth="2.5" fill="none" />
+      <circle cx="16" cy="27" r="2.5" fill="currentColor" opacity="0.7" />
+      <circle cx="32" cy="27" r="2.5" fill="currentColor" opacity="0.7" />
+      <path d="M18 6V14M30 6V14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   )
 }
@@ -25,61 +29,204 @@ function IconArrowLeft() {
   )
 }
 
-export default function SignInPage({
-  searchParams,
-}: {
-  searchParams?: {
-    callbackUrl?: string
-    error?: string
-  }
-}) {
-  const callbackUrl = searchParams?.callbackUrl ?? '/'
-  const error = searchParams?.error
+/* ── Sign-in form (uses useSearchParams → needs Suspense) ── */
+function SignInForm() {
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams?.get('callbackUrl') ?? '/'
+  const error = searchParams?.get('error')
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[var(--background)] px-6">
-      <div className="w-full max-w-md">
-        {/* Clean open layout instead of card */}
-        <div className="text-center">
-          {/* Accent line */}
-          <div className="mx-auto mb-10 h-px w-16 bg-gradient-to-r from-[var(--primary-500)] via-[var(--game-skribble)] to-[var(--game-wordel)]" />
+    <>
+      {error && (
+        <motion.div
+          className="mb-6 rounded-xl border border-[var(--error-500)]/20 bg-[var(--error-500)]/5 px-4 py-3 text-sm text-[var(--error-500)]"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          Sign-in failed: <strong>{error}</strong>
+        </motion.div>
+      )}
 
-          <div className="mb-8 flex justify-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--primary-500)]/10">
-              <LogoIcon />
-            </div>
-          </div>
+      {/* OAuth Buttons */}
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="mb-6"
+      >
+        <SignInButtons callbackUrl={callbackUrl} />
+      </motion.div>
 
-          <p className="mb-2 text-xs font-medium uppercase tracking-[0.25em] text-[var(--text-tertiary)]">
-            Authentication
-          </p>
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">
-            Sign in to Mini Arcade
-          </h1>
-          <p className="mt-4 text-sm leading-relaxed text-[var(--text-secondary)]">
-            Sign in with your Google or GitHub account to create rooms, track scores, and play with
-            friends.
-          </p>
+      {/* OR Divider */}
+      <motion.div
+        className="flex items-center gap-4 my-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.35, duration: 0.4 }}
+      >
+        <div className="flex-1 h-px bg-[var(--border)]" />
+        <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[var(--text-tertiary)]">
+          OR
+        </span>
+        <div className="flex-1 h-px bg-[var(--border)]" />
+      </motion.div>
 
-          {error && (
-            <div className="mt-8 rounded-xl border border-[var(--error-500)]/20 bg-[var(--error-500)]/5 px-4 py-3 text-sm text-[var(--error-500)]">
-              Sign-in failed with error: <strong>{error}</strong>
-            </div>
-          )}
+      {/* Already have an account */}
+      <motion.p
+        className="text-sm text-center text-[var(--text-secondary)]"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4, duration: 0.4 }}
+      >
+        Already have an account?{' '}
+        <Link
+          href="/auth/signin"
+          className="font-semibold text-[var(--text-primary)] underline underline-offset-[3px] decoration-[var(--border-strong)] hover:decoration-[var(--text-primary)] transition-colors"
+        >
+          Login
+        </Link>
+      </motion.p>
+    </>
+  )
+}
 
-          <div className="mt-10">
-            <SignInButtons callbackUrl={callbackUrl} />
+export default function SignInPage() {
+  return (
+    <main className="auth-page-bg flex min-h-screen bg-[var(--background)] transition-colors duration-200">
+      {/* ── LEFT: Visual panel with mosaic art + rounded corners ── */}
+      <motion.div
+        className="hidden lg:block lg:w-1/2 xl:w-[55%] p-5"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <div className="relative h-full w-full overflow-hidden rounded-3xl">
+          <Image
+            src="/auth-mosaic.png"
+            alt="Abstract pixel mosaic artwork"
+            fill
+            priority
+            className="object-cover"
+          />
+          {/* Subtle gradient overlays */}
+          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/30 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
+
+          {/* Floating info badges */}
+          <div className="absolute bottom-10 left-10 z-10 flex flex-col gap-3">
+            {[
+              { label: 'Games', value: '4' },
+              { label: 'Max Players', value: '10' },
+            ].map((item, i) => (
+              <motion.div
+                key={item.label}
+                className="inline-flex w-fit items-center gap-2.5 rounded-xl border border-white/12 bg-white/10 px-4 py-2 text-white shadow-lg backdrop-blur-xl"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 + i * 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <span className="font-display text-base font-bold leading-none">{item.value}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.1em] opacity-80">
+                  {item.label}
+                </span>
+              </motion.div>
+            ))}
+            <motion.div
+              className="inline-flex w-fit items-center gap-2 rounded-xl border border-white/12 bg-white/10 px-4 py-2 text-white shadow-lg backdrop-blur-xl"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] opacity-80">
+                Real-time sync
+              </span>
+            </motion.div>
           </div>
         </div>
+      </motion.div>
 
-        <div className="mt-10 text-center">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-sm text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-secondary)]"
+      {/* ── RIGHT: Sign-in form panel ── */}
+      <div className="flex flex-1 items-center justify-center px-6 py-12 sm:px-10 lg:px-16">
+        <div className="flex w-full max-w-[400px] flex-col" style={{ minHeight: 'min(680px, calc(100vh - 96px))' }}>
+
+          {/* Brand — top right area */}
+          <motion.div
+            className="mb-auto pb-6"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.05 }}
           >
-            <IconArrowLeft />
-            Back to home
-          </Link>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2.5 text-[var(--text-primary)] transition-opacity hover:opacity-80"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)]">
+                <LogoIcon />
+              </div>
+              <span className="font-display text-lg font-bold tracking-tight">Mini Arcade</span>
+            </Link>
+          </motion.div>
+
+          {/* Title + subtitle */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="mb-8"
+          >
+            <h1 className="font-display text-[2rem] sm:text-4xl font-bold tracking-[-0.04em] leading-[1.1] text-[var(--text-primary)]">
+              Create an account
+            </h1>
+            <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)] max-w-[320px]">
+              Sign in to create rooms, track scores, and play with friends
+            </p>
+          </motion.div>
+
+          {/* Form area */}
+          <Suspense
+            fallback={
+              <div className="space-y-4 animate-pulse">
+                <div className="h-12 rounded-xl bg-[var(--surface)]" />
+                <div className="h-12 rounded-xl bg-[var(--surface)]" />
+              </div>
+            }
+          >
+            <SignInForm />
+          </Suspense>
+
+          {/* Footer */}
+          <motion.div
+            className="mt-auto pt-8 flex items-center justify-center gap-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
+          >
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-secondary)]"
+            >
+              <IconArrowLeft />
+              Back to home
+            </Link>
+            <span className="text-[var(--border-strong)]">/</span>
+            <Link
+              href="#"
+              className="text-xs text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-secondary)]"
+            >
+              Help
+            </Link>
+            <span className="text-[var(--border-strong)]">/</span>
+            <Link
+              href="#"
+              className="text-xs text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-secondary)]"
+            >
+              Terms
+            </Link>
+          </motion.div>
         </div>
       </div>
     </main>

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { staggerContainer, staggerItem } from '@/lib/motion'
+import { GameIcon } from '@/components/ui/GameIcons'
 
 interface DashboardStats {
   totalUsers: number
@@ -96,12 +97,7 @@ const ANALYTICS_RANGE_LABELS: Record<AnalyticsRange, string> = {
   year: 'This year',
 }
 
-const GAME_EMOJIS: Record<string, string> = {
-  skribble: '🎨',
-  trivia: '🧠',
-  wordel: '📝',
-  flagel: '🏳️',
-}
+
 
 const STATUS_BADGE: Record<string, string> = {
   WAITING: 'badge-primary',
@@ -365,8 +361,9 @@ export function AdminDashboardClient({
                       className="h-3 w-3 rounded-full"
                       style={{ backgroundColor: GAME_COLORS[g.gameId] || 'var(--primary-500)' }}
                     />
-                    <span className="text-[var(--text-secondary)]">
-                      {GAME_EMOJIS[g.gameId] || '🎮'} {g.gameId}
+                    <span className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+                      <GameIcon gameId={g.gameId} size={16} />
+                      {g.gameId}
                     </span>
                   </div>
                   <span className="font-medium text-[var(--text-primary)]">{g.count} rooms</span>
@@ -380,8 +377,9 @@ export function AdminDashboardClient({
                       className="h-3 w-3 rounded-full"
                       style={{ backgroundColor: GAME_COLORS[g] }}
                     />
-                    <span className="text-[var(--text-secondary)]">
-                      {GAME_EMOJIS[g]} {g}
+                    <span className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+                      <GameIcon gameId={g} size={16} />
+                      {g}
                     </span>
                   </div>
                   <span className="font-medium text-[var(--text-primary)]">0 rooms</span>
@@ -431,7 +429,7 @@ export function AdminDashboardClient({
                   className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--background)] p-3"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-xl">{GAME_EMOJIS[game.gameId] || '🎮'}</span>
+                    <GameIcon gameId={game.gameId} size={24} />
                     <div>
                       <p className="text-sm font-medium text-[var(--text-primary)]">{game.name}</p>
                       <p className="text-xs text-[var(--text-tertiary)]">{game.gameId}</p>
@@ -489,7 +487,7 @@ export function AdminDashboardClient({
                       </td>
                       <td className="py-3 pr-4">
                         <span className="flex items-center gap-1.5 text-[var(--text-secondary)]">
-                          <span>{GAME_EMOJIS[room.gameId] || '🎮'}</span>
+                          <GameIcon gameId={room.gameId} size={16} />
                           {room.gameId}
                         </span>
                       </td>

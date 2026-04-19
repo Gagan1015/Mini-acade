@@ -28,9 +28,5 @@ export default async function RoomPage({
     redirect(`/play/${room.gameId}`)
   }
 
-  return (
-    <main className="min-h-screen px-6 py-12">
-      <RoomLobby roomCode={room.code} currentUserId={session.user.id} initialRoom={room} />
-    </main>
-  )
+  return <RoomLobby roomCode={room.code} currentUserId={session.user.id} initialRoom={room} />
 }
