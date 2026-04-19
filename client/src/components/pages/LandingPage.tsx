@@ -174,9 +174,6 @@ export function LandingPage({ isSignedIn }: LandingPageProps) {
               <div className="pointer-events-none absolute right-[8%] top-1/2 hidden -translate-y-1/2 lg:block">
                 <ArcadeMascot className="opacity-95" />
               </div>
-              <div className="mt-4 flex justify-center lg:hidden">
-                <ArcadeMascot className="scale-[0.55] opacity-95" />
-              </div>
             </div>
           </div>
         </section>

@@ -558,6 +558,13 @@ a {
     z-index: 1;
   }
 
+  @media (max-width: 1023px) {
+    .marketing-rail-layout::before,
+    .marketing-rail-layout::after {
+      display: none;
+    }
+  }
+
   .marketing-h-line {
     height: 1px;
     background: var(--marketing-hairline);

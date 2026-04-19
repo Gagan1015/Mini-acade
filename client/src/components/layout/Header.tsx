@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { AnimatePresence, motion } from 'motion/react'
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 
 function LogoMark({ className = '' }: { className?: string }) {
   return (
@@ -128,27 +129,48 @@ function IconArrowRight({ size = 14 }: { size?: number }) {
   )
 }
 
+function IconChevronDown({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  )
+}
+
+function IconHome({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5 9.5V21h14V9.5" />
+    </svg>
+  )
+}
+
+function IconBarChart({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="20" x2="12" y2="10" />
+      <line x1="18" y1="20" x2="18" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  )
+}
+
 function ThemeToggle({
   theme,
   mounted,
   onToggle,
-  variant,
 }: {
   theme: 'light' | 'dark'
   mounted: boolean
   onToggle: () => void
-  variant: 'default' | 'marketing'
 }) {
   return (
     <button
       type="button"
       onClick={onToggle}
       aria-label={mounted ? `Switch to ${theme === 'light' ? 'dark' : 'light'} theme` : 'Toggle theme'}
-      className={`inline-flex h-10 w-10 items-center justify-center rounded-[12px] border transition-colors ${
-        variant === 'marketing'
-          ? 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'
-          : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'
-      }`}
+      className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
     >
       {mounted && theme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
     </button>
@@ -190,13 +212,27 @@ interface HeaderProps {
   variant?: 'default' | 'marketing'
 }
 
+type MenuItem = {
+  href: string
+  label: string
+  icon: ReactNode
+  accent?: boolean
+}
+
 export function Header({ variant = 'default' }: HeaderProps) {
+  const pathname = usePathname()
   const { data: session, status } = useSession()
   const user = session?.user
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
+  const isLandingPage = pathname === '/'
+  const showLandingNav = variant === 'marketing' && isLandingPage
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const profileMenuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -224,18 +260,70 @@ export function Header({ variant = 'default' }: HeaderProps) {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [variant])
 
+  useEffect(() => {
+    setMobileMenuOpen(false)
+    setProfileMenuOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    if (!mobileMenuOpen) {
+      document.body.style.overflow = ''
+      return
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mobileMenuOpen])
+
+  useEffect(() => {
+    if (!profileMenuOpen) return
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!profileMenuRef.current?.contains(event.target as Node)) {
+        setProfileMenuOpen(false)
+      }
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setProfileMenuOpen(false)
+      }
+    }
+
+    window.addEventListener('mousedown', handlePointerDown)
+    window.addEventListener('keydown', handleEscape)
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown)
+      window.removeEventListener('keydown', handleEscape)
+    }
+  }, [profileMenuOpen])
+
   const navItems =
     variant === 'marketing'
-      ? [
-          { href: '#games', label: 'Games' },
-          { href: '#how-it-works', label: 'How it works' },
-          { href: '/lobby', label: 'Lobby' },
-        ]
+      ? showLandingNav
+        ? [
+            { href: '#games', label: 'Games' },
+            { href: '#how-it-works', label: 'How it works' },
+            { href: '/lobby', label: 'Lobby' },
+          ]
+        : []
       : [
           { href: '/', label: 'Games' },
           { href: '/lobby', label: 'Lobby' },
           ...(user ? [{ href: '/stats', label: 'My Stats' }] : []),
         ]
+
+  const accountItems: MenuItem[] = [
+    { href: '/', label: 'Home', icon: <IconHome size={16} /> },
+    { href: '/lobby', label: 'Lobby', icon: <IconArrowRight size={15} /> },
+    { href: '/profile', label: 'Profile', icon: <IconUser size={16} /> },
+    { href: '/stats', label: 'My Stats', icon: <IconBarChart size={16} /> },
+    ...(isAdmin ? [{ href: '/admin', label: 'Admin Dashboard', icon: <IconDashboard size={16} />, accent: true }] : []),
+  ]
 
   const ctaHref = user ? '/lobby' : '/auth/signin'
   const ctaLabel = user ? 'Open lobby' : variant === 'marketing' ? 'Get started' : 'Sign in'
@@ -282,13 +370,7 @@ export function Header({ variant = 'default' }: HeaderProps) {
                 : 'text-[var(--text-primary)] hover:text-[var(--primary-400)]'
             }`}
           >
-            <div
-              className={`relative flex h-10 w-10 items-center justify-center rounded-[12px] border shadow-[var(--shadow-sm)] ${
-                variant === 'marketing'
-                  ? 'border-[var(--border)] bg-[var(--surface)]'
-                  : 'border-[var(--border)] bg-[var(--surface)]'
-              }`}
-            >
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-[12px] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
               <LogoMark />
             </div>
             <div className="flex flex-col">
@@ -296,58 +378,127 @@ export function Header({ variant = 'default' }: HeaderProps) {
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-8 md:flex">
-            {navItems.map((item) => (
-              <NavLink key={item.label} href={item.href} variant={variant}>
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
+          {navItems.length > 0 && (
+            <nav className="hidden items-center gap-8 md:flex">
+              {navItems.map((item) => (
+                <NavLink key={item.label} href={item.href} variant={variant}>
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+          )}
 
           <div className="flex items-center gap-3">
             <ThemeToggle
               theme={theme}
               mounted={mounted}
               onToggle={() => setTheme((value) => (value === 'light' ? 'dark' : 'light'))}
-              variant={variant}
             />
 
             {status === 'loading' ? (
-              <div className="hidden h-10 w-10 animate-pulse rounded-[12px] bg-[var(--surface)] md:block" />
+              <div className="hidden h-10 w-[148px] animate-pulse rounded-[12px] bg-[var(--surface)] md:block" />
             ) : user ? (
-              <div className="hidden items-center gap-3 md:flex">
-                {(user as { role?: string }).role === 'ADMIN' && (
-                  <Link
-                    href="/admin"
-                    className="flex items-center gap-1.5 text-sm font-medium text-[var(--warning-500)] transition-colors hover:text-[var(--warning-600)]"
-                  >
-                    <IconDashboard size={15} />
-                    Admin
-                  </Link>
-                )}
-                <div className="flex items-center gap-2.5 rounded-[12px] border border-[var(--border)] bg-[var(--surface)] px-2 py-1.5">
+              <div ref={profileMenuRef} className="relative hidden md:block">
+                <button
+                  type="button"
+                  onClick={() => setProfileMenuOpen((value) => !value)}
+                  aria-label="Open account menu"
+                  aria-expanded={profileMenuOpen}
+                  aria-haspopup="menu"
+                  className={`flex items-center gap-2.5 rounded-[14px] border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-left transition-all ${
+                    profileMenuOpen
+                      ? 'shadow-[var(--marketing-shadow)] ring-1 ring-[var(--marketing-accent)]/20'
+                      : 'hover:bg-[var(--surface-hover)]'
+                  }`}
+                >
                   {user.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={user.image}
                       alt={user.name || 'User'}
                       className="h-8 w-8 rounded-full ring-1 ring-[var(--border)]"
                     />
                   ) : (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-hover)]">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-hover)] text-[var(--text-secondary)]">
                       <IconUser size={14} />
                     </div>
                   )}
-                  <span className="max-w-[120px] truncate text-sm font-medium text-[var(--text-secondary)]">
-                    {user.name}
-                  </span>
-                </div>
-                <button
-                  onClick={() => signOut()}
-                  className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[var(--border)] text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
-                  aria-label="Sign out"
-                >
-                  <IconLogOut size={16} />
+                  <div className="min-w-0">
+                    <p className="max-w-[124px] truncate text-sm font-semibold text-[var(--text-primary)]">
+                      {user.name ?? 'Player'}
+                    </p>
+                    <p className="max-w-[124px] truncate text-[11px] text-[var(--text-tertiary)]">
+                      {isAdmin ? 'Admin access enabled' : user.email ?? 'Account menu'}
+                    </p>
+                  </div>
+                  <motion.span
+                    animate={{ rotate: profileMenuOpen ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-[var(--text-tertiary)]"
+                  >
+                    <IconChevronDown size={16} />
+                  </motion.span>
                 </button>
+
+                <AnimatePresence>
+                  {profileMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                      className="absolute right-0 top-[calc(100%+12px)] w-[280px] overflow-hidden rounded-[22px] border border-[var(--border)] bg-[var(--marketing-panel-bg)] shadow-[var(--marketing-shadow-strong)] backdrop-blur-xl"
+                    >
+                      <div className="border-b border-[var(--border)] px-4 py-4">
+                        <p className="text-base font-semibold text-[var(--text-primary)]">
+                          {user.name ?? 'Player'}
+                        </p>
+                        <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                          {user.email ?? 'Signed in'}
+                        </p>
+                        <div className="mt-3 inline-flex items-center rounded-full bg-[var(--surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--text-tertiary)]">
+                          {isAdmin ? 'Administrator' : 'Player account'}
+                        </div>
+                      </div>
+
+                      <div className="px-3 py-3">
+                        <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                          Pages
+                        </p>
+                        <div className="mt-1 space-y-1">
+                          {accountItems.map((item) => (
+                            <Link
+                              key={item.label}
+                              href={item.href}
+                              onClick={() => setProfileMenuOpen(false)}
+                              className={`flex items-center gap-3 rounded-[14px] px-3 py-2.5 text-sm font-medium transition-colors ${
+                                item.accent
+                                  ? 'text-[var(--warning-500)] hover:bg-[var(--warning-500)]/10'
+                                  : 'text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
+                              }`}
+                            >
+                              <span className={item.accent ? 'text-[var(--warning-500)]' : 'text-[var(--text-tertiary)]'}>
+                                {item.icon}
+                              </span>
+                              <span>{item.label}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="border-t border-[var(--border)] p-3">
+                        <button
+                          type="button"
+                          onClick={() => void signOut({ callbackUrl: '/' })}
+                          className="flex w-full items-center gap-3 rounded-[14px] px-3 py-2.5 text-sm font-medium text-[var(--error-500)] transition-colors hover:bg-[var(--error-500)]/10"
+                        >
+                          <IconLogOut size={16} />
+                          Sign Out
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ) : variant === 'marketing' ? (
               <div className="hidden items-center gap-3 md:flex">
@@ -391,64 +542,154 @@ export function Header({ variant = 'default' }: HeaderProps) {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-            className={`overflow-hidden border-t border-[var(--border)] md:hidden ${
-              variant === 'marketing' ? 'bg-[var(--marketing-panel-bg)]/96 backdrop-blur-xl' : 'bg-[var(--background)]'
-            }`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed inset-0 z-[60] md:hidden"
+            aria-modal="true"
+            role="dialog"
           >
-            <div className="space-y-1 px-6 py-4">
-              {navItems.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className="block rounded-[12px] px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+            <button
+              type="button"
+              aria-label="Close navigation"
+              onClick={() => setMobileMenuOpen(false)}
+              className="absolute inset-0 bg-[rgba(15,23,42,0.42)] backdrop-blur-[2px]"
+            />
+
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute right-0 top-0 flex h-full w-[min(88vw,360px)] flex-col border-l border-[var(--border)] bg-[var(--background)] shadow-[var(--marketing-shadow-strong)]"
+            >
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                    Navigation
+                  </p>
+                  {user ? (
+                    <div className="mt-2 flex items-center gap-3">
+                      {user.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={user.image}
+                          alt={user.name || 'User'}
+                          className="h-11 w-11 rounded-full ring-1 ring-[var(--border)]"
+                        />
+                      ) : (
+                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-hover)] text-[var(--text-secondary)]">
+                          <IconUser size={18} />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate text-base font-semibold text-[var(--text-primary)]">
+                          {user.name ?? 'Player'}
+                        </p>
+                        <p className="truncate text-xs text-[var(--text-secondary)]">
+                          {user.email ?? 'Signed in'}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-base font-semibold text-[var(--text-primary)]">
+                      Mini Arcade
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
                   onClick={() => setMobileMenuOpen(false)}
+                  className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[var(--border)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+                  aria-label="Close menu"
                 >
-                  {item.label}
-                </Link>
-              ))}
-              {user ? (
-                <>
-                  <Link
-                    href="/lobby"
-                    className="block rounded-[12px] px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Open lobby
-                  </Link>
+                  <IconX size={18} />
+                </button>
+              </div>
+
+              <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
+                {navItems.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                      Explore
+                    </p>
+                    {navItems.map((item) => (
+                      <Link
+                        key={item.label}
+                        href={item.href}
+                        className="block rounded-[14px] px-3 py-3 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-hover)]"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
+                {user ? (
+                  <>
+                    <div className="space-y-1">
+                      <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                        Pages
+                      </p>
+                      {accountItems.map((item) => (
+                        <Link
+                          key={item.label}
+                          href={item.href}
+                          className={`flex items-center gap-3 rounded-[14px] px-3 py-3 text-sm font-medium transition-colors ${
+                            item.accent
+                              ? 'text-[var(--warning-500)] hover:bg-[var(--warning-500)]/10'
+                              : 'text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
+                          }`}
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <span className={item.accent ? 'text-[var(--warning-500)]' : 'text-[var(--text-tertiary)]'}>
+                            {item.icon}
+                          </span>
+                          <span>{item.label}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                      Account
+                    </p>
+                    <button
+                      onClick={() => signIn()}
+                      className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-hover)]"
+                    >
+                      <IconLogIn size={16} />
+                      Sign In
+                    </button>
+                    {variant === 'marketing' && (
+                      <Link
+                        href={ctaHref}
+                        className="mt-2 flex items-center justify-center gap-2 rounded-[14px] bg-[var(--text-primary)] px-3 py-3 text-sm font-semibold text-[var(--text-inverse)]"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {ctaLabel}
+                        <IconArrowRight />
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {user && (
+                <div className="border-t border-[var(--border)] p-5">
                   <button
-                    onClick={() => signOut()}
-                    className="flex w-full items-center gap-2 rounded-[12px] px-3 py-2.5 text-sm font-medium text-[var(--error-500)] hover:bg-[var(--error-500)]/10"
+                    onClick={() => void signOut({ callbackUrl: '/' })}
+                    className="flex w-full items-center gap-3 rounded-[14px] px-3 py-3 text-sm font-medium text-[var(--error-500)] transition-colors hover:bg-[var(--error-500)]/10"
                   >
                     <IconLogOut size={16} />
                     Sign Out
                   </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => signIn()}
-                    className="flex w-full items-center gap-2 rounded-[12px] px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
-                  >
-                    <IconLogIn size={16} />
-                    Sign In
-                  </button>
-                  {variant === 'marketing' && (
-                    <Link
-                      href={ctaHref}
-                      className="flex items-center justify-center gap-2 rounded-[12px] bg-[var(--text-primary)] px-3 py-3 text-sm font-semibold text-[var(--text-inverse)]"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      {ctaLabel}
-                      <IconArrowRight />
-                    </Link>
-                  )}
-                </>
+                </div>
               )}
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
