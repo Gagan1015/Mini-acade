@@ -12,9 +12,12 @@ import {
   MoreVertical,
   Ban,
   CheckCircle2,
+  PauseCircle,
   UserCog,
   ChevronDown,
+  Eye,
 } from 'lucide-react'
+import Link from 'next/link'
 import { staggerContainer, staggerItem } from '@/lib/motion'
 
 interface User {
@@ -300,13 +303,22 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
 
                       {/* Actions */}
                       <td className="px-5 py-4">
-                        <button
-                          ref={(el) => { dropdownBtnRefs.current[user.id] = el }}
-                          onClick={() => openDropdown(user.id)}
-                          className="btn btn-ghost btn-sm !p-1.5"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <Link
+                            href={`/admin/users/${user.id}`}
+                            className="btn btn-ghost btn-sm !p-1.5"
+                            title="View user details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                          <button
+                            ref={(el) => { dropdownBtnRefs.current[user.id] = el }}
+                            onClick={() => openDropdown(user.id)}
+                            className="btn btn-ghost btn-sm !p-1.5"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -377,6 +389,15 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
                     Activate
                   </button>
                 )}
+                {user.status !== 'SUSPENDED' && (
+                  <button
+                    onClick={() => updateUser(user.id, { status: 'SUSPENDED' })}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--warning-500)] transition-colors hover:bg-[var(--surface-hover)]"
+                  >
+                    <PauseCircle className="h-3.5 w-3.5" />
+                    Suspend
+                  </button>
+                )}
                 {user.status !== 'BANNED' && (
                   <button
                     onClick={() => updateUser(user.id, { status: 'BANNED' })}
@@ -386,6 +407,17 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
                     Ban User
                   </button>
                 )}
+
+                <div className="my-1 border-t border-[var(--border)]" />
+
+                <Link
+                  href={`/admin/users/${user.id}`}
+                  onClick={closeDropdown}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  View Details
+                </Link>
               </div>
             </>
           )

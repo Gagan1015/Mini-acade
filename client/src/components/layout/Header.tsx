@@ -466,23 +466,31 @@ export function Header({ variant = 'default' }: HeaderProps) {
                           Pages
                         </p>
                         <div className="mt-1 space-y-1">
-                          {accountItems.map((item) => (
-                            <Link
-                              key={item.label}
-                              href={item.href}
-                              onClick={() => setProfileMenuOpen(false)}
-                              className={`flex items-center gap-3 rounded-[14px] px-3 py-2.5 text-sm font-medium transition-colors ${
-                                item.accent
-                                  ? 'text-[var(--warning-500)] hover:bg-[var(--warning-500)]/10'
-                                  : 'text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
-                              }`}
-                            >
-                              <span className={item.accent ? 'text-[var(--warning-500)]' : 'text-[var(--text-tertiary)]'}>
-                                {item.icon}
-                              </span>
-                              <span>{item.label}</span>
-                            </Link>
-                          ))}
+                          {accountItems.map((item) => {
+                            const isActive = pathname === item.href
+                            return (
+                              <Link
+                                key={item.label}
+                                href={item.href}
+                                onClick={() => setProfileMenuOpen(false)}
+                                className={`relative flex items-center gap-3 rounded-[14px] px-3 py-2.5 text-sm font-medium transition-colors ${
+                                  isActive
+                                    ? 'bg-[var(--marketing-accent-soft)] text-[var(--marketing-accent)]'
+                                    : item.accent
+                                      ? 'text-[var(--warning-500)] hover:bg-[var(--warning-500)]/10'
+                                      : 'text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
+                                }`}
+                              >
+                                {isActive && (
+                                  <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-[var(--marketing-accent)]" />
+                                )}
+                                <span className={isActive ? 'text-[var(--marketing-accent)]' : item.accent ? 'text-[var(--warning-500)]' : 'text-[var(--text-tertiary)]'}>
+                                  {item.icon}
+                                </span>
+                                <span>{item.label}</span>
+                              </Link>
+                            )
+                          })}
                         </div>
                       </div>
 
@@ -633,23 +641,31 @@ export function Header({ variant = 'default' }: HeaderProps) {
                       <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
                         Pages
                       </p>
-                      {accountItems.map((item) => (
-                        <Link
-                          key={item.label}
-                          href={item.href}
-                          className={`flex items-center gap-3 rounded-[14px] px-3 py-3 text-sm font-medium transition-colors ${
-                            item.accent
-                              ? 'text-[var(--warning-500)] hover:bg-[var(--warning-500)]/10'
-                              : 'text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
-                          }`}
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          <span className={item.accent ? 'text-[var(--warning-500)]' : 'text-[var(--text-tertiary)]'}>
-                            {item.icon}
-                          </span>
-                          <span>{item.label}</span>
-                        </Link>
-                      ))}
+                      {accountItems.map((item) => {
+                        const isActive = pathname === item.href
+                        return (
+                          <Link
+                            key={item.label}
+                            href={item.href}
+                            className={`relative flex items-center gap-3 rounded-[14px] px-3 py-3 text-sm font-medium transition-colors ${
+                              isActive
+                                ? 'bg-[var(--marketing-accent-soft)] text-[var(--marketing-accent)]'
+                                : item.accent
+                                  ? 'text-[var(--warning-500)] hover:bg-[var(--warning-500)]/10'
+                                  : 'text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
+                            }`}
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            {isActive && (
+                              <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-[var(--marketing-accent)]" />
+                            )}
+                            <span className={isActive ? 'text-[var(--marketing-accent)]' : item.accent ? 'text-[var(--warning-500)]' : 'text-[var(--text-tertiary)]'}>
+                              {item.icon}
+                            </span>
+                            <span>{item.label}</span>
+                          </Link>
+                        )
+                      })}
                     </div>
                   </>
                 ) : (
