@@ -4,6 +4,7 @@ import { motion } from 'motion/react'
 import Link from 'next/link'
 import { GameIcon } from '@/components/ui/GameIcons'
 import { ProgressRing, SparkLine, HorizontalBarChart } from '@/components/ui/Charts'
+import { UserAvatar } from '@/components/ui/UserAvatar'
 
 /* ── Types ── */
 interface RecentResult {
@@ -180,20 +181,14 @@ export default function ProfileClient({
                 />
               </svg>
 
-              {profile.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={profile.image}
-                  alt={profile.name ?? 'Player'}
-                  className="relative h-[88px] w-[88px] rounded-full border-2 border-[var(--border)] object-cover"
-                />
-              ) : (
-                <div className="relative flex h-[88px] w-[88px] items-center justify-center rounded-full border-2 border-[var(--border)] bg-[var(--surface-hover)]">
-                  <span className="font-display text-3xl font-bold text-[var(--text-primary)]">
-                    {(profile.name ?? 'P').slice(0, 1)}
-                  </span>
-                </div>
-              )}
+              <UserAvatar
+                src={profile.image}
+                name={profile.name ?? 'Player'}
+                alt={profile.name ?? 'Player'}
+                className="relative h-[88px] w-[88px] rounded-full border-2 border-[var(--border)]"
+                fallbackClassName="bg-[var(--surface-hover)] font-display text-3xl text-[var(--text-primary)]"
+                iconClassName="h-8 w-8"
+              />
 
               {/* Level badge */}
               <motion.div

@@ -576,7 +576,8 @@ export class SkribbleRuntime extends BaseGameRuntime {
   }
 
   private unrefRoundTimer() {
-    ;(this.roundTimer as { unref?: () => void } | null)?.unref?.()
+    const timer = this.roundTimer as { unref?: () => void } | null
+    timer?.unref?.()
   }
 }
 

@@ -1,4 +1,4 @@
-import type { GameId, Player, UserId } from './types'
+import type { GameId, Player, TriviaCategory, TriviaDifficulty, UserId } from './types'
 
 export type GamePhase = 'waiting' | 'playing' | 'roundEnd' | 'gameEnd'
 
@@ -6,6 +6,8 @@ export interface GameSettings {
   rounds?: number
   roundTime?: number
   maxPlayers?: number
+  triviaCategory?: TriviaCategory
+  triviaDifficulty?: TriviaDifficulty
   customSettings?: Record<string, unknown>
 }
 

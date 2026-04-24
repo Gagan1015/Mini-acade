@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { staggerContainer, staggerItem } from '@/lib/motion'
+import { UserAvatar } from '@/components/ui/UserAvatar'
 
 interface User {
   id: string
@@ -258,17 +259,13 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
                       {/* User info */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          {user.image ? (
-                            <img
-                              src={user.image}
-                              alt={user.name}
-                              className="h-9 w-9 rounded-full ring-2 ring-[var(--border)]"
-                            />
-                          ) : (
-                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--primary-500)]/15 text-sm font-bold text-[var(--primary-400)]">
-                              {user.name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
+                          <UserAvatar
+                            src={user.image}
+                            name={user.name}
+                            alt={user.name}
+                            className="h-9 w-9 rounded-full ring-2 ring-[var(--border)]"
+                            fallbackClassName="bg-[var(--primary-500)]/15 text-[var(--primary-400)]"
+                          />
                           <div className="min-w-0">
                             <p className="truncate font-medium text-[var(--text-primary)]">
                               {user.name}

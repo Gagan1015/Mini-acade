@@ -38,6 +38,7 @@ import {
   type Stroke,
   type TriviaAnswerResultPayload,
   type TriviaGameEnded,
+  type TriviaQuestion,
   type TriviaPlayerAnsweredPayload,
   type TriviaRoundEnded,
   type TriviaRoundStarted,
@@ -179,7 +180,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
   const [trivia, setTrivia] = useState<TriviaUiState>({
     phase: initialRoom.status === 'playing' ? 'playing' : 'waiting',
     currentRound: 0,
-    totalRounds: 5,
+    totalRounds: initialRoom.settings?.rounds ?? 10,
     timeRemaining: 0,
     question: null,
     answeredPlayers: [],
@@ -601,6 +602,10 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
       setTrivia((previousState) => ({
         ...previousState,
         phase: 'roundEnd',
+        timeRemaining: 0,
+        answeredPlayers: payload.playerResults
+          .filter((result) => result.answerId !== null)
+          .map((result) => result.playerId),
         roundResults: payload,
         scores: Object.fromEntries(
           payload.playerResults.map((result) => [result.playerId, result.totalScore])
@@ -637,6 +642,8 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
               answers: payload.question.answers,
               category: payload.question.category,
               difficulty: payload.question.difficulty,
+              explanation: payload.question.explanation,
+              tags: payload.question.tags,
             }
           : null,
         answeredPlayers: payload.playerProgress
@@ -644,7 +651,14 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
           .map((entry) => entry.playerId),
         selectedAnswerId: null,
         answerFeedback: null,
-        roundResults: null,
+        roundResults:
+          payload.question?.correctAnswerId
+            ? {
+                correctAnswerId: payload.question.correctAnswerId,
+                explanation: payload.question.explanation,
+                playerResults: [],
+              }
+            : null,
         scores: payload.scores,
         finalScores: payload.finalScores ?? [],
       })
@@ -1085,7 +1099,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
   )
 
   const submitTriviaAnswer = useCallback(
-    (questionId: string, answerId: string) => {
+    (questionId: string, answerId: TriviaQuestion['answers'][number]['id']) => {
       const socket = socketRef.current
       if (!socket) {
         return

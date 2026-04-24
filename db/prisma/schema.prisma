@@ -91,6 +91,7 @@ model Room {
   status     RoomStatus @default(WAITING)
   maxPlayers Int        @default(8)
   isPrivate  Boolean    @default(true)
+  settings   Json?
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   startedAt  DateTime?
@@ -205,6 +206,30 @@ model GameConfig {
 
   @@index([gameId])
   @@index([isEnabled])
+}
+
+model TriviaQuestion {
+  id           String    @id @default(cuid())
+  hash         String    @unique
+  question     String
+  answers      Json
+  correctId    String
+  explanation  String?
+  category     String
+  difficulty   String
+  tags         String[]
+  source       String    @default("ai")
+  status       String    @default("approved")
+  usageCount   Int       @default(0)
+  correctCount Int       @default(0)
+  reportCount  Int       @default(0)
+  lastUsedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([category, difficulty, status])
+  @@index([lastUsedAt])
+  @@index([usageCount])
 }
 
 model SystemSetting {

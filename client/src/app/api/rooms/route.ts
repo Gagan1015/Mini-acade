@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { gameIdSchema } from '@mini-arcade/shared'
+import { gameIdSchema, triviaCategorySchema, triviaDifficultySchema } from '@mini-arcade/shared'
 
 import { requireSession } from '@/lib/admin'
 import { createRoomForUser } from '@/lib/rooms'
@@ -9,6 +9,13 @@ import { createRoomForUser } from '@/lib/rooms'
 const createRoomSchema = z.object({
   gameId: gameIdSchema,
   maxPlayers: z.number().int().min(1).max(10).optional(),
+  settings: z
+    .object({
+      rounds: z.number().int().min(1).max(20).optional(),
+      triviaCategory: triviaCategorySchema.optional(),
+      triviaDifficulty: triviaDifficultySchema.optional(),
+    })
+    .optional(),
 })
 
 export async function POST(request: Request) {
@@ -21,6 +28,7 @@ export async function POST(request: Request) {
       creatorId: session.user.id,
       gameId: input.gameId,
       maxPlayers: input.maxPlayers,
+      settings: input.gameId === 'trivia' ? input.settings : undefined,
     })
 
     return NextResponse.json({

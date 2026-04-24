@@ -1,9 +1,10 @@
-import { prisma } from '@mini-arcade/db'
+import { prisma, type Prisma } from '@mini-arcade/db'
 import {
   GAMES,
   ROOM_CONFIG,
   roomCodeSchema,
   type GameId,
+  type GameSettings,
   type Room,
   type RoomCode,
 } from '@mini-arcade/shared'
@@ -14,6 +15,7 @@ export async function createRoomForUser(input: {
   creatorId: string
   gameId: GameId
   maxPlayers?: number
+  settings?: GameSettings
 }) {
   const code = await generateUniqueRoomCode()
   const maxPlayers = clampMaxPlayers(input.gameId, input.maxPlayers)
@@ -24,6 +26,7 @@ export async function createRoomForUser(input: {
       gameId: input.gameId,
       creatorId: input.creatorId,
       maxPlayers,
+      settings: input.settings as Prisma.InputJsonValue | undefined,
       status: 'WAITING',
       isPrivate: true,
     },
@@ -130,6 +133,7 @@ export async function getRoomByCode(code: string): Promise<Room | null> {
       isHost: player.id === hostId,
     })),
     maxPlayers: room.maxPlayers,
+    settings: (room.settings as GameSettings | null) ?? undefined,
     createdAt: room.createdAt.toISOString(),
   }
 }

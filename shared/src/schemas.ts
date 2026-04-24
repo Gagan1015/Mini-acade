@@ -12,6 +12,24 @@ export const playerNameSchema = z.string().trim().min(1).max(30)
 export const isoDateTimeSchema = z.string().datetime()
 export const roomStatusSchema = z.enum(['waiting', 'playing', 'finished'])
 
+// Trivia option schemas are declared early because rooms can persist trivia settings.
+export const triviaCategories = [
+  'Mixed',
+  'Movies & TV',
+  'Music',
+  'Sports',
+  'Gaming',
+  'Science & Nature',
+  'History & Culture',
+  'Geography & Travel',
+  'Internet & Tech',
+  'Food & Lifestyle',
+] as const
+
+export const triviaCategorySchema = z.enum(triviaCategories)
+export const triviaDifficultySchema = z.enum(['easy', 'medium', 'hard'])
+export const triviaAnswerIdSchema = z.enum(['a', 'b', 'c', 'd'])
+
 // Shared entities
 export const userSchema = z.object({
   id: userIdSchema,
@@ -30,6 +48,14 @@ export const playerSchema = z.object({
   score: z.number().int().min(0).default(0),
 })
 
+export const gameSettingsSchema = z
+  .object({
+    rounds: z.number().int().min(1).max(20).optional(),
+    triviaCategory: triviaCategorySchema.optional(),
+    triviaDifficulty: triviaDifficultySchema.optional(),
+  })
+  .optional()
+
 export const roomSchema = z.object({
   code: roomCodeSchema,
   gameId: gameIdSchema,
@@ -37,6 +63,7 @@ export const roomSchema = z.object({
   status: roomStatusSchema,
   players: z.array(playerSchema),
   maxPlayers: z.number().int().min(1).max(10).default(8),
+  settings: gameSettingsSchema,
   createdAt: isoDateTimeSchema,
 })
 
@@ -209,24 +236,25 @@ export const drawWordHintSchema = z.object({
   hint: z.string(),
 })
 
-// Trivia schemas
 export const triviaAnswerSchema = z.object({
-  id: z.string().min(1),
-  text: z.string().min(1),
+  id: triviaAnswerIdSchema,
+  text: z.string().trim().min(1).max(120),
 })
 
 export const triviaQuestionSchema = z.object({
   id: z.string().min(1),
-  question: z.string().min(1),
+  question: z.string().trim().min(8).max(240),
   answers: z.array(triviaAnswerSchema).length(4),
-  category: z.string().optional(),
-  difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+  category: triviaCategorySchema.default('Mixed'),
+  difficulty: triviaDifficultySchema.default('medium'),
+  explanation: z.string().trim().max(180).optional(),
+  tags: z.array(z.string().trim().regex(/^[a-z0-9-]+$/).max(40)).max(8).optional(),
 })
 
 export const triviaSubmitAnswerPayloadSchema = z.object({
   roomCode: roomCodeSchema,
   questionId: z.string().min(1),
-  answerId: z.string().min(1),
+  answerId: triviaAnswerIdSchema,
 })
 
 export const triviaRoundStartedSchema = z.object({
@@ -238,11 +266,12 @@ export const triviaRoundStartedSchema = z.object({
 })
 
 export const triviaRoundEndedSchema = z.object({
-  correctAnswerId: z.string().min(1),
+  correctAnswerId: triviaAnswerIdSchema,
+  explanation: z.string().trim().max(180).optional(),
   playerResults: z.array(
     z.object({
       playerId: userIdSchema,
-      answerId: z.string().nullable(),
+      answerId: triviaAnswerIdSchema.nullable(),
       isCorrect: z.boolean(),
       pointsEarned: z.number().int(),
       totalScore: z.number().int(),
@@ -289,7 +318,7 @@ export const triviaSyncSchema = z.object({
   timeRemaining: z.number().int().min(0),
   question: triviaQuestionSchema
     .extend({
-      correctAnswerId: z.string().min(1).optional(),
+      correctAnswerId: triviaAnswerIdSchema.optional(),
     })
     .nullable(),
   playerProgress: z.array(triviaPlayerProgressSchema),

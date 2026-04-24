@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { AnimatePresence, motion } from 'motion/react'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { UserAvatar } from '@/components/ui/UserAvatar'
 
 function LogoMark({ className = '' }: { className?: string }) {
   return (
@@ -411,18 +412,13 @@ export function Header({ variant = 'default' }: HeaderProps) {
                       : 'hover:bg-[var(--surface-hover)]'
                   }`}
                 >
-                  {user.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={user.image}
-                      alt={user.name || 'User'}
-                      className="h-8 w-8 rounded-full ring-1 ring-[var(--border)]"
-                    />
-                  ) : (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-hover)] text-[var(--text-secondary)]">
-                      <IconUser size={14} />
-                    </div>
-                  )}
+                  <UserAvatar
+                    src={user.image}
+                    name={user.name ?? 'User'}
+                    alt={user.name ?? 'User'}
+                    className="h-8 w-8 rounded-full ring-1 ring-[var(--border)]"
+                    iconClassName="h-3.5 w-3.5"
+                  />
                   <div className="min-w-0">
                     <p className="max-w-[124px] truncate text-sm font-semibold text-[var(--text-primary)]">
                       {user.name ?? 'Player'}
@@ -579,18 +575,13 @@ export function Header({ variant = 'default' }: HeaderProps) {
                   </p>
                   {user ? (
                     <div className="mt-2 flex items-center gap-3">
-                      {user.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={user.image}
-                          alt={user.name || 'User'}
-                          className="h-11 w-11 rounded-full ring-1 ring-[var(--border)]"
-                        />
-                      ) : (
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--surface-hover)] text-[var(--text-secondary)]">
-                          <IconUser size={18} />
-                        </div>
-                      )}
+                      <UserAvatar
+                        src={user.image}
+                        name={user.name ?? 'User'}
+                        alt={user.name ?? 'User'}
+                        className="h-11 w-11 rounded-full ring-1 ring-[var(--border)]"
+                        iconClassName="h-[18px] w-[18px]"
+                      />
                       <div className="min-w-0">
                         <p className="truncate text-base font-semibold text-[var(--text-primary)]">
                           {user.name ?? 'Player'}

@@ -3,7 +3,14 @@
 import { useRouter } from 'next/navigation'
 import { type FormEvent, useMemo, useState } from 'react'
 import { motion } from 'motion/react'
-import { GAMES, ROOM_CONFIG, type GameId } from '@mini-arcade/shared'
+import {
+  GAMES,
+  ROOM_CONFIG,
+  triviaCategories,
+  type GameId,
+  type TriviaCategory,
+  type TriviaDifficulty,
+} from '@mini-arcade/shared'
 import { GAME_LIST, getGameInfo } from '@/lib/games'
 import { GameIcon } from '@/components/ui/GameIcons'
 
@@ -44,11 +51,19 @@ function IconCheck({ size = 10 }: { size?: number }) {
 }
 
 const defaultGameId: GameId = 'wordel'
+const triviaDifficultyOptions: Array<{ value: TriviaDifficulty; label: string }> = [
+  { value: 'easy', label: 'Chill' },
+  { value: 'medium', label: 'Classic' },
+  { value: 'hard', label: 'Expert' },
+]
 
 export function RoomActionsPanel() {
   const router = useRouter()
   const [gameId, setGameId] = useState<GameId>(defaultGameId)
   const [maxPlayers, setMaxPlayers] = useState(String(GAMES[defaultGameId].maxPlayers))
+  const [triviaRounds, setTriviaRounds] = useState('10')
+  const [triviaCategory, setTriviaCategory] = useState<TriviaCategory>('Mixed')
+  const [triviaDifficulty, setTriviaDifficulty] = useState<TriviaDifficulty>('medium')
   const [joinCode, setJoinCode] = useState('')
   const [createError, setCreateError] = useState<string | null>(null)
   const [joinError, setJoinError] = useState<string | null>(null)
@@ -70,7 +85,18 @@ export function RoomActionsPanel() {
       const response = await fetch('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gameId, maxPlayers: Number(maxPlayers) }),
+        body: JSON.stringify({
+          gameId,
+          maxPlayers: Number(maxPlayers),
+          settings:
+            gameId === 'trivia'
+              ? {
+                  rounds: Number(triviaRounds),
+                  triviaCategory,
+                  triviaDifficulty,
+                }
+              : undefined,
+        }),
       })
       const payload = await response.json() as {
         success: boolean
@@ -170,6 +196,71 @@ export function RoomActionsPanel() {
             })}
           </div>
         </label>
+
+        {gameId === 'trivia' && (
+          <div className="mb-5 space-y-4 rounded-xl border border-[var(--border)]/50 bg-[var(--surface)]/30 p-4">
+            <div>
+              <span className="mb-3 block text-sm font-medium text-[var(--text-secondary)]">Category</span>
+              <div className="flex flex-wrap gap-2">
+                {triviaCategories.map((category) => {
+                  const isSelected = triviaCategory === category
+                  return (
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() => setTriviaCategory(category)}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                        isSelected
+                          ? 'border-[var(--game-trivia)]/50 bg-[var(--game-trivia)]/10 text-[var(--game-trivia)]'
+                          : 'border-[var(--border)] bg-[var(--surface)]/40 text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]'
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div>
+              <span className="mb-3 block text-sm font-medium text-[var(--text-secondary)]">Difficulty</span>
+              <div className="grid grid-cols-3 gap-2">
+                {triviaDifficultyOptions.map((option) => {
+                  const isSelected = triviaDifficulty === option.value
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setTriviaDifficulty(option.value)}
+                      className={`rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
+                        isSelected
+                          ? 'border-[var(--game-trivia)]/50 bg-[var(--game-trivia)]/10 text-[var(--game-trivia)]'
+                          : 'border-[var(--border)] bg-[var(--surface)]/40 text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Questions</span>
+              <input
+                type="number"
+                min={3}
+                max={20}
+                value={triviaRounds}
+                onChange={(event) => setTriviaRounds(event.target.value)}
+                className="input"
+              />
+              <span className="mt-1.5 block text-xs text-[var(--text-tertiary)]">
+                Scores are out of {Math.max(1, Number(triviaRounds) || 10) * 1000} points.
+              </span>
+            </label>
+          </div>
+        )}
 
         {/* Max players */}
         <label className="mb-5 block">

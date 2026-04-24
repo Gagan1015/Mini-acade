@@ -63,12 +63,12 @@ export function Footer({ variant = 'default' }: FooterProps) {
                 </Link>
               </>
             )}
-            <a href="#" className="transition-colors duration-200 hover:text-[var(--text-primary)]">
+            <Link href="/privacy" className="transition-colors duration-200 hover:text-[var(--text-primary)]">
               Privacy
-            </a>
-            <a href="#" className="transition-colors duration-200 hover:text-[var(--text-primary)]">
+            </Link>
+            <Link href="/terms" className="transition-colors duration-200 hover:text-[var(--text-primary)]">
               Terms
-            </a>
+            </Link>
           </nav>
         </div>
       </div>

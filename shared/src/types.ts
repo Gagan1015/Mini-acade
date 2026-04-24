@@ -60,6 +60,8 @@ import {
   strokeBatchPayloadSchema,
   strokeSchema,
   triviaAnswerResultSchema,
+  triviaCategorySchema,
+  triviaDifficultySchema,
   triviaGameEndedSchema,
   triviaPlayerProgressSchema,
   triviaPlayerAnsweredSchema,
@@ -122,6 +124,8 @@ export type DrawWordChoicesPayload = z.infer<typeof drawWordChoicesSchema>
 export type DrawWordChoosingStartedPayload = z.infer<typeof drawWordChoosingStartedSchema>
 
 export type TriviaQuestion = z.infer<typeof triviaQuestionSchema>
+export type TriviaCategory = z.infer<typeof triviaCategorySchema>
+export type TriviaDifficulty = z.infer<typeof triviaDifficultySchema>
 export type TriviaSubmitAnswerPayload = z.infer<typeof triviaSubmitAnswerPayloadSchema>
 export type TriviaRoundStarted = z.infer<typeof triviaRoundStartedSchema>
 export type TriviaRoundEnded = z.infer<typeof triviaRoundEndedSchema>

@@ -1,6 +1,7 @@
 import {
   type ClientToServerEvents,
   type GameEventResult,
+  type GameSettings,
   type IGameRuntime,
   type InterServerEvents,
   type Room,
@@ -18,6 +19,15 @@ import { WordelRuntime } from './wordel/WordelRuntime'
 
 type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>
 type TypedIo = Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>
+
+function getTriviaSettings(room: Room): GameSettings {
+  return {
+    rounds: room.settings?.rounds ?? 10,
+    maxPlayers: room.maxPlayers,
+    triviaCategory: room.settings?.triviaCategory,
+    triviaDifficulty: room.settings?.triviaDifficulty,
+  }
+}
 
 export class GameManager {
   private readonly games = new Map<string, IGameRuntime>()
@@ -115,10 +125,7 @@ export class GameManager {
               gameId: room.gameId,
               roomCode: room.code,
               players: room.players,
-              settings: {
-                rounds: 5,
-                maxPlayers: room.maxPlayers,
-              },
+              settings: getTriviaSettings(room),
             },
             this.roomService
           )

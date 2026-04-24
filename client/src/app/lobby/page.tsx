@@ -4,7 +4,14 @@ import { Suspense, useState, useEffect, type FormEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession, signIn } from 'next-auth/react'
 import { motion, AnimatePresence } from 'motion/react'
-import { GAMES, ROOM_CONFIG, type GameId } from '@mini-arcade/shared'
+import {
+  GAMES,
+  ROOM_CONFIG,
+  triviaCategories,
+  type GameId,
+  type TriviaCategory,
+  type TriviaDifficulty,
+} from '@mini-arcade/shared'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { GAME_LIST, getGameInfo } from '@/lib/games'
 import { Spinner } from '@/components/ui/Animated'
@@ -107,6 +114,11 @@ function IconHash({ size = 16 }: { size?: number }) {
 
 type TabType = 'create' | 'join'
 type PlayMode = 'solo' | 'multiplayer'
+const triviaDifficultyOptions: Array<{ value: TriviaDifficulty; label: string }> = [
+  { value: 'easy', label: 'Chill' },
+  { value: 'medium', label: 'Classic' },
+  { value: 'hard', label: 'Expert' },
+]
 
 function LobbyPageContent() {
   const router = useRouter()
@@ -117,6 +129,9 @@ function LobbyPageContent() {
   const [selectedGame, setSelectedGame] = useState<GameId | null>(null)
   const [playMode, setPlayMode] = useState<PlayMode>('multiplayer')
   const [maxPlayers, setMaxPlayers] = useState('8')
+  const [triviaRounds, setTriviaRounds] = useState('10')
+  const [triviaCategory, setTriviaCategory] = useState<TriviaCategory>('Mixed')
+  const [triviaDifficulty, setTriviaDifficulty] = useState<TriviaDifficulty>('medium')
   const [joinCode, setJoinCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -154,7 +169,18 @@ function LobbyPageContent() {
       const res = await fetch('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gameId: selectedGame, maxPlayers: Number(maxPlayers) }),
+        body: JSON.stringify({
+          gameId: selectedGame,
+          maxPlayers: Number(maxPlayers),
+          settings:
+            selectedGame === 'trivia'
+              ? {
+                  rounds: Number(triviaRounds),
+                  triviaCategory,
+                  triviaDifficulty,
+                }
+              : undefined,
+        }),
       })
       const payload = await res.json()
       if (!res.ok || !payload.success || !payload.data) {
@@ -432,6 +458,77 @@ function LobbyPageContent() {
 
                             {/* Divider */}
                             <div className="h-px bg-[var(--border)]" />
+
+                            {selectedGameData.id === 'trivia' && (
+                              <div className="space-y-5">
+                                <div>
+                                  <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
+                                    Category
+                                  </label>
+                                  <div className="flex flex-wrap gap-2">
+                                    {triviaCategories.map((category) => {
+                                      const isSelected = triviaCategory === category
+                                      return (
+                                        <button
+                                          key={category}
+                                          type="button"
+                                          onClick={() => setTriviaCategory(category)}
+                                          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                                            isSelected
+                                              ? 'border-[var(--game-trivia)]/50 bg-[var(--game-trivia)]/10 text-[var(--game-trivia)]'
+                                              : 'border-[var(--border)] bg-[var(--background)]/50 text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]'
+                                          }`}
+                                        >
+                                          {category}
+                                        </button>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
+                                    Difficulty
+                                  </label>
+                                  <div className="grid grid-cols-3 gap-2">
+                                    {triviaDifficultyOptions.map((option) => {
+                                      const isSelected = triviaDifficulty === option.value
+                                      return (
+                                        <button
+                                          key={option.value}
+                                          type="button"
+                                          onClick={() => setTriviaDifficulty(option.value)}
+                                          className={`rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors cursor-pointer ${
+                                            isSelected
+                                              ? 'border-[var(--game-trivia)]/50 bg-[var(--game-trivia)]/10 text-[var(--game-trivia)]'
+                                              : 'border-[var(--border)] bg-[var(--background)]/50 text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]'
+                                          }`}
+                                        >
+                                          {option.label}
+                                        </button>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+
+                                <label className="block">
+                                  <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
+                                    Questions
+                                  </span>
+                                  <input
+                                    type="number"
+                                    min={3}
+                                    max={20}
+                                    value={triviaRounds}
+                                    onChange={(event) => setTriviaRounds(event.target.value)}
+                                    className="input"
+                                  />
+                                  <span className="mt-1.5 block text-[10px] text-[var(--text-tertiary)]">
+                                    Match score is out of {Math.max(1, Number(triviaRounds) || 10) * 1000} points.
+                                  </span>
+                                </label>
+                              </div>
+                            )}
 
                             {/* Play mode toggle (only for singleplayer-capable games) */}
                             {supportsSolo && (

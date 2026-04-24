@@ -1,7 +1,6 @@
 'use client'
 
 import { motion } from 'motion/react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import {
@@ -10,7 +9,6 @@ import {
   ShieldCheck,
   ShieldAlert,
   Crown,
-  UserCog,
   Ban,
   CheckCircle2,
   PauseCircle,
@@ -27,6 +25,7 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { staggerContainer, staggerItem } from '@/lib/motion'
+import { UserAvatar } from '@/components/ui/UserAvatar'
 
 /* ── Types ── */
 interface UserData {
@@ -253,18 +252,14 @@ export function AdminUserDetailClient({
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
           {/* Avatar */}
           <div className="flex-shrink-0">
-            {currentUser.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={currentUser.image}
-                alt={currentUser.name}
-                className="h-20 w-20 rounded-2xl ring-2 ring-[var(--border)] object-cover"
-              />
-            ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[var(--primary-500)]/15 text-2xl font-bold text-[var(--primary-400)]">
-                {currentUser.name.charAt(0).toUpperCase()}
-              </div>
-            )}
+            <UserAvatar
+              src={currentUser.image}
+              name={currentUser.name}
+              alt={currentUser.name}
+              className="h-20 w-20 rounded-2xl ring-2 ring-[var(--border)]"
+              fallbackClassName="bg-[var(--primary-500)]/15 text-2xl text-[var(--primary-400)]"
+              iconClassName="h-7 w-7"
+            />
           </div>
 
           {/* Info */}

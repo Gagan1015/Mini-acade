@@ -4,6 +4,7 @@ import {
   ROOM_CONFIG,
   ROOM_EVENTS,
   type ClientToServerEvents,
+  type GameSettings,
   type GameId,
   type InterServerEvents,
   type Player,
@@ -32,6 +33,7 @@ type RoomState = {
   hostId: UserId
   status: RoomStatus
   maxPlayers: number
+  settings?: GameSettings
   createdAt: string
   players: Map<UserId, PlayerState>
 }
@@ -400,6 +402,7 @@ export class RoomService {
       hostId,
       status: this.mapDbStatus(dbRoom.status),
       maxPlayers: dbRoom.maxPlayers,
+      settings: (dbRoom.settings as GameSettings | null) ?? undefined,
       createdAt: dbRoom.createdAt.toISOString(),
       players,
     }
@@ -546,6 +549,7 @@ export class RoomService {
         score: player.score,
       })),
       maxPlayers: room.maxPlayers,
+      settings: room.settings,
       createdAt: room.createdAt,
     }
   }

@@ -6,6 +6,7 @@ import type {
   Player,
   TriviaAnswerResultPayload,
   TriviaGameEnded,
+  TriviaQuestion,
   TriviaRoundEnded,
   TriviaRoundStarted,
 } from '@mini-arcade/shared'
@@ -24,7 +25,7 @@ type TriviaPlayAreaProps = {
   roundResults: TriviaRoundEnded | null
   scores: Record<string, number>
   finalScores: TriviaGameEnded['finalScores']
-  onSubmitAnswer: (questionId: string, answerId: string) => void
+  onSubmitAnswer: (questionId: string, answerId: TriviaQuestion['answers'][number]['id']) => void
 }
 
 /* ── SVG Icons ── */
@@ -76,6 +77,7 @@ export function TriviaPlayArea({
   onSubmitAnswer,
 }: TriviaPlayAreaProps) {
   const sortedPlayers = [...players].sort((left, right) => (scores[right.id] ?? 0) - (scores[left.id] ?? 0))
+  const maxPossibleScore = totalRounds * 1000
   const leaderboardEntries: TriviaGameEnded['finalScores'] =
     finalScores.length > 0
       ? finalScores
@@ -107,6 +109,9 @@ export function TriviaPlayArea({
           <p className="text-sm text-[var(--text-secondary)]">
             Round <span className="font-semibold text-[var(--text-primary)]">{currentRound}</span> / {totalRounds}
           </p>
+          <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+            Max score {maxPossibleScore.toLocaleString()} pts
+          </p>
           <p className={`mt-2 font-mono text-3xl font-bold ${timeRemaining <= 5 ? 'text-[var(--error-500)]' : 'text-[var(--text-primary)]'}`}>
             {timeRemaining}s
           </p>
@@ -129,6 +134,9 @@ export function TriviaPlayArea({
           <div className="mt-6 grid gap-3 md:grid-cols-2">
             {question.answers.map((answer) => {
               const isSelected = selectedAnswerId === answer.id
+              const isReveal = phase === 'roundEnd' || phase === 'gameEnd'
+              const isCorrectAnswer = roundResults?.correctAnswerId === answer.id
+              const isWrongSelected = isReveal && isSelected && !isCorrectAnswer
               return (
                 <motion.button
                   key={answer.id}
@@ -138,7 +146,11 @@ export function TriviaPlayArea({
                   onClick={() => onSubmitAnswer(question.id, answer.id)}
                   disabled={phase !== 'playing' || Boolean(selectedAnswerId)}
                   className={`rounded-xl border px-4 py-4 text-left text-sm transition-all duration-200 ${
-                    isSelected
+                    isCorrectAnswer
+                      ? 'border-[var(--success-500)]/40 bg-[var(--success-500)]/10 text-[var(--success-500)]'
+                      : isWrongSelected
+                        ? 'border-[var(--error-500)]/40 bg-[var(--error-500)]/10 text-[var(--error-500)]'
+                        : isSelected
                       ? 'border-[var(--primary-500)]/40 bg-[var(--primary-500)]/10 text-[var(--primary-400)]'
                       : 'border-[var(--border)]/40 bg-[var(--surface)]/20 text-[var(--text-primary)] hover:bg-[var(--surface)]/50'
                   } disabled:cursor-not-allowed disabled:opacity-70`}
@@ -185,6 +197,9 @@ export function TriviaPlayArea({
           >
             Correct answer: <span className="font-semibold">{question?.answers.find((answer) => answer.id === roundResults.correctAnswerId)?.text ??
               roundResults.correctAnswerId}</span>
+            {roundResults.explanation && (
+              <p className="mt-2 text-[var(--text-secondary)]">{roundResults.explanation}</p>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -211,7 +226,9 @@ export function TriviaPlayArea({
                       {didAnswer ? 'Locked in' : 'Thinking'}
                     </p>
                   </div>
-                  <p className="text-sm font-medium text-[var(--primary-400)]">{scores[player.id] ?? 0} pts</p>
+                  <p className="text-sm font-medium text-[var(--primary-400)]">
+                    {(scores[player.id] ?? 0).toLocaleString()} / {maxPossibleScore.toLocaleString()}
+                  </p>
                 </div>
               )
             })}
@@ -234,7 +251,9 @@ export function TriviaPlayArea({
                   <span className="font-mono text-[var(--text-tertiary)]">#{entry.rank}</span>{' '}
                   {entry.playerName}
                 </p>
-                <p className="text-sm font-medium text-[var(--primary-400)]">{entry.score} pts</p>
+                <p className="text-sm font-medium text-[var(--primary-400)]">
+                  {entry.score.toLocaleString()} / {maxPossibleScore.toLocaleString()}
+                </p>
               </div>
             ))}
           </div>

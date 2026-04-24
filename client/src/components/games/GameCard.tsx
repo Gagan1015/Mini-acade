@@ -1,9 +1,15 @@
 'use client'
 
+import { useId } from 'react'
 import Link from 'next/link'
 import { motion } from 'motion/react'
+import dynamic from 'next/dynamic'
 import type { GameInfo } from '@/lib/games'
 import { GameIcon } from '@/components/ui/GameIcons'
+
+const World = dynamic(() => import('../ui/globe').then((m) => m.World), {
+  ssr: false,
+})
 
 function IconUsers({ size = 16 }: { size?: number }) {
   return (
@@ -49,6 +55,308 @@ interface GameCardProps {
   featured?: boolean
   compact?: boolean
 }
+
+const flagelGlobeConfig = {
+  pointSize: 4,
+  globeColor: '#062056',
+  showAtmosphere: true,
+  atmosphereColor: '#FFFFFF',
+  atmosphereAltitude: 0.1,
+  emissive: '#062056',
+  emissiveIntensity: 0.1,
+  shininess: 0.9,
+  polygonColor: 'rgba(255,255,255,0.7)',
+  ambientLight: '#38bdf8',
+  directionalLeftLight: '#ffffff',
+  directionalTopLight: '#ffffff',
+  pointLight: '#ffffff',
+  arcTime: 1000,
+  arcLength: 0.9,
+  rings: 1,
+  maxRings: 3,
+  initialPosition: { lat: 22.3193, lng: 114.1694 },
+  autoRotate: true,
+  autoRotateSpeed: 0.5,
+}
+
+const flagelGlobeColors = ['#06b6d4', '#3b82f6', '#6366f1']
+
+const flagelGlobeRoutes = [
+  {
+    order: 1,
+    startLat: -19.885592,
+    startLng: -43.951191,
+    endLat: -22.9068,
+    endLng: -43.1729,
+    arcAlt: 0.1,
+  },
+  { order: 1, startLat: 28.6139, startLng: 77.209, endLat: 3.139, endLng: 101.6869, arcAlt: 0.2 },
+  {
+    order: 1,
+    startLat: -19.885592,
+    startLng: -43.951191,
+    endLat: -1.303396,
+    endLng: 36.852443,
+    arcAlt: 0.5,
+  },
+  {
+    order: 2,
+    startLat: 1.3521,
+    startLng: 103.8198,
+    endLat: 35.6762,
+    endLng: 139.6503,
+    arcAlt: 0.2,
+  },
+  { order: 2, startLat: 51.5072, startLng: -0.1276, endLat: 3.139, endLng: 101.6869, arcAlt: 0.3 },
+  {
+    order: 2,
+    startLat: -15.785493,
+    startLng: -47.909029,
+    endLat: 36.162809,
+    endLng: -115.119411,
+    arcAlt: 0.3,
+  },
+  {
+    order: 3,
+    startLat: -33.8688,
+    startLng: 151.2093,
+    endLat: 22.3193,
+    endLng: 114.1694,
+    arcAlt: 0.3,
+  },
+  {
+    order: 3,
+    startLat: 21.3099,
+    startLng: -157.8581,
+    endLat: 40.7128,
+    endLng: -74.006,
+    arcAlt: 0.3,
+  },
+  {
+    order: 3,
+    startLat: -6.2088,
+    startLng: 106.8456,
+    endLat: 51.5072,
+    endLng: -0.1276,
+    arcAlt: 0.3,
+  },
+  {
+    order: 4,
+    startLat: 11.986597,
+    startLng: 8.571831,
+    endLat: -15.595412,
+    endLng: -56.05918,
+    arcAlt: 0.5,
+  },
+  {
+    order: 4,
+    startLat: -34.6037,
+    startLng: -58.3816,
+    endLat: 22.3193,
+    endLng: 114.1694,
+    arcAlt: 0.7,
+  },
+  { order: 4, startLat: 51.5072, startLng: -0.1276, endLat: 48.8566, endLng: -2.3522, arcAlt: 0.1 },
+  {
+    order: 5,
+    startLat: 14.5995,
+    startLng: 120.9842,
+    endLat: 51.5072,
+    endLng: -0.1276,
+    arcAlt: 0.3,
+  },
+  {
+    order: 5,
+    startLat: 1.3521,
+    startLng: 103.8198,
+    endLat: -33.8688,
+    endLng: 151.2093,
+    arcAlt: 0.2,
+  },
+  {
+    order: 5,
+    startLat: 34.0522,
+    startLng: -118.2437,
+    endLat: 48.8566,
+    endLng: -2.3522,
+    arcAlt: 0.2,
+  },
+  {
+    order: 6,
+    startLat: -15.432563,
+    startLng: 28.315853,
+    endLat: 1.094136,
+    endLng: -63.34546,
+    arcAlt: 0.7,
+  },
+  {
+    order: 6,
+    startLat: 37.5665,
+    startLng: 126.978,
+    endLat: 35.6762,
+    endLng: 139.6503,
+    arcAlt: 0.1,
+  },
+  {
+    order: 6,
+    startLat: 22.3193,
+    startLng: 114.1694,
+    endLat: 51.5072,
+    endLng: -0.1276,
+    arcAlt: 0.3,
+  },
+  {
+    order: 7,
+    startLat: -19.885592,
+    startLng: -43.951191,
+    endLat: -15.595412,
+    endLng: -56.05918,
+    arcAlt: 0.1,
+  },
+  { order: 7, startLat: 48.8566, startLng: -2.3522, endLat: 52.52, endLng: 13.405, arcAlt: 0.1 },
+  { order: 7, startLat: 52.52, startLng: 13.405, endLat: 34.0522, endLng: -118.2437, arcAlt: 0.2 },
+  {
+    order: 8,
+    startLat: -8.833221,
+    startLng: 13.264837,
+    endLat: -33.936138,
+    endLng: 18.436529,
+    arcAlt: 0.2,
+  },
+  {
+    order: 8,
+    startLat: 49.2827,
+    startLng: -123.1207,
+    endLat: 52.3676,
+    endLng: 4.9041,
+    arcAlt: 0.2,
+  },
+  { order: 8, startLat: 1.3521, startLng: 103.8198, endLat: 40.7128, endLng: -74.006, arcAlt: 0.5 },
+  {
+    order: 9,
+    startLat: 51.5072,
+    startLng: -0.1276,
+    endLat: 34.0522,
+    endLng: -118.2437,
+    arcAlt: 0.2,
+  },
+  {
+    order: 9,
+    startLat: 22.3193,
+    startLng: 114.1694,
+    endLat: -22.9068,
+    endLng: -43.1729,
+    arcAlt: 0.7,
+  },
+  {
+    order: 9,
+    startLat: 1.3521,
+    startLng: 103.8198,
+    endLat: -34.6037,
+    endLng: -58.3816,
+    arcAlt: 0.5,
+  },
+  {
+    order: 10,
+    startLat: -22.9068,
+    startLng: -43.1729,
+    endLat: 28.6139,
+    endLng: 77.209,
+    arcAlt: 0.7,
+  },
+  {
+    order: 10,
+    startLat: 34.0522,
+    startLng: -118.2437,
+    endLat: 31.2304,
+    endLng: 121.4737,
+    arcAlt: 0.3,
+  },
+  {
+    order: 10,
+    startLat: -6.2088,
+    startLng: 106.8456,
+    endLat: 52.3676,
+    endLng: 4.9041,
+    arcAlt: 0.3,
+  },
+  {
+    order: 11,
+    startLat: 41.9028,
+    startLng: 12.4964,
+    endLat: 34.0522,
+    endLng: -118.2437,
+    arcAlt: 0.2,
+  },
+  {
+    order: 11,
+    startLat: -6.2088,
+    startLng: 106.8456,
+    endLat: 31.2304,
+    endLng: 121.4737,
+    arcAlt: 0.2,
+  },
+  {
+    order: 11,
+    startLat: 22.3193,
+    startLng: 114.1694,
+    endLat: 1.3521,
+    endLng: 103.8198,
+    arcAlt: 0.2,
+  },
+  {
+    order: 12,
+    startLat: 34.0522,
+    startLng: -118.2437,
+    endLat: 37.7749,
+    endLng: -122.4194,
+    arcAlt: 0.1,
+  },
+  {
+    order: 12,
+    startLat: 35.6762,
+    startLng: 139.6503,
+    endLat: 22.3193,
+    endLng: 114.1694,
+    arcAlt: 0.2,
+  },
+  {
+    order: 12,
+    startLat: 22.3193,
+    startLng: 114.1694,
+    endLat: 34.0522,
+    endLng: -118.2437,
+    arcAlt: 0.3,
+  },
+  { order: 13, startLat: 52.52, startLng: 13.405, endLat: 22.3193, endLng: 114.1694, arcAlt: 0.3 },
+  {
+    order: 13,
+    startLat: 11.986597,
+    startLng: 8.571831,
+    endLat: 35.6762,
+    endLng: 139.6503,
+    arcAlt: 0.3,
+  },
+  {
+    order: 13,
+    startLat: -22.9068,
+    startLng: -43.1729,
+    endLat: -34.6037,
+    endLng: -58.3816,
+    arcAlt: 0.1,
+  },
+  {
+    order: 14,
+    startLat: -33.936138,
+    startLng: 18.436529,
+    endLat: 21.395643,
+    endLng: 39.883798,
+    arcAlt: 0.3,
+  },
+].map((route, routeIndex) => ({
+  ...route,
+  color: flagelGlobeColors[routeIndex % flagelGlobeColors.length],
+}))
 
 function SkribbleGamePreview({ color }: { color: string }) {
   return (
@@ -325,7 +633,7 @@ function WordelGamePreview({ color }: { color: string }) {
   const resultFill = (result: string) => {
     if (result === 'correct') return color
     if (result === 'present') return '#b59f3b'
-    return '#3a3a3c'
+    return '#d4d4d4'
   }
 
   return (
@@ -579,205 +887,139 @@ function WordelGamePreview({ color }: { color: string }) {
   )
 }
 
-function FlagelGamePreview({ color }: { color: string }) {
-  const dur = 6.4
-
-  const flagW = 164
-  const flagH = 82
-  const tileC = 3
-  const tileR = 2
-  const tileW = flagW / tileC
-  const tileH = flagH / tileR
-
-  const guesses = [
-    { name: 'France', km: '9,713 km', dir: '↗', pct: 42 },
-    { name: 'Japan', km: '0 km', dir: '◎', pct: 100 },
-  ]
-
-  const pctFill = (p: number) => {
-    if (p >= 85) return '#34d399'
-    if (p >= 35) return '#a5b4fc'
-    return '#94a3b8'
-  }
+function TriviaBulbPreview() {
+  const glowId = useId().replace(/:/g, '')
+  const bulbCycleDuration = 7.2
+  const bulbCycleTimes = [0, 0.4, 0.55, 0.78, 1]
+  const lightColor = '#facc15'
+  const offStroke = 'var(--text-tertiary)'
 
   return (
     <motion.div
-      className="relative z-10 mt-6 overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--marketing-shadow)]"
+      className="pointer-events-none absolute right-5 top-5 z-10 h-24 w-24 sm:right-7 sm:top-7 sm:h-28 sm:w-28"
       variants={{
-        rest: { y: 0 },
-        hover: { y: -3 },
+        rest: { scale: 1, rotate: 0 },
+        hover: { scale: 1.04, rotate: 3 },
       }}
-      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+      aria-hidden="true"
     >
-      <svg viewBox="0 0 560 130" className="h-full min-h-[120px] w-full" aria-hidden="true">
+      <svg viewBox="0 0 120 120" className="h-full w-full overflow-visible">
         <defs>
-          <clipPath id="fp-flag"><rect width={flagW} height={flagH} rx="8" /></clipPath>
+          <filter id={`${glowId}-glow`} x="-70%" y="-70%" width="240%" height="240%">
+            <feGaussianBlur stdDeviation="6" result="blur" />
+            <feColorMatrix
+              in="blur"
+              type="matrix"
+              values="1 0 0 0 0.98 0 1 0 0 0.72 0 0 1 0 0.08 0 0 0 0.55 0"
+            />
+            <feMerge>
+              <feMergeNode />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
 
-        <rect width="560" height="130" fill="var(--marketing-card-bg)" />
+        <motion.circle
+          cx="60"
+          cy="50"
+          r="26"
+          fill={lightColor}
+          filter={`url(#${glowId}-glow)`}
+          animate={{ opacity: [0.04, 0.38, 0.08, 0.48, 0.06] }}
+          transition={{ duration: bulbCycleDuration, repeat: Infinity, times: bulbCycleTimes }}
+        />
 
-        {/* ───── Flag area (left) ───── */}
-        <g transform="translate(24 14)">
-          {/* Container */}
-          <rect x="-8" y="-8" width={flagW + 16} height={flagH + 16}
-            rx="12" fill="var(--background)" stroke="var(--border)" strokeWidth="0.5" />
+        <motion.g
+          stroke={lightColor}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          animate={{ opacity: [0.18, 0.9, 0.22, 1, 0.2] }}
+          transition={{ duration: bulbCycleDuration, repeat: Infinity, times: bulbCycleTimes }}
+        >
+          <path d="M60 12V24" />
+          <path d="M31 22L39 31" />
+          <path d="M89 22L81 31" />
+          <path d="M18 50H30" />
+          <path d="M90 50H102" />
+          <path d="M27 80L36 72" />
+          <path d="M93 80L84 72" />
+        </motion.g>
 
-          {/* Flag with tile reveal */}
-          <g clipPath="url(#fp-flag)">
-            <rect width={flagW} height={flagH} fill="#ffffff" />
-            <circle cx={flagW / 2} cy={flagH / 2} r={flagH * 0.29} fill="#BC002D" />
+        <motion.path
+          d="M38 51C38 36.6 47.4 28 60 28C72.6 28 82 36.6 82 51C82 59.7 77.5 66.2 70 71.5C67.4 73.3 66 76.2 66 79.4V82H54V79.4C54 76.2 52.6 73.3 50 71.5C42.5 66.2 38 59.7 38 51Z"
+          fill="var(--background)"
+          stroke={offStroke}
+          strokeWidth="3"
+          strokeLinejoin="round"
+          animate={{
+            fill: [
+              'var(--background)',
+              '#fef3c7',
+              'var(--background)',
+              '#fde68a',
+              'var(--background)',
+            ],
+            stroke: [offStroke, lightColor, offStroke, lightColor, offStroke],
+          }}
+          transition={{ duration: bulbCycleDuration, repeat: Infinity, times: bulbCycleTimes }}
+        />
 
-            {/* Tile covers */}
-            {Array.from({ length: tileC * tileR }, (_, i) => {
-              const cx = (i % tileC) * tileW
-              const cy = Math.floor(i / tileC) * tileH
-              const reveal = 0.06 + i * 0.052
+        <motion.path
+          d="M55 69V55H65V69M55 55C55 51.8 57.1 50 60 50C62.9 50 65 51.8 65 55"
+          fill="none"
+          stroke={offStroke}
+          strokeWidth="2.3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          animate={{ stroke: [offStroke, '#92400e', offStroke, '#92400e', offStroke] }}
+          transition={{ duration: bulbCycleDuration, repeat: Infinity, times: bulbCycleTimes }}
+        />
 
-              return (
-                <motion.rect
-                  key={`cover-${i}`}
-                  x={cx} y={cy} width={tileW} height={tileH}
-                  fill="var(--surface-hover)"
-                  animate={{ opacity: [1, 1, 0, 0, 0, 1] }}
-                  transition={{
-                    duration: dur, repeat: Infinity,
-                    times: [0, reveal, reveal + 0.045, 0.88, 0.94, 1],
-                    ease: [0.16, 1, 0.3, 1],
-                  }}
-                />
-              )
-            })}
-
-            {/* Grid lines — fade out on merge */}
-            <motion.g
-              animate={{ opacity: [0.5, 0.5, 0, 0, 0.5] }}
-              transition={{
-                duration: dur, repeat: Infinity,
-                times: [0, 0.36, 0.42, 0.88, 1],
-                ease: [0.22, 1, 0.36, 1],
-              }}
-            >
-              <line x1={tileW} y1="0" x2={tileW} y2={flagH}
-                stroke="var(--border)" strokeWidth="0.5" />
-              <line x1={tileW * 2} y1="0" x2={tileW * 2} y2={flagH}
-                stroke="var(--border)" strokeWidth="0.5" />
-              <line x1="0" y1={tileH} x2={flagW} y2={tileH}
-                stroke="var(--border)" strokeWidth="0.5" />
-            </motion.g>
-          </g>
-        </g>
-
-        {/* ───── Right panel ───── */}
-        <g transform="translate(220 14)">
-          {/* Search input */}
-          <rect x="0" y="0" width="316" height="30" rx="10"
-            fill="var(--background)" stroke="var(--border)" strokeWidth="0.5" />
-          {/* Search icon */}
-          <g transform="translate(11 9)" stroke="var(--text-tertiary)" strokeWidth="1.5" fill="none">
-            <circle cx="4.5" cy="4.5" r="4" />
-            <line x1="7.3" y1="7.3" x2="10" y2="10" />
-          </g>
-          <text x="27" y="19" fill="var(--text-tertiary)"
-            fontFamily="var(--font-mono)" fontSize="9" fontWeight="600">
-            country
-          </text>
-
-          {/* Typing animation */}
-          {'JAPAN'.split('').map((ch, ci) => {
-            const t = 0.16 + ci * 0.035
-            return (
-              <motion.text
-                key={`ch-${ci}`}
-                x={82 + ci * 13} y="19"
-                fill="var(--text-primary)" fontFamily="var(--font-display)"
-                fontSize="12" fontWeight="700" textAnchor="middle"
-                animate={{ opacity: [0, 0, 1, 1, 0] }}
-                transition={{
-                  duration: dur, repeat: Infinity,
-                  times: [0, t, t + 0.018, 0.86, 0.94],
-                  ease: [0.25, 1, 0.5, 1],
-                }}
-              >
-                {ch}
-              </motion.text>
-            )
-          })}
-
-          {/* Cursor blink */}
-          <motion.rect
-            x="148" y="10" width="1" height="11" rx="0.5" fill={color}
-            animate={{ opacity: [0, 0, 1, 0, 1, 0, 0] }}
-            transition={{ duration: dur, repeat: Infinity,
-              times: [0, 0.15, 0.16, 0.28, 0.29, 0.42, 1] }}
-          />
-
-          {/* Guess rows */}
-          {guesses.map((g, gi) => {
-            const ry = 38 + gi * 30
-            const isWin = g.pct === 100
-            const t0 = 0.22 + gi * 0.08
-
-            return (
-              <motion.g
-                key={g.name}
-                animate={{ opacity: [0, 0, 1, 1, 0], y: [4, 4, 0, 0, 4] }}
-                transition={{
-                  duration: dur, repeat: Infinity,
-                  times: [0, t0, t0 + 0.035, 0.86, 0.94],
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-              >
-                <rect x="0" y={ry} width="316" height="24" rx="7"
-                  fill={isWin ? `${color}06` : 'var(--background)'}
-                  stroke={isWin ? `${color}22` : 'var(--border)'}
-                  strokeWidth="0.5" />
-
-                <text x="10" y={ry + 16}
-                  fill={isWin ? color : 'var(--text-primary)'}
-                  fontFamily="var(--font-sans)" fontSize="11" fontWeight="700">
-                  {g.name}
-                </text>
-
-                <text x="80" y={ry + 16}
-                  fill="var(--text-secondary)"
-                  fontFamily="var(--font-mono)" fontSize="9" fontWeight="600">
-                  {g.km}
-                </text>
-
-                <rect x="200" y={ry + 3} width="24" height="18" rx="9"
-                  fill={isWin ? `${color}14` : 'var(--surface-hover)'} />
-                <text x="212" y={ry + 16}
-                  fill={isWin ? color : 'var(--text-primary)'}
-                  fontFamily="var(--font-mono)" fontSize="10" fontWeight="800"
-                  textAnchor="middle">
-                  {g.dir}
-                </text>
-
-                <rect x="232" y={ry + 3} width="38" height="18" rx="9"
-                  fill={`${pctFill(g.pct)}14`} />
-                <text x="251" y={ry + 16}
-                  fill={pctFill(g.pct)}
-                  fontFamily="var(--font-mono)" fontSize="9" fontWeight="800"
-                  textAnchor="middle">
-                  {g.pct}%
-                </text>
-
-                {isWin && (
-                  <rect x="278" y={ry + 6} width="24" height="12" rx="6"
-                    fill={color} fillOpacity="0.12" />
-                )}
-                {isWin && (
-                  <text x="290" y={ry + 16} fill={color}
-                    fontFamily="var(--font-mono)" fontSize="7" fontWeight="700"
-                    textAnchor="middle">
-                    ✓
-                  </text>
-                )}
-              </motion.g>
-            )
-          })}
-        </g>
+        <motion.g
+          fill="var(--background)"
+          stroke={offStroke}
+          strokeWidth="3"
+          strokeLinejoin="round"
+          animate={{
+            fill: [
+              'var(--background)',
+              '#fef9c3',
+              'var(--background)',
+              '#fef08a',
+              'var(--background)',
+            ],
+            stroke: [offStroke, lightColor, offStroke, lightColor, offStroke],
+          }}
+          transition={{ duration: bulbCycleDuration, repeat: Infinity, times: bulbCycleTimes }}
+        >
+          <path d="M52 82H68V92C68 95.3 65.3 98 62 98H58C54.7 98 52 95.3 52 92V82Z" />
+          <path d="M51 88H69" />
+          <path d="M53 94H67" />
+        </motion.g>
       </svg>
+    </motion.div>
+  )
+}
+
+function FlagelGlobePreview({ color }: { color: string }) {
+  return (
+    <motion.div
+      className="pointer-events-none absolute -right-16 top-4 z-0 h-[240px] w-[240px] opacity-90 sm:-right-20 sm:top-0 sm:h-[320px] sm:w-[320px] lg:-right-16 lg:-top-2 lg:h-[340px] lg:w-[340px]"
+      variants={{
+        rest: { scale: 1, rotate: 0 },
+        hover: { scale: 1.03, rotate: -2 },
+      }}
+      transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+      aria-hidden="true"
+    >
+      <div
+        className="absolute inset-10 rounded-full blur-3xl"
+        style={{ backgroundColor: `${color}24` }}
+      />
+      <div className="relative h-full w-full">
+        <World data={flagelGlobeRoutes} globeConfig={flagelGlobeConfig} />
+      </div>
     </motion.div>
   )
 }
@@ -787,12 +1029,16 @@ function GamePreview({ game }: { game: GameInfo }) {
     return <SkribbleGamePreview color={game.colorHex} />
   }
 
+  if (game.id === 'trivia') {
+    return <TriviaBulbPreview />
+  }
+
   if (game.id === 'wordel') {
     return <WordelGamePreview color={game.colorHex} />
   }
 
   if (game.id === 'flagel') {
-    return <FlagelGamePreview color={game.colorHex} />
+    return <FlagelGlobePreview color={game.colorHex} />
   }
 
   return null
@@ -811,83 +1057,88 @@ export function GameCard({ game, index, featured = false, compact = false }: Gam
       }}
       className="group h-full"
     >
-      <Link href={`/lobby?game=${game.id}`} className="block h-full">
-        <motion.div
-          initial="rest"
-          whileHover="hover"
-          whileFocus="hover"
-          className={`marketing-card relative flex h-full min-h-[280px] flex-col overflow-hidden transition-transform duration-300 group-hover:-translate-y-1 ${
-            featured ? 'p-8 lg:min-h-[472px]' : compact ? 'p-5' : 'p-6'
-          }`}
+      <motion.div
+        initial="rest"
+        whileHover="hover"
+        className={`marketing-card relative flex h-full min-h-[280px] flex-col overflow-hidden transition-transform duration-300 group-hover:-translate-y-1 ${
+          featured ? 'p-8 lg:min-h-[472px]' : compact ? 'p-5' : 'p-6'
+        }`}
+        style={{
+          boxShadow: featured
+            ? `var(--marketing-shadow-strong), inset 0 0 0 1px ${game.colorHex}14`
+            : undefined,
+        }}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
           style={{
-            boxShadow: featured
-              ? `var(--marketing-shadow-strong), inset 0 0 0 1px ${game.colorHex}14`
-              : undefined,
+            background: `radial-gradient(circle at 18% 12%, ${game.colorHex}18, transparent 34%)`,
           }}
-        >
+        />
+
+        <div className="relative z-10 flex items-start gap-4">
           <div
-            className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-            style={{
-              background: `radial-gradient(circle at 18% 12%, ${game.colorHex}18, transparent 34%)`,
-            }}
-          />
-
-          <div className="relative z-10 flex items-start justify-between gap-4">
-            <div
-              className={`flex shrink-0 items-center justify-center rounded-2xl border border-[var(--border)] transition-transform duration-300 group-hover:scale-[1.04] ${
-                featured ? 'h-16 w-16' : 'h-14 w-14'
-              }`}
-              style={{ backgroundColor: `${game.colorHex}10`, color: game.colorHex }}
-            >
-              <GameIcon gameId={game.id} size={featured ? 34 : 30} color={game.colorHex} animated />
-            </div>
-            <span className="rounded-full border border-[var(--border)] bg-[var(--background)] px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-              0{index + 1}
-            </span>
-          </div>
-
-          <div className={`relative z-10 ${featured ? 'mt-10 max-w-md' : 'mt-6'}`}>
-            <h3
-              className={`font-display font-bold tracking-tight text-[var(--text-primary)] ${featured ? 'text-4xl' : 'text-2xl'}`}
-            >
-              {game.name}
-            </h3>
-            <p
-              className={`${featured ? 'mt-4 text-base leading-8' : 'mt-3 text-sm leading-7'} text-[var(--text-secondary)]`}
-            >
-              {game.description}
-            </p>
-          </div>
-
-          <div
-            className={`relative z-10 flex flex-wrap gap-2 ${featured ? 'mt-7 max-w-lg' : 'mt-5'}`}
+            className={`flex shrink-0 items-center justify-center rounded-2xl border border-[var(--border)] transition-transform duration-300 group-hover:scale-[1.04] ${
+              featured ? 'h-16 w-16' : 'h-14 w-14'
+            }`}
+            style={{ backgroundColor: `${game.colorHex}10`, color: game.colorHex }}
           >
-            {game.features.map((feature) => (
-              <span
-                key={feature}
-                className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1 text-[11px] font-medium text-[var(--text-secondary)]"
-              >
-                {feature}
-              </span>
-            ))}
+            <GameIcon gameId={game.id} size={featured ? 34 : 30} color={game.colorHex} animated />
           </div>
+        </div>
 
-          {(featured || game.id === 'wordel' || game.id === 'flagel') && (
-            <GamePreview game={game} />
-          )}
+        <div className={`relative z-10 ${featured ? 'mt-10 max-w-md' : 'mt-6'}`}>
+          <h3
+            className={`font-display font-bold tracking-tight text-[var(--text-primary)] ${featured ? 'text-4xl' : 'text-2xl'}`}
+          >
+            {game.name}
+          </h3>
+          <p
+            className={`${featured ? 'mt-4 text-base leading-8' : 'mt-3 text-sm leading-7'} text-[var(--text-secondary)]`}
+          >
+            {game.description}
+          </p>
+        </div>
 
-          <div className="relative z-10 mt-auto flex items-center justify-between border-t border-[var(--border)] pt-6">
-            <span className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-              <IconUsers size={14} />
-              {game.minPlayers}-{game.maxPlayers} players
+        <div
+          className={`relative z-10 flex flex-wrap gap-2 ${featured ? 'mt-7 max-w-lg' : 'mt-5'}`}
+        >
+          {game.features.map((feature) => (
+            <span
+              key={feature}
+              className="rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1 text-[11px] font-medium text-[var(--text-secondary)]"
+            >
+              {feature}
             </span>
-            <span className="flex items-center gap-1 text-sm font-semibold text-[var(--text-primary)] transition-transform duration-300 group-hover:translate-x-1">
-              Play now
-              <IconArrowRight size={14} />
-            </span>
-          </div>
-        </motion.div>
-      </Link>
+          ))}
+        </div>
+
+        {(featured || game.id === 'wordel' || game.id === 'flagel' || game.id === 'trivia') && (
+          <GamePreview game={game} />
+        )}
+
+        <div
+          className={`relative z-10 mt-auto flex items-center border-t border-[var(--border)] pt-6 ${
+            game.id === 'flagel' ? 'justify-start gap-6 pr-36 sm:pr-44' : 'justify-between'
+          }`}
+        >
+          <span className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+            <IconUsers size={14} />
+            {game.minPlayers}-{game.maxPlayers} players
+          </span>
+          <Link
+            href={`/lobby?game=${game.id}`}
+            className={`flex items-center gap-1 text-sm font-semibold text-[var(--text-primary)] transition-transform duration-300 hover:translate-x-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--primary-500)] ${
+              game.id === 'flagel'
+                ? 'rounded-full bg-[var(--surface)]/80 px-3 py-1.5 backdrop-blur'
+                : ''
+            }`}
+          >
+            Play now
+            <IconArrowRight size={14} />
+          </Link>
+        </div>
+      </motion.div>
     </motion.div>
   )
 }

@@ -47,6 +47,12 @@ isProject: false
   - reconnect-aware room rejoin now keeps player identity stable with a grace period
   - deployment config and hosted environments are still pending
 
+## Planned upgrade: AI-powered Trivia
+
+- Add Gemini 2.5 Flash question generation for Trivia with strict server-side validation and fallback behavior.
+- Keep realtime round/timer/scoring logic server-authoritative and unchanged.
+- Implementation details: `.agent/games/GAME_TRIVIA.md`.
+
 ## Recommended tech stack (web, local/private realtime)
 
 - **Frontend:** `Next.js` (React) + `TypeScript`
@@ -59,7 +65,7 @@ isProject: false
 - **Validation / types:** `zod` for runtime validation and shared request/response shapes
 - **Monorepo (optional but good):** `pnpm` + `Turborepo` with packages like `shared`, `server`, `client`
 
-This matches your existing direction in `[c:\game\idea_01.md](c:\game\idea_01.md)` (React/TypeScript/Canvas and Socket.IO realtime). 
+This matches your existing direction in `[c:\game\idea_01.md](c:\game\idea_01.md)` (React/TypeScript/Canvas and Socket.IO realtime).
 
 ## MVP architecture
 
@@ -85,8 +91,6 @@ flowchart LR
   Room -->|broadcast round results| User
 ```
 
-
-
 ## Detailed phase-by-phase implementation roadmap
 
 ### Phase 0: Monorepo + baseline tooling
@@ -97,7 +101,7 @@ Deliverables:
 - `client/` (Next.js + React + TS)
 - `server/` (Node + TS + Socket.IO)
 - `shared/` (types + Zod schemas + constants)
-Acceptance criteria:
+  Acceptance criteria:
 - `pnpm dev` starts both `client` and `server` without crashing.
 - `client` can import from `shared` and `server` can import from `shared`.
 
@@ -113,7 +117,7 @@ Deliverables:
 - A server helper like `parseSocketPayload(eventName, payload)` that:
   - validates payload against Zod
   - returns typed payload for the game runtime
-  Acceptance criteria:
+    Acceptance criteria:
 - If a client sends invalid payloads, the server rejects them and does not update room state.
 
 ### Phase 2: Accounts/login + persistence
@@ -128,7 +132,7 @@ Deliverables:
   - `Room` (roomCode, createdBy, gameId, status)
   - `RoomPlayer` (roomCode, userId, joinedAt)
   - `GameResult` (roomCode, userId, gameId, scoring summary)
-  Acceptance criteria:
+    Acceptance criteria:
 - Logged-in users can create and join rooms.
 - After a game round completes, `GameStat` updates.
 
@@ -143,10 +147,10 @@ Deliverables:
   - `room:join` with `{ roomCode }`
   - `room:leave`
   - `room:presence` broadcast (players list + who is host)
-  Server rules:
+    Server rules:
 - RoomCode must exist and must match the expected gameId (or allow “pending” state until selected).
 - On disconnect: remove player after a short grace period (ex: 5–10s).
-Acceptance criteria:
+  Acceptance criteria:
 - Two browsers using the same `roomCode` show the same player list.
 
 ### Phase 4: Server game-runtime layer (state machine)
@@ -163,7 +167,7 @@ Deliverables:
 - A `RoomManager`:
   - creates room runtime for a specific `gameId`
   - routes Socket.IO events to the correct runtime
-  Acceptance criteria:
+    Acceptance criteria:
 - Switching through multiple rounds in one room doesn’t leak state between rounds.
 
 ### Phase 5: Skribble-style drawing (Canvas + realtime)
@@ -177,15 +181,15 @@ Deliverables (server):
   - `draw:sync` (server -> client, canvas snapshot or stroke history)
   - `draw:guess` (client -> server, validated)
   - `draw:roundStarted` / `draw:roundEnded`
-  Deliverables (client):
+    Deliverables (client):
 - Canvas drawing with:
   - DPR-aware scaling
   - stroke batching (ex: every 30–60ms)
   - local immediate rendering + remote stroke rendering
-  Throttling rules:
+    Throttling rules:
 - Per-user max stroke batches per second.
 - Clamp stroke coordinates to canvas bounds.
-Acceptance criteria:
+  Acceptance criteria:
 - A new joiner receives a consistent canvas state quickly (within ~1–2s).
 
 ### Phase 6: Trivia realtime quiz
@@ -198,10 +202,10 @@ Deliverables (server):
   - `roundEndsAt` (timestamp)
 - `trivia:answer` counts only once per player per round.
 - `trivia:roundEnded` includes correct answer + per-player scoring deltas.
-Deliverables (client):
+  Deliverables (client):
 - Countdown based on `roundEndsAt` (avoid spam ticking)
 - Lock answer after submit
-Acceptance criteria:
+  Acceptance criteria:
 - Late answers after timer end do not score.
 
 ### Phase 7: Wordel + Flagel (server-validated guess games)
@@ -213,9 +217,9 @@ Deliverables (shared pattern):
 - Client submits guesses (`*:submitGuess`).
 - Server sends `*:guessResult` only to the submitting player (or broadcast feedback if you want shared competition).
 - Server sends `*:roundEnded` and persists `GameResult`.
-Flagel MVP decision (important):
+  Flagel MVP decision (important):
 - Use `Unicode flag emojis` for the first MVP (no external asset licensing).
-Acceptance criteria:
+  Acceptance criteria:
 - Guess outcomes are determined by the server and correctly persisted.
 
 ### Phase 8: UI arcade shell + room UX
@@ -227,7 +231,7 @@ Routes to implement:
 - `/lobby` create room + join by code
 - `/rooms/[roomCode]` showing status + start button for host
 - `/rooms/[roomCode]/[gameId]` game screen
-Acceptance criteria:
+  Acceptance criteria:
 - Create room -> share code -> two users see the correct game screen and can play.
 
 ### Phase 9: Hardening + deployment
@@ -240,7 +244,7 @@ Deliverables:
 - Deployment:
   - `client` on Vercel
   - `server` + WebSocket on Render/Fly/Railway
-  Acceptance criteria:
+    Acceptance criteria:
 - A deployed build supports room join and reconnection without breaking the round.
 
 ## MVP scope notes (important)
@@ -251,9 +255,11 @@ Deliverables:
 ## Two decisions before we start implementing
 
 1. `Wordel` / `Flagel` multiplayer mode:
-  - A) each player plays their own board in parallel (simpler MVP)
-  - B) shared turn-based competition (more complex server state)
-2. `Flagel` flag source:
-  - A) Unicode flag emojis (fast MVP, no external images)
-  - B) open-licensed flag images (more accurate visuals, but needs dataset selection)
 
+- A) each player plays their own board in parallel (simpler MVP)
+- B) shared turn-based competition (more complex server state)
+
+2. `Flagel` flag source:
+
+- A) Unicode flag emojis (fast MVP, no external images)
+- B) open-licensed flag images (more accurate visuals, but needs dataset selection)

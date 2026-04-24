@@ -19,6 +19,7 @@ import {
   Menu,
   X,
 } from 'lucide-react'
+import { UserAvatar } from '@/components/ui/UserAvatar'
 
 interface AdminSidebarProps {
   userName: string
@@ -210,17 +211,13 @@ export function AdminSidebar({ userName, userEmail: _userEmail, userImage, userR
       {/* User profile footer */}
       <div className="border-t border-[var(--sidebar-border)] p-3">
         <div className={`flex items-center gap-3 ${collapsed && !mobile ? 'flex-col' : ''}`}>
-          {userImage ? (
-            <img
-              src={userImage}
-              alt={userName}
-              className="h-9 w-9 flex-shrink-0 rounded-full ring-2 ring-[var(--sidebar-border)]"
-            />
-          ) : (
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[var(--primary-500)]/20 text-sm font-bold text-[var(--primary-400)]">
-              {userName.charAt(0).toUpperCase()}
-            </div>
-          )}
+          <UserAvatar
+            src={userImage}
+            name={userName}
+            alt={userName}
+            className="h-9 w-9 rounded-full ring-2 ring-[var(--sidebar-border)]"
+            fallbackClassName="bg-[var(--primary-500)]/20 text-[var(--primary-400)]"
+          />
           {(!collapsed || mobile) && (
             <div className="flex-1 overflow-hidden">
               <p className="truncate text-sm font-medium text-[var(--sidebar-text)]">{userName}</p>
