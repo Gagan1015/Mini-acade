@@ -4,7 +4,9 @@ import {
   type ChooseSkribbleWordPayload,
   type GameConfig,
   type GameEventResult,
+  type GameResultData,
   type GuessPayload,
+  type SkribbleGameResultMetadata,
   type Stroke,
   type StrokeBatchPayload,
   type UserId,
@@ -24,6 +26,18 @@ type SkribbleRoundState = {
   correctGuessers: Set<UserId>
   guessOrder: UserId[]
   roundStartedAt: Date | null
+}
+
+type SkribbleRoundSummary = {
+  roundNumber: number
+  drawerId: UserId
+  drawerName: string
+  word: string
+  wordHint: string
+  strokeCount: number
+  drawerPoints: number
+  correctGuessers: SkribbleGameResultMetadata['rounds'][number]['correctGuessers']
+  scores: Record<string, number>
 }
 
 const ROUND_TIME_SECONDS = 90
@@ -50,6 +64,7 @@ export class SkribbleRuntime extends BaseGameRuntime {
   private drawerOrder: UserId[] = []
   private roundTimer: ReturnType<typeof setTimeout> | null = null
   private roundEndsAt: Date | null = null
+  private readonly roundHistory: SkribbleRoundSummary[] = []
 
   constructor(io: Server, config: GameConfig, roomService: RoomService) {
     super(io, config, roomService)
@@ -58,6 +73,7 @@ export class SkribbleRuntime extends BaseGameRuntime {
 
   async initialize() {
     this.drawerOrder = shuffle(Array.from(this.players.keys()))
+    this.roundHistory.length = 0
   }
 
   async start(): Promise<GameEventResult> {
@@ -173,6 +189,33 @@ export class SkribbleRuntime extends BaseGameRuntime {
           : undefined,
       isChoosing,
       wordChoices: isChoosing && playerId === this.roundState.drawerId ? this.roundState.wordOptions : undefined,
+    }
+  }
+
+  protected override buildResultMetadata(playerId: UserId): GameResultData['metadata'] {
+    return {
+      gameType: 'skribble',
+      totalRounds: this.totalRounds,
+      rounds: this.roundHistory.map((round) => {
+        const guessEntry = round.correctGuessers.find((entry) => entry.playerId === playerId)
+        const playerWasDrawer = round.drawerId === playerId
+
+        return {
+          roundNumber: round.roundNumber,
+          drawerId: round.drawerId,
+          drawerName: round.drawerName,
+          word: round.word,
+          wordHint: round.wordHint,
+          strokeCount: round.strokeCount,
+          drawerPoints: round.drawerPoints,
+          playerWasDrawer,
+          guessedCorrectly: Boolean(guessEntry),
+          guessPosition: guessEntry?.position ?? null,
+          pointsEarned: playerWasDrawer ? round.drawerPoints : guessEntry?.pointsEarned ?? 0,
+          scoreAfterRound: round.scores[playerId] ?? 0,
+          correctGuessers: round.correctGuessers,
+        }
+      }),
     }
   }
 
@@ -528,6 +571,25 @@ export class SkribbleRuntime extends BaseGameRuntime {
         (this.scores.get(this.roundState.drawerId) ?? 0) + drawerPoints
       )
     }
+
+    const correctGuessers = this.roundState.guessOrder.map((guesserId, index) => ({
+      playerId: guesserId,
+      playerName: this.players.get(guesserId)?.name ?? 'Player',
+      position: index + 1,
+      pointsEarned: Math.max(POINTS_FIRST - index * POINTS_DECREASE, POINTS_MIN),
+    }))
+
+    this.roundHistory.push({
+      roundNumber: this.currentRound,
+      drawerId: this.roundState.drawerId,
+      drawerName: this.players.get(this.roundState.drawerId)?.name ?? 'Player',
+      word: this.roundState.word,
+      wordHint: this.roundState.wordHint,
+      strokeCount: this.roundState.strokes.length,
+      drawerPoints,
+      correctGuessers,
+      scores: Object.fromEntries(this.scores),
+    })
 
     const roundEndResult: GameEventResult = {
       success: true,

@@ -16,6 +16,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { GAME_LIST, getGameInfo } from '@/lib/games'
 import { Spinner } from '@/components/ui/Animated'
 import { GameIcon } from '@/components/ui/GameIcons'
+import { buildSoloPlayUrl } from '@/lib/soloPlay'
 
 /* ── SVG Icons ── */
 
@@ -119,6 +120,25 @@ const triviaDifficultyOptions: Array<{ value: TriviaDifficulty; label: string }>
   { value: 'medium', label: 'Classic' },
   { value: 'hard', label: 'Expert' },
 ]
+const defaultTriviaCategories: TriviaCategory[] = ['Mixed']
+
+function toggleTriviaCategorySelection(
+  selectedCategories: TriviaCategory[],
+  category: TriviaCategory
+) {
+  if (category === 'Mixed') {
+    return defaultTriviaCategories
+  }
+
+  const nextCategories = selectedCategories.filter((selected) => selected !== 'Mixed')
+
+  if (nextCategories.includes(category)) {
+    const filteredCategories = nextCategories.filter((selected) => selected !== category)
+    return filteredCategories.length > 0 ? filteredCategories : defaultTriviaCategories
+  }
+
+  return [...nextCategories, category]
+}
 
 function LobbyPageContent() {
   const router = useRouter()
@@ -130,7 +150,7 @@ function LobbyPageContent() {
   const [playMode, setPlayMode] = useState<PlayMode>('multiplayer')
   const [maxPlayers, setMaxPlayers] = useState('8')
   const [triviaRounds, setTriviaRounds] = useState('10')
-  const [triviaCategory, setTriviaCategory] = useState<TriviaCategory>('Mixed')
+  const [selectedTriviaCategories, setSelectedTriviaCategories] = useState<TriviaCategory[]>(defaultTriviaCategories)
   const [triviaDifficulty, setTriviaDifficulty] = useState<TriviaDifficulty>('medium')
   const [joinCode, setJoinCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -159,7 +179,18 @@ function LobbyPageContent() {
     }
 
     if (playMode === 'solo') {
-      router.push(`/play/${selectedGame}?session=${Date.now()}`)
+      router.push(
+        buildSoloPlayUrl(selectedGame, {
+          settings:
+            selectedGame === 'trivia'
+              ? {
+                  rounds: Number(triviaRounds),
+                  triviaCategories: selectedTriviaCategories,
+                  triviaDifficulty,
+                }
+              : undefined,
+        })
+      )
       return
     }
 
@@ -176,7 +207,7 @@ function LobbyPageContent() {
             selectedGame === 'trivia'
               ? {
                   rounds: Number(triviaRounds),
-                  triviaCategory,
+                  triviaCategories: selectedTriviaCategories,
                   triviaDifficulty,
                 }
               : undefined,
@@ -465,14 +496,21 @@ function LobbyPageContent() {
                                   <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
                                     Category
                                   </label>
+                                  <p className="mb-3 text-[10px] uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                                    Pick one or more categories
+                                  </p>
                                   <div className="flex flex-wrap gap-2">
                                     {triviaCategories.map((category) => {
-                                      const isSelected = triviaCategory === category
+                                      const isSelected = selectedTriviaCategories.includes(category)
                                       return (
                                         <button
                                           key={category}
                                           type="button"
-                                          onClick={() => setTriviaCategory(category)}
+                                          onClick={() =>
+                                            setSelectedTriviaCategories((currentCategories) =>
+                                              toggleTriviaCategorySelection(currentCategories, category)
+                                            )
+                                          }
                                           className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
                                             isSelected
                                               ? 'border-[var(--game-trivia)]/50 bg-[var(--game-trivia)]/10 text-[var(--game-trivia)]'

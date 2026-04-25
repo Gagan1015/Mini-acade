@@ -44,24 +44,28 @@ export async function createRoomForUser(input: {
 export async function getOrCreateSoloRoomForUser(input: {
   creatorId: string
   gameId: GameId
+  settings?: GameSettings
+  forceNew?: boolean
 }) {
-  const existingRoom = await prisma.room.findFirst({
-    where: {
-      creatorId: input.creatorId,
-      gameId: input.gameId,
-      maxPlayers: 1,
-      isPrivate: true,
-      status: {
-        in: ['WAITING', 'PLAYING'],
+  const existingRoom = input.forceNew
+    ? null
+    : await prisma.room.findFirst({
+      where: {
+        creatorId: input.creatorId,
+        gameId: input.gameId,
+        maxPlayers: 1,
+        isPrivate: true,
+        status: {
+          in: ['WAITING', 'PLAYING'],
+        },
       },
-    },
-    orderBy: {
-      updatedAt: 'desc',
-    },
-    select: {
-      code: true,
-    },
-  })
+      orderBy: {
+        updatedAt: 'desc',
+      },
+      select: {
+        code: true,
+      },
+    })
 
   if (existingRoom) {
     return {
@@ -78,6 +82,7 @@ export async function getOrCreateSoloRoomForUser(input: {
     creatorId: input.creatorId,
     gameId: input.gameId,
     maxPlayers: 1,
+    settings: input.settings,
   })
 
   return {

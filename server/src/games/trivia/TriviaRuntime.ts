@@ -2,7 +2,9 @@ import {
   TRIVIA_EVENTS,
   type GameConfig,
   type GameEventResult,
+  type GameResultData,
   type TriviaQuestion,
+  type TriviaGameResultMetadata,
   type TriviaCategory,
   type TriviaDifficulty,
   type TriviaSubmitAnswerPayload,
@@ -13,14 +15,32 @@ import type { Server } from 'socket.io'
 import { RoomService } from '../../services/roomService'
 import { BaseGameRuntime } from '../BaseGameRuntime'
 import { QuestionService, type TriviaQuestionData } from './questionService'
-import { GeminiTriviaProvider } from './providers/GeminiTriviaProvider'
 
 type PlayerAnswer = {
   answerId: string
   answeredAt: Date
 }
 
-const ROUND_TIME_SECONDS = 20
+type TriviaRoundPlayerSummary = {
+  answerId: string | null
+  isCorrect: boolean
+  pointsEarned: number
+  totalScore: number
+  answerTime: number | null
+}
+
+type TriviaRoundSummary = {
+  roundNumber: number
+  category: string
+  difficulty: string
+  question: string
+  answers: Array<{ id: string; text: string }>
+  correctAnswerId: string
+  explanation: string | null
+  playerResults: Record<string, TriviaRoundPlayerSummary>
+}
+
+const DEFAULT_ROUND_TIME_SECONDS = 20
 const DEFAULT_ROUNDS = 10
 const ROUND_REVEAL_SECONDS = 5
 const POINTS_TIERS = [
@@ -40,23 +60,29 @@ export class TriviaRuntime extends BaseGameRuntime {
   private roundTimer: ReturnType<typeof setTimeout> | null = null
   private timerTick: ReturnType<typeof setInterval> | null = null
   private revealTimer: ReturnType<typeof setTimeout> | null = null
-  private readonly category: TriviaCategory
+  private readonly categories: TriviaCategory[]
   private readonly difficulty: TriviaDifficulty
+  private readonly roundTimeSeconds: number
+  private readonly roundHistory: TriviaRoundSummary[] = []
 
   constructor(io: Server, config: GameConfig, roomService: RoomService) {
     super(io, config, roomService)
     this.totalRounds = config.settings?.rounds ?? DEFAULT_ROUNDS
-    this.category = config.settings?.triviaCategory ?? 'Mixed'
-    this.difficulty = config.settings?.triviaDifficulty ?? 'medium'
-    const shouldUseAi = process.env.TRIVIA_AI_ENABLED === 'true'
-    this.questionService = new QuestionService(
-      undefined,
-      shouldUseAi ? new GeminiTriviaProvider() : undefined
+    this.roundTimeSeconds = config.settings?.triviaTimeLimit ?? DEFAULT_ROUND_TIME_SECONDS
+    this.categories = normalizeTriviaCategories(
+      config.settings?.triviaCategories?.length
+        ? config.settings.triviaCategories
+        : config.settings?.triviaCategory
+          ? [config.settings.triviaCategory]
+          : ['Mixed']
     )
+    this.difficulty = config.settings?.triviaDifficulty ?? 'medium'
+    this.questionService = new QuestionService()
   }
 
   async initialize() {
     this.questionService.reset()
+    this.roundHistory.length = 0
   }
 
   async start(): Promise<GameEventResult> {
@@ -186,6 +212,7 @@ export class TriviaRuntime extends BaseGameRuntime {
       currentRound: this.currentRound,
       totalRounds: this.totalRounds,
       timeRemaining: getRemainingSeconds(this.roundEndsAt),
+      nextRoundStartsAt: this.phase === 'roundEnd' && this.roundEndsAt ? this.roundEndsAt.toISOString() : undefined,
       question: this.currentQuestion
         ? {
             id: this.currentQuestion.id,
@@ -221,6 +248,37 @@ export class TriviaRuntime extends BaseGameRuntime {
     }
   }
 
+  protected override buildResultMetadata(playerId: UserId): GameResultData['metadata'] {
+    const rounds: TriviaGameResultMetadata['rounds'] = this.roundHistory.map((round) => {
+      const playerResult = round.playerResults[playerId]
+
+      return {
+        roundNumber: round.roundNumber,
+        category: round.category,
+        difficulty: round.difficulty,
+        question: round.question,
+        answers: round.answers,
+        selectedAnswerId: playerResult?.answerId ?? null,
+        correctAnswerId: round.correctAnswerId,
+        isCorrect: playerResult?.isCorrect ?? false,
+        pointsEarned: playerResult?.pointsEarned ?? 0,
+        answerTime: playerResult?.answerTime ?? null,
+        totalScore: playerResult?.totalScore ?? 0,
+        explanation: round.explanation,
+      }
+    })
+
+    return {
+      gameType: 'trivia',
+      totalRounds: this.totalRounds,
+      roundTimeSeconds: this.roundTimeSeconds,
+      categories: this.categories,
+      difficulty: this.difficulty,
+      correctAnswers: this.correctAnswers.get(playerId) ?? 0,
+      rounds,
+    }
+  }
+
   private async startNextRound(): Promise<GameEventResult> {
     this.currentRound += 1
 
@@ -231,17 +289,17 @@ export class TriviaRuntime extends BaseGameRuntime {
     this.phase = 'playing'
     this.answers.clear()
     this.currentQuestion = await this.questionService.getQuestion({
-      category: this.category,
+      category: pickTriviaCategory(this.categories),
       difficulty: this.difficulty,
     })
     const currentQuestion = this.currentQuestion
     this.roundStartedAt = new Date()
-    this.roundEndsAt = new Date(this.roundStartedAt.getTime() + ROUND_TIME_SECONDS * 1000)
+    this.roundEndsAt = new Date(this.roundStartedAt.getTime() + this.roundTimeSeconds * 1000)
 
     this.clearTimers()
     this.roundTimer = setTimeout(() => {
       void this.finishCurrentRound().then((result) => this.broadcastToRoom(result))
-    }, ROUND_TIME_SECONDS * 1000)
+    }, this.roundTimeSeconds * 1000)
     this.timerTick = setInterval(() => {
       if (!this.roundEndsAt || this.phase !== 'playing') {
         return
@@ -265,7 +323,7 @@ export class TriviaRuntime extends BaseGameRuntime {
             totalRounds: this.totalRounds,
             question: toClientQuestion(currentQuestion),
             roundEndsAt: this.roundEndsAt.toISOString(),
-            timeLimit: ROUND_TIME_SECONDS,
+            timeLimit: this.roundTimeSeconds,
           },
         },
       ],
@@ -279,6 +337,7 @@ export class TriviaRuntime extends BaseGameRuntime {
 
     this.phase = 'roundEnd'
     this.clearRoundTimers()
+    this.roundEndsAt = null
 
     const playerResults = Array.from(this.players.keys()).map((playerId) => {
       const answer = this.answers.get(playerId)
@@ -287,7 +346,7 @@ export class TriviaRuntime extends BaseGameRuntime {
         answer && this.roundStartedAt
           ? (answer.answeredAt.getTime() - this.roundStartedAt.getTime()) / 1000
           : undefined
-      const pointsEarned = isCorrect ? calculateTriviaPoints(elapsedSeconds ?? ROUND_TIME_SECONDS) : 0
+      const pointsEarned = isCorrect ? calculateTriviaPoints(elapsedSeconds ?? this.roundTimeSeconds) : 0
 
       return {
         playerId,
@@ -295,8 +354,33 @@ export class TriviaRuntime extends BaseGameRuntime {
         isCorrect,
         pointsEarned,
         totalScore: this.scores.get(playerId) ?? 0,
-        answerTime: elapsedSeconds,
+        answerTime: elapsedSeconds != null ? roundSeconds(elapsedSeconds) : undefined,
       }
+    })
+
+    this.roundHistory.push({
+      roundNumber: this.currentRound,
+      category: this.currentQuestion.category,
+      difficulty: this.currentQuestion.difficulty,
+      question: this.currentQuestion.question,
+      answers: this.currentQuestion.answers.map((answer) => ({
+        id: answer.id,
+        text: answer.text,
+      })),
+      correctAnswerId: this.currentQuestion.correctId,
+      explanation: this.currentQuestion.explanation ?? null,
+      playerResults: Object.fromEntries(
+        playerResults.map((result) => [
+          result.playerId,
+          {
+            answerId: result.answerId,
+            isCorrect: result.isCorrect,
+            pointsEarned: result.pointsEarned,
+            totalScore: result.totalScore,
+            answerTime: result.answerTime ?? null,
+          },
+        ])
+      ),
     })
 
     await this.updateRoomPresenceStatus('playing')
@@ -308,6 +392,10 @@ export class TriviaRuntime extends BaseGameRuntime {
         data: {
           correctAnswerId: this.currentQuestion.correctId,
           explanation: this.currentQuestion.explanation,
+          nextRoundStartsAt:
+            this.currentRound < this.totalRounds
+              ? new Date(Date.now() + ROUND_REVEAL_SECONDS * 1000).toISOString()
+              : undefined,
           playerResults,
         },
       },
@@ -352,8 +440,20 @@ export class TriviaRuntime extends BaseGameRuntime {
       clearTimeout(this.revealTimer)
     }
 
+    this.roundEndsAt = new Date(Date.now() + ROUND_REVEAL_SECONDS * 1000)
+    this.timerTick = setInterval(() => {
+      if (!this.roundEndsAt || this.phase !== 'roundEnd') {
+        return
+      }
+
+      this.io.to(this.roomCode).emit(TRIVIA_EVENTS.TIMER_TICK, {
+        remainingSeconds: getRemainingSeconds(this.roundEndsAt),
+      })
+    }, 1000)
+
     this.revealTimer = setTimeout(() => {
       this.revealTimer = null
+      this.roundEndsAt = null
       void this.startNextRound().then((result) => this.broadcastToRoom(result))
     }, ROUND_REVEAL_SECONDS * 1000)
   }
@@ -386,4 +486,27 @@ function getRemainingSeconds(roundEndsAt: Date | null) {
   }
 
   return Math.max(0, Math.ceil((roundEndsAt.getTime() - Date.now()) / 1000))
+}
+
+function roundSeconds(value: number) {
+  return Number(value.toFixed(2))
+}
+
+function normalizeTriviaCategories(categories: TriviaCategory[]) {
+  const uniqueCategories = Array.from(new Set(categories))
+
+  if (uniqueCategories.length === 0 || uniqueCategories.includes('Mixed')) {
+    return ['Mixed'] satisfies TriviaCategory[]
+  }
+
+  return uniqueCategories
+}
+
+function pickTriviaCategory(categories: TriviaCategory[]) {
+  if (categories.length <= 1) {
+    return categories[0] ?? 'Mixed'
+  }
+
+  const index = Math.floor(Math.random() * categories.length)
+  return categories[index] ?? 'Mixed'
 }

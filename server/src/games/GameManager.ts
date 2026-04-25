@@ -21,10 +21,18 @@ type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents, InterServe
 type TypedIo = Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>
 
 function getTriviaSettings(room: Room): GameSettings {
+  const configuredCategories =
+    room.settings?.triviaCategories?.length
+      ? room.settings.triviaCategories
+      : room.settings?.triviaCategory
+        ? [room.settings.triviaCategory]
+        : undefined
+
   return {
     rounds: room.settings?.rounds ?? 10,
     maxPlayers: room.maxPlayers,
     triviaCategory: room.settings?.triviaCategory,
+    triviaCategories: configuredCategories,
     triviaDifficulty: room.settings?.triviaDifficulty,
   }
 }

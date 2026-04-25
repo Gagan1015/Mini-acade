@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { gameIdSchema, triviaCategorySchema, triviaDifficultySchema } from '@mini-arcade/shared'
+import { gameIdSchema, triviaCategoryListSchema, triviaCategorySchema, triviaDifficultySchema } from '@mini-arcade/shared'
 
 import { requireSession } from '@/lib/admin'
 import { createRoomForUser } from '@/lib/rooms'
@@ -13,6 +13,7 @@ const createRoomSchema = z.object({
     .object({
       rounds: z.number().int().min(1).max(20).optional(),
       triviaCategory: triviaCategorySchema.optional(),
+      triviaCategories: triviaCategoryListSchema.optional(),
       triviaDifficulty: triviaDifficultySchema.optional(),
     })
     .optional(),

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence, type Variants } from 'motion/react'
 
 /* ── Game data ──────────────────────────────────────────────── */
 
@@ -16,19 +16,19 @@ type Game = (typeof GAMES)[number]
 
 /* ── Slot machine animation variants ────────────────────────── */
 
-const slotVariants = {
+const slotVariants: Variants = {
   initial: { opacity: 0, y: 24, scale: 0.97 },
   enter: (delay: number) => ({
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] as const },
   }),
   exit: {
     opacity: 0,
     y: -24,
     scale: 0.97,
-    transition: { duration: 0.45, ease: [0.55, 0, 1, 0.45] },
+    transition: { duration: 0.45, ease: [0.55, 0, 1, 0.45] as const },
   },
 }
 

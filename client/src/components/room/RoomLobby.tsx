@@ -11,6 +11,7 @@ import { TriviaPlayArea } from '@/components/room/TriviaPlayArea'
 import { WordelPlayArea } from './WordelPlayArea'
 import { useRoom } from '@/hooks/useRoom'
 import { getGameInfo } from '@/lib/games'
+import { buildSoloPlayUrl } from '@/lib/soloPlay'
 import { LiveIndicator } from '@/components/ui/Animated'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { GameIcon } from '@/components/ui/GameIcons'
@@ -115,9 +116,9 @@ function IconUser({ size = 14 }: { size?: number }) {
   )
 }
 
-function IconZap({ size = 18 }: { size?: number }) {
+function IconZap({ size = 18, className = '' }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
     </svg>
   )
@@ -236,7 +237,11 @@ export function RoomLobby({
 
   function handlePlayAgain() {
     if (isSolo) {
-      window.location.assign(`/play/${activeRoom.gameId}?session=${Date.now()}`)
+      window.location.assign(
+        buildSoloPlayUrl(activeRoom.gameId, {
+          settings: activeRoom.settings,
+        })
+      )
       return
     }
 
@@ -331,6 +336,7 @@ export function RoomLobby({
             roundResults={trivia.roundResults}
             scores={trivia.scores}
             finalScores={trivia.finalScores}
+            roundHistory={trivia.roundHistory}
             onSubmitAnswer={submitTriviaAnswer}
           />
         </motion.div>

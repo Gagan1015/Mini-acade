@@ -1,10 +1,12 @@
 import {
   FLAGEL_EVENTS,
   type FlagelGuessResult,
+  type FlagelGameResultMetadata,
   type FlagelSkipPayload,
   type FlagelSubmitGuessPayload,
   type GameConfig,
   type GameEventResult,
+  type GameResultData,
   type UserId,
 } from '@mini-arcade/shared'
 import type { Server } from 'socket.io'
@@ -139,6 +141,36 @@ export class FlagelRuntime extends BaseGameRuntime {
         this.phase === 'roundEnd' || this.phase === 'gameEnd' ? this.secretCountry?.name : undefined,
       countryCode:
         this.phase === 'roundEnd' || this.phase === 'gameEnd' ? this.secretCountry?.code : undefined,
+    }
+  }
+
+  protected override buildResultMetadata(playerId: UserId): GameResultData['metadata'] {
+    const state = this.playerState.get(playerId)
+
+    if (!state || !this.secretCountry) {
+      return undefined
+    }
+
+    const guesses: FlagelGameResultMetadata['guesses'] = state.guesses.map((guess) => ({
+      guess: guess.guess,
+      isCorrect: guess.isCorrect,
+      distance: guess.distance ?? null,
+      direction: guess.direction ?? null,
+      attemptsUsed: guess.attemptsUsed,
+      maxAttempts: guess.maxAttempts,
+    }))
+
+    return {
+      gameType: 'flagel',
+      maxAttempts: MAX_ATTEMPTS,
+      correctCountry: this.secretCountry.name,
+      countryCode: this.secretCountry.code,
+      flagEmoji: this.secretCountry.flagEmoji ?? null,
+      flagImageUrl: this.secretCountry.flagImageUrl ?? null,
+      solved: state.solved,
+      skipped: state.skipped,
+      attemptsUsed: state.guesses.length,
+      guesses,
     }
   }
 

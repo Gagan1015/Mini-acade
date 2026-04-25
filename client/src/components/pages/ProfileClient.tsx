@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import Link from 'next/link'
 import { GameIcon } from '@/components/ui/GameIcons'
@@ -84,6 +85,15 @@ function formatRelative(value?: string | null) {
   const days = Math.floor(hours / 24)
   if (days < 7) return `${days}d ago`
   return formatDate(value)
+}
+
+/** Renders a relative timestamp client-side only to avoid hydration mismatches. */
+function RelativeTime({ value }: { value?: string | null }) {
+  const [text, setText] = useState(() => formatDate(value))
+  useEffect(() => {
+    setText(formatRelative(value))
+  }, [value])
+  return <>{text}</>
 }
 
 function roleTone(role: string) {
@@ -257,7 +267,7 @@ export default function ProfileClient({
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">Last sign in</p>
-            <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">{formatRelative(profile.lastLoginAt)}</p>
+            <p className="mt-1 text-sm font-medium text-[var(--text-primary)]"><RelativeTime value={profile.lastLoginAt} /></p>
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">Games Recorded</p>
@@ -392,36 +402,44 @@ export default function ProfileClient({
                 recentResults.map((result, i) => (
                   <motion.div
                     key={result.id}
-                    className="flex flex-col gap-3 rounded-[20px] border border-[var(--border)] bg-[var(--background)]/55 px-4 py-4 transition-colors hover:bg-[var(--surface-hover)] sm:flex-row sm:items-center sm:justify-between"
+                    className="rounded-[20px] border border-[var(--border)] bg-[var(--background)]/55 transition-colors hover:bg-[var(--surface-hover)]"
                     custom={i}
                     initial="hidden"
                     animate="show"
                     variants={stagger}
                   >
-                    <div className="flex items-center gap-3">
-                      <GameIcon gameId={result.gameId} size={28} />
-                      <div>
-                        <p className="text-sm font-semibold text-[var(--text-primary)]">
-                          {GAME_LABELS[result.gameId] ?? result.gameId}
-                        </p>
-                        <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
-                          Room {result.room.code} · {formatRelative(result.createdAt)}
-                        </p>
+                    <Link
+                      href={`/profile/recent-games/${result.id}?from=profile`}
+                      className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="flex items-center gap-3">
+                        <GameIcon gameId={result.gameId} size={28} />
+                        <div>
+                          <p className="text-sm font-semibold text-[var(--text-primary)]">
+                            {GAME_LABELS[result.gameId] ?? result.gameId}
+                          </p>
+                          <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
+                            Room {result.room.code} · <RelativeTime value={result.createdAt} />
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      {result.isWinner && (
-                        <span className="rounded-full px-2.5 py-0.5 text-xs font-bold" style={{ background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success-500)' }}>
-                          🏆 Winner
+                      <div className="flex flex-wrap items-center gap-3 text-sm sm:justify-end">
+                        {result.isWinner && (
+                          <span className="rounded-full px-2.5 py-0.5 text-xs font-bold" style={{ background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success-500)' }}>
+                            Winner
+                          </span>
+                        )}
+                        <span className="rounded-full bg-[var(--surface)] px-3 py-1 font-medium text-[var(--text-secondary)]">
+                          {result.rank != null ? `#${result.rank}` : 'Done'}
                         </span>
-                      )}
-                      <span className="rounded-full bg-[var(--surface)] px-3 py-1 font-medium text-[var(--text-secondary)]">
-                        {result.rank ? `#${result.rank}` : 'Done'}
-                      </span>
-                      <span className="font-semibold font-mono text-[var(--text-primary)]">
-                        {result.score} pts
-                      </span>
-                    </div>
+                        <span className="font-semibold font-mono text-[var(--text-primary)]">
+                          {result.score} pts
+                        </span>
+                        <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--marketing-accent)]">
+                          View details
+                        </span>
+                      </div>
+                    </Link>
                   </motion.div>
                 ))
               ) : (
@@ -495,3 +513,4 @@ export default function ProfileClient({
     </div>
   )
 }
+

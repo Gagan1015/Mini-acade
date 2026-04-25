@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 
 import type {
@@ -10,6 +11,9 @@ import type {
   TriviaRoundEnded,
   TriviaRoundStarted,
 } from '@mini-arcade/shared'
+import type { TriviaRoundHistoryEntry } from '@/hooks/useRoom'
+import { TriviaResultsModal } from './TriviaResultsModal'
+import { TriviaDetailedResults } from './TriviaDetailedResults'
 
 type TriviaPlayAreaProps = {
   currentUserId: string
@@ -25,6 +29,7 @@ type TriviaPlayAreaProps = {
   roundResults: TriviaRoundEnded | null
   scores: Record<string, number>
   finalScores: TriviaGameEnded['finalScores']
+  roundHistory: TriviaRoundHistoryEntry[]
   onSubmitAnswer: (questionId: string, answerId: TriviaQuestion['answers'][number]['id']) => void
 }
 
@@ -74,10 +79,16 @@ export function TriviaPlayArea({
   roundResults,
   scores,
   finalScores,
+  roundHistory,
   onSubmitAnswer,
 }: TriviaPlayAreaProps) {
   const sortedPlayers = [...players].sort((left, right) => (scores[right.id] ?? 0) - (scores[left.id] ?? 0))
   const maxPossibleScore = totalRounds * 1000
+  const isReveal = phase === 'roundEnd' || phase === 'gameEnd'
+  const [displayTimeRemaining, setDisplayTimeRemaining] = useState(timeRemaining)
+  const [showResultsModal, setShowResultsModal] = useState(false)
+  const [showDetailedResults, setShowDetailedResults] = useState(false)
+  const [prevPhase, setPrevPhase] = useState(phase)
   const leaderboardEntries: TriviaGameEnded['finalScores'] =
     finalScores.length > 0
       ? finalScores
@@ -88,6 +99,32 @@ export function TriviaPlayArea({
           correctAnswers: 0,
           rank: index + 1,
         }))
+
+  useEffect(() => {
+    if (phase !== 'roundEnd' || !roundResults?.nextRoundStartsAt) {
+      setDisplayTimeRemaining(timeRemaining)
+      return
+    }
+
+    const updateCountdown = () => {
+      setDisplayTimeRemaining(getRemainingSeconds(roundResults.nextRoundStartsAt))
+    }
+
+    updateCountdown()
+    const intervalId = window.setInterval(updateCountdown, 1000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [phase, roundResults?.nextRoundStartsAt, timeRemaining])
+
+  // Auto-open results modal when game ends
+  useEffect(() => {
+    if (prevPhase !== 'gameEnd' && phase === 'gameEnd') {
+      setShowResultsModal(true)
+    }
+    setPrevPhase(phase)
+  }, [phase, prevPhase])
 
   return (
     <motion.section
@@ -112,9 +149,22 @@ export function TriviaPlayArea({
           <p className="mt-1 text-xs text-[var(--text-tertiary)]">
             Max score {maxPossibleScore.toLocaleString()} pts
           </p>
-          <p className={`mt-2 font-mono text-3xl font-bold ${timeRemaining <= 5 ? 'text-[var(--error-500)]' : 'text-[var(--text-primary)]'}`}>
-            {timeRemaining}s
-          </p>
+          <div
+            className={`mt-3 inline-flex min-w-[112px] flex-col rounded-2xl border px-4 py-3 ${
+              phase === 'roundEnd'
+                ? 'border-[var(--warning-500)]/25 bg-[var(--warning-500)]/10'
+                : displayTimeRemaining <= 5
+                  ? 'border-[var(--error-500)]/25 bg-[var(--error-500)]/10'
+                  : 'border-[var(--border)]/40 bg-[var(--surface)]/35'
+            }`}
+          >
+            <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+              {phase === 'roundEnd' ? 'Next Question In' : 'Time Left'}
+            </span>
+            <span className="mt-1 font-mono text-3xl font-bold text-[var(--text-primary)]">
+              {displayTimeRemaining}s
+            </span>
+          </div>
         </div>
       </div>
 
@@ -134,9 +184,12 @@ export function TriviaPlayArea({
           <div className="mt-6 grid gap-3 md:grid-cols-2">
             {question.answers.map((answer) => {
               const isSelected = selectedAnswerId === answer.id
-              const isReveal = phase === 'roundEnd' || phase === 'gameEnd'
               const isCorrectAnswer = roundResults?.correctAnswerId === answer.id
-              const isWrongSelected = isReveal && isSelected && !isCorrectAnswer
+              const isInstantCorrect = isSelected && answerFeedback?.isCorrect === true
+              const isInstantWrong = isSelected && answerFeedback?.isCorrect === false
+              const showCorrectState = isCorrectAnswer || (!isReveal && isInstantCorrect)
+              const showWrongState = !showCorrectState && (isReveal ? isSelected && !isCorrectAnswer : isInstantWrong)
+
               return (
                 <motion.button
                   key={answer.id}
@@ -146,14 +199,14 @@ export function TriviaPlayArea({
                   onClick={() => onSubmitAnswer(question.id, answer.id)}
                   disabled={phase !== 'playing' || Boolean(selectedAnswerId)}
                   className={`rounded-xl border px-4 py-4 text-left text-sm transition-all duration-200 ${
-                    isCorrectAnswer
-                      ? 'border-[var(--success-500)]/40 bg-[var(--success-500)]/10 text-[var(--success-500)]'
-                      : isWrongSelected
-                        ? 'border-[var(--error-500)]/40 bg-[var(--error-500)]/10 text-[var(--error-500)]'
+                    showCorrectState
+                      ? 'border-[var(--success-600)] bg-[var(--success-500)] text-white shadow-[0_12px_28px_-18px_rgba(16,185,129,0.8)]'
+                      : showWrongState
+                        ? 'border-[var(--error-600)] bg-[var(--error-500)] text-white shadow-[0_12px_28px_-18px_rgba(239,68,68,0.8)]'
                         : isSelected
-                      ? 'border-[var(--primary-500)]/40 bg-[var(--primary-500)]/10 text-[var(--primary-400)]'
+                      ? 'border-[var(--primary-500)]/45 bg-[var(--primary-500)]/14 text-[var(--text-primary)]'
                       : 'border-[var(--border)]/40 bg-[var(--surface)]/20 text-[var(--text-primary)] hover:bg-[var(--surface)]/50'
-                  } disabled:cursor-not-allowed disabled:opacity-70`}
+                  } disabled:cursor-not-allowed`}
                 >
                   {answer.text}
                 </motion.button>
@@ -175,8 +228,8 @@ export function TriviaPlayArea({
             animate={{ opacity: 1, y: 0 }}
             className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm ${
               answerFeedback.isCorrect
-                ? 'border-[var(--success-500)]/20 bg-[var(--success-500)]/5 text-[var(--success-500)]'
-                : 'border-[var(--error-500)]/20 bg-[var(--error-500)]/5 text-[var(--error-500)]'
+                ? 'border-[var(--success-600)] bg-[var(--success-500)] text-white shadow-[0_12px_28px_-18px_rgba(16,185,129,0.75)]'
+                : 'border-[var(--error-600)] bg-[var(--error-500)] text-white shadow-[0_12px_28px_-18px_rgba(239,68,68,0.75)]'
             }`}
           >
             {answerFeedback.isCorrect ? <IconCheck size={16} /> : <IconX size={16} />}
@@ -193,7 +246,7 @@ export function TriviaPlayArea({
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-[var(--warning-500)]/20 bg-[var(--warning-500)]/5 px-4 py-3 text-sm text-[var(--warning-500)]"
+            className="rounded-xl border border-[var(--warning-500)]/25 bg-[var(--warning-500)]/12 px-4 py-3 text-sm text-[var(--text-primary)]"
           >
             Correct answer: <span className="font-semibold">{question?.answers.find((answer) => answer.id === roundResults.correctAnswerId)?.text ??
               roundResults.correctAnswerId}</span>
@@ -259,6 +312,63 @@ export function TriviaPlayArea({
           </div>
         </div>
       </div>
+      {/* Game End Results Button */}
+      {phase === 'gameEnd' && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="flex justify-center gap-3"
+        >
+          <button
+            onClick={() => setShowResultsModal(true)}
+            className="flex items-center gap-2 rounded-xl bg-[var(--game-trivia)] px-6 py-3.5 text-sm font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5 cursor-pointer"
+          >
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10" />
+              <line x1="12" y1="20" x2="12" y2="4" />
+              <line x1="6" y1="20" x2="6" y2="14" />
+            </svg>
+            View Results
+          </button>
+        </motion.div>
+      )}
+
+      {/* Results Modal */}
+      <TriviaResultsModal
+        isOpen={showResultsModal}
+        onClose={() => setShowResultsModal(false)}
+        onViewDetails={() => {
+          setShowResultsModal(false)
+          setShowDetailedResults(true)
+        }}
+        roundHistory={roundHistory}
+        finalScores={finalScores}
+        currentUserId={currentUserId}
+        totalRounds={totalRounds}
+      />
+
+      {/* Detailed Results Full Page */}
+      <AnimatePresence>
+        {showDetailedResults && (
+          <TriviaDetailedResults
+            isOpen={showDetailedResults}
+            onClose={() => setShowDetailedResults(false)}
+            roundHistory={roundHistory}
+            finalScores={finalScores}
+            currentUserId={currentUserId}
+            totalRounds={totalRounds}
+          />
+        )}
+      </AnimatePresence>
     </motion.section>
   )
+}
+
+function getRemainingSeconds(nextRoundStartsAt?: string) {
+  if (!nextRoundStartsAt) {
+    return 0
+  }
+
+  return Math.max(0, Math.ceil((new Date(nextRoundStartsAt).getTime() - Date.now()) / 1000))
 }

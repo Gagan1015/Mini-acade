@@ -118,11 +118,16 @@ export abstract class BaseGameRuntime implements IGameRuntime {
       score,
       rank: index + 1,
       isWinner: score === highestScore,
+      metadata: this.buildResultMetadata(playerId),
     }))
   }
 
   protected getConnectedPlayers() {
     return Array.from(this.players.values()).filter((player) => player.isConnected)
+  }
+
+  protected buildResultMetadata(_playerId: UserId): GameResultData['metadata'] {
+    return undefined
   }
 
   protected setPlayerScore(playerId: UserId, score: number) {
@@ -175,7 +180,7 @@ export abstract class BaseGameRuntime implements IGameRuntime {
   private async persistResults() {
     const room = await prisma.room.findUnique({
       where: { code: this.roomCode },
-      select: { id: true },
+      select: { id: true, startedAt: true },
     })
 
     if (!room) {
@@ -183,6 +188,10 @@ export abstract class BaseGameRuntime implements IGameRuntime {
     }
 
     const results = this.getResults()
+    const endedAt = new Date()
+    const durationSeconds = room.startedAt
+      ? Math.max(0, Math.round((endedAt.getTime() - room.startedAt.getTime()) / 1000))
+      : undefined
 
     for (const result of results) {
       await prisma.gameResult.create({
@@ -193,6 +202,7 @@ export abstract class BaseGameRuntime implements IGameRuntime {
           score: result.score,
           rank: result.rank,
           isWinner: result.isWinner,
+          duration: durationSeconds,
           metadata: result.metadata as Prisma.InputJsonValue | undefined,
         },
       })
@@ -215,6 +225,7 @@ export abstract class BaseGameRuntime implements IGameRuntime {
             gamesWon: result.isWinner ? 1 : 0,
             totalScore: result.score,
             highScore: result.score,
+            totalTime: durationSeconds ?? 0,
           },
         })
       } else {
@@ -230,6 +241,7 @@ export abstract class BaseGameRuntime implements IGameRuntime {
             gamesWon: existingStat.gamesWon + (result.isWinner ? 1 : 0),
             totalScore: existingStat.totalScore + result.score,
             highScore: Math.max(existingStat.highScore, result.score),
+            totalTime: existingStat.totalTime + (durationSeconds ?? 0),
           },
         })
       }
@@ -239,7 +251,7 @@ export abstract class BaseGameRuntime implements IGameRuntime {
       where: { code: this.roomCode },
       data: {
         status: 'FINISHED',
-        endedAt: new Date(),
+        endedAt,
       },
     })
 

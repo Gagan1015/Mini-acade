@@ -480,38 +480,53 @@ export default function StatsClient({ gameStats, recentResults }: StatsClientPro
                 recentResults.map((result, i) => (
                   <motion.div
                     key={result.id}
-                    className="rounded-[18px] border border-[var(--border)] bg-[var(--background)]/55 px-4 py-4 transition-colors hover:bg-[var(--surface-hover)]"
+                    className="rounded-[18px] border border-[var(--border)] bg-[var(--background)]/55 transition-colors hover:bg-[var(--surface-hover)]"
                     custom={i}
                     initial="hidden"
                     animate="show"
                     variants={stagger}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5">
-                        <GameIcon gameId={result.gameId} size={22} />
-                        <p className="text-sm font-semibold text-[var(--text-primary)]">
-                          {GAME_META[result.gameId]?.label ?? result.gameId}
+                    <Link
+                      href={`/profile/recent-games/${result.id}?from=stats`}
+                      className="block px-4 py-4"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <GameIcon gameId={result.gameId} size={22} />
+                          <p className="text-sm font-semibold text-[var(--text-primary)]">
+                            {GAME_META[result.gameId]?.label ?? result.gameId}
+                          </p>
+                        </div>
+                        <p className="text-xs text-[var(--text-tertiary)]">
+                          {formatRelative(result.createdAt)}
                         </p>
                       </div>
-                      <p className="text-xs text-[var(--text-tertiary)]">
-                        {formatRelative(result.createdAt)}
-                      </p>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between gap-3 text-sm">
-                      <div className="flex items-center gap-2">
-                        <p className="text-[var(--text-secondary)]">
-                          Room {result.room.code}
-                        </p>
-                        {result.isWinner && (
-                          <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success-500)' }}>
-                            🏆
-                          </span>
-                        )}
+                      <div className="mt-2 flex items-center justify-between gap-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <p className="text-[var(--text-secondary)]">
+                            Room {result.room.code}
+                          </p>
+                          {result.isWinner && (
+                            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success-500)' }}>
+                              Winner
+                            </span>
+                          )}
+                          {result.rank != null && (
+                            <span className="rounded-full bg-[var(--surface)] px-2.5 py-0.5 text-[10px] font-semibold text-[var(--text-secondary)]">
+                              #{result.rank}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold font-mono text-[var(--text-primary)]">
+                            {result.score} pts
+                          </p>
+                          <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--marketing-accent)]">
+                            View details
+                          </p>
+                        </div>
                       </div>
-                      <p className="font-semibold font-mono text-[var(--text-primary)]">
-                        {result.score} pts
-                      </p>
-                    </div>
+                    </Link>
                   </motion.div>
                 ))
               ) : (
@@ -526,3 +541,4 @@ export default function StatsClient({ gameStats, recentResults }: StatsClientPro
     </div>
   )
 }
+

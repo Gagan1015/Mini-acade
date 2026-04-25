@@ -1,4 +1,11 @@
-import type { GameId, Player, TriviaCategory, TriviaDifficulty, UserId } from './types'
+import type {
+  GameId,
+  Player,
+  TriviaCategory,
+  TriviaDifficulty,
+  UserId,
+  WordelLetterResult,
+} from './types'
 
 export type GamePhase = 'waiting' | 'playing' | 'roundEnd' | 'gameEnd'
 
@@ -7,7 +14,9 @@ export interface GameSettings {
   roundTime?: number
   maxPlayers?: number
   triviaCategory?: TriviaCategory
+  triviaCategories?: TriviaCategory[]
   triviaDifficulty?: TriviaDifficulty
+  triviaTimeLimit?: number
   customSettings?: Record<string, unknown>
 }
 
@@ -40,12 +49,116 @@ export interface GameEventResult {
   error?: string
 }
 
+export interface TriviaAnswerOptionMetadata {
+  id: string
+  text: string
+}
+
+export interface TriviaRoundResultMetadata {
+  roundNumber: number
+  category: string
+  difficulty: string
+  question: string
+  answers: TriviaAnswerOptionMetadata[]
+  selectedAnswerId: string | null
+  correctAnswerId: string
+  isCorrect: boolean
+  pointsEarned: number
+  answerTime: number | null
+  totalScore: number
+  explanation: string | null
+}
+
+export interface TriviaGameResultMetadata {
+  gameType: 'trivia'
+  totalRounds: number
+  roundTimeSeconds: number
+  categories: TriviaCategory[]
+  difficulty: TriviaDifficulty
+  correctAnswers: number
+  rounds: TriviaRoundResultMetadata[]
+}
+
+export interface WordelGuessMetadata {
+  guess: string
+  results: WordelLetterResult[]
+  isCorrect: boolean
+  attemptsUsed: number
+}
+
+export interface WordelGameResultMetadata {
+  gameType: 'wordel'
+  wordLength: number
+  maxAttempts: number
+  correctWord: string
+  solved: boolean
+  attemptsUsed: number
+  guesses: WordelGuessMetadata[]
+}
+
+export interface FlagelGuessMetadata {
+  guess: string
+  isCorrect: boolean
+  distance: number | null
+  direction: string | null
+  attemptsUsed: number
+  maxAttempts: number
+}
+
+export interface FlagelGameResultMetadata {
+  gameType: 'flagel'
+  maxAttempts: number
+  correctCountry: string
+  countryCode: string
+  flagEmoji: string | null
+  flagImageUrl: string | null
+  solved: boolean
+  skipped: boolean
+  attemptsUsed: number
+  guesses: FlagelGuessMetadata[]
+}
+
+export interface SkribbleCorrectGuesserMetadata {
+  playerId: string
+  playerName: string
+  position: number
+  pointsEarned: number
+}
+
+export interface SkribbleRoundResultMetadata {
+  roundNumber: number
+  drawerId: string
+  drawerName: string
+  word: string
+  wordHint: string
+  strokeCount: number
+  drawerPoints: number
+  playerWasDrawer: boolean
+  guessedCorrectly: boolean
+  guessPosition: number | null
+  pointsEarned: number
+  scoreAfterRound: number
+  correctGuessers: SkribbleCorrectGuesserMetadata[]
+}
+
+export interface SkribbleGameResultMetadata {
+  gameType: 'skribble'
+  totalRounds: number
+  rounds: SkribbleRoundResultMetadata[]
+}
+
+export type PersistedGameResultMetadata =
+  | TriviaGameResultMetadata
+  | WordelGameResultMetadata
+  | FlagelGameResultMetadata
+  | SkribbleGameResultMetadata
+
 export interface GameResultData {
   playerId: UserId
   score: number
   rank: number
   isWinner: boolean
-  metadata?: Record<string, unknown>
+  metadata?: PersistedGameResultMetadata
 }
 
 export interface IGameRuntime {

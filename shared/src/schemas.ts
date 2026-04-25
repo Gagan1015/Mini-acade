@@ -27,6 +27,13 @@ export const triviaCategories = [
 ] as const
 
 export const triviaCategorySchema = z.enum(triviaCategories)
+export const triviaCategoryListSchema = z
+  .array(triviaCategorySchema)
+  .min(1)
+  .max(triviaCategories.length)
+  .refine((categories) => new Set(categories).size === categories.length, {
+    message: 'Trivia categories must be unique',
+  })
 export const triviaDifficultySchema = z.enum(['easy', 'medium', 'hard'])
 export const triviaAnswerIdSchema = z.enum(['a', 'b', 'c', 'd'])
 
@@ -52,7 +59,9 @@ export const gameSettingsSchema = z
   .object({
     rounds: z.number().int().min(1).max(20).optional(),
     triviaCategory: triviaCategorySchema.optional(),
+    triviaCategories: triviaCategoryListSchema.optional(),
     triviaDifficulty: triviaDifficultySchema.optional(),
+    triviaTimeLimit: z.number().int().min(5).max(60).optional(),
   })
   .optional()
 
@@ -268,6 +277,7 @@ export const triviaRoundStartedSchema = z.object({
 export const triviaRoundEndedSchema = z.object({
   correctAnswerId: triviaAnswerIdSchema,
   explanation: z.string().trim().max(180).optional(),
+  nextRoundStartsAt: isoDateTimeSchema.optional(),
   playerResults: z.array(
     z.object({
       playerId: userIdSchema,
@@ -316,6 +326,7 @@ export const triviaSyncSchema = z.object({
   currentRound: z.number().int().min(0),
   totalRounds: z.number().int().min(1),
   timeRemaining: z.number().int().min(0),
+  nextRoundStartsAt: isoDateTimeSchema.optional(),
   question: triviaQuestionSchema
     .extend({
       correctAnswerId: triviaAnswerIdSchema.optional(),

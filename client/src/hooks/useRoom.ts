@@ -87,11 +87,24 @@ type WordelUiState = {
   correctWord?: string
 }
 
+export type TriviaRoundHistoryEntry = {
+  roundNumber: number
+  question: TriviaRoundStarted['question']
+  selectedAnswerId: string | null
+  correctAnswerId: string
+  isCorrect: boolean
+  pointsEarned: number
+  explanation?: string
+  category?: string
+  difficulty?: string
+}
+
 type TriviaUiState = {
   phase: 'waiting' | 'playing' | 'roundEnd' | 'gameEnd'
   currentRound: number
   totalRounds: number
   timeRemaining: number
+  nextRoundStartsAt: string | null
   question: TriviaRoundStarted['question'] | null
   answeredPlayers: string[]
   selectedAnswerId: string | null
@@ -99,7 +112,10 @@ type TriviaUiState = {
   roundResults: TriviaRoundEnded | null
   scores: Record<string, number>
   finalScores: TriviaGameEnded['finalScores']
+  roundHistory: TriviaRoundHistoryEntry[]
 }
+
+const TRIVIA_REVEAL_SECONDS = 5
 
 type FlagelUiState = {
   phase: 'waiting' | 'playing' | 'roundEnd' | 'gameEnd'
@@ -182,6 +198,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     currentRound: 0,
     totalRounds: initialRoom.settings?.rounds ?? 10,
     timeRemaining: 0,
+    nextRoundStartsAt: null,
     question: null,
     answeredPlayers: [],
     selectedAnswerId: null,
@@ -189,6 +206,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     roundResults: null,
     scores: Object.fromEntries(initialRoom.players.map((player) => [player.id, player.score])),
     finalScores: [],
+    roundHistory: [],
   })
   const [flagel, setFlagel] = useState<FlagelUiState>({
     phase: initialRoom.status === 'playing' ? 'playing' : 'waiting',
@@ -354,6 +372,16 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
         setTrivia((previousState) => ({
           ...previousState,
           phase: 'playing',
+          timeRemaining: 0,
+          nextRoundStartsAt: null,
+          question: null,
+          answeredPlayers: [],
+          selectedAnswerId: null,
+          answerFeedback: null,
+          roundResults: null,
+          finalScores: [],
+          scores: createEmptyScores(Object.keys(previousState.scores)),
+          roundHistory: [],
         }))
       } else if (payload.gameId === 'flagel') {
         setFlagel((previousState) => ({
@@ -567,6 +595,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
         currentRound: payload.roundNumber,
         totalRounds: payload.totalRounds,
         timeRemaining: payload.timeLimit,
+        nextRoundStartsAt: null,
         question: payload.question,
         answeredPlayers: [],
         selectedAnswerId: null,
@@ -578,7 +607,10 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     const handleTriviaTimerTick = (payload: TriviaTimerTickPayload) => {
       setTrivia((previousState) => ({
         ...previousState,
-        timeRemaining: payload.remainingSeconds,
+        timeRemaining:
+          previousState.phase === 'roundEnd' && previousState.nextRoundStartsAt
+            ? getRemainingSeconds(previousState.nextRoundStartsAt)
+            : payload.remainingSeconds,
       }))
     }
 
@@ -599,24 +631,55 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
 
     const handleTriviaRoundEnded = (payload: TriviaRoundEnded) => {
-      setTrivia((previousState) => ({
-        ...previousState,
-        phase: 'roundEnd',
-        timeRemaining: 0,
-        answeredPlayers: payload.playerResults
-          .filter((result) => result.answerId !== null)
-          .map((result) => result.playerId),
-        roundResults: payload,
-        scores: Object.fromEntries(
-          payload.playerResults.map((result) => [result.playerId, result.totalScore])
-        ),
-      }))
+      const nextRoundStartsAt = resolveTriviaRevealDeadline(payload.nextRoundStartsAt)
+
+      setTrivia((previousState) => {
+        const currentPlayerResult = payload.playerResults.find(
+          (result) => result.playerId === currentUserId
+        )
+
+        const historyEntry: TriviaRoundHistoryEntry | null =
+          previousState.question
+            ? {
+                roundNumber: previousState.currentRound,
+                question: previousState.question,
+                selectedAnswerId: previousState.selectedAnswerId,
+                correctAnswerId: payload.correctAnswerId,
+                isCorrect: currentPlayerResult?.isCorrect ?? false,
+                pointsEarned: currentPlayerResult?.pointsEarned ?? 0,
+                explanation: payload.explanation,
+                category: previousState.question.category,
+                difficulty: previousState.question.difficulty,
+              }
+            : null
+
+        return {
+          ...previousState,
+          phase: 'roundEnd',
+          timeRemaining: getRemainingSeconds(nextRoundStartsAt),
+          nextRoundStartsAt,
+          answeredPlayers: payload.playerResults
+            .filter((result) => result.answerId !== null)
+            .map((result) => result.playerId),
+          roundResults: {
+            ...payload,
+            nextRoundStartsAt: nextRoundStartsAt ?? undefined,
+          },
+          scores: Object.fromEntries(
+            payload.playerResults.map((result) => [result.playerId, result.totalScore])
+          ),
+          roundHistory: historyEntry
+            ? [...previousState.roundHistory, historyEntry]
+            : previousState.roundHistory,
+        }
+      })
     }
 
     const handleTriviaGameEnded = (payload: TriviaGameEnded) => {
       setTrivia((previousState) => ({
         ...previousState,
         phase: 'gameEnd',
+        nextRoundStartsAt: null,
         finalScores: payload.finalScores,
       }))
       setRoom((previousRoom) =>
@@ -630,11 +693,21 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
 
     const handleTriviaSync = (payload: TriviaSyncPayload) => {
-      setTrivia({
+      const nextRoundStartsAt =
+        payload.phase === 'roundEnd'
+          ? resolveTriviaRevealDeadline(payload.nextRoundStartsAt)
+          : null
+
+      setTrivia((previousState) => ({
+        ...previousState,
         phase: payload.phase,
         currentRound: payload.currentRound,
         totalRounds: payload.totalRounds,
-        timeRemaining: payload.timeRemaining,
+        timeRemaining:
+          payload.phase === 'roundEnd'
+            ? getRemainingSeconds(nextRoundStartsAt ?? undefined)
+            : payload.timeRemaining,
+        nextRoundStartsAt,
         question: payload.question
           ? {
               id: payload.question.id,
@@ -656,12 +729,13 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
             ? {
                 correctAnswerId: payload.question.correctAnswerId,
                 explanation: payload.question.explanation,
+                nextRoundStartsAt: nextRoundStartsAt ?? undefined,
                 playerResults: [],
               }
             : null,
         scores: payload.scores,
         finalScores: payload.finalScores ?? [],
-      })
+      }))
     }
 
     const handleFlagelRoundStarted = (payload: FlagelRoundStarted) => {
@@ -1049,6 +1123,37 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
   }, [createEmptyPlayerStatuses, createEmptyScores, currentUserId, roomCode, showNotification])
 
+  useEffect(() => {
+    if (trivia.phase !== 'roundEnd' || !trivia.nextRoundStartsAt) {
+      return
+    }
+
+    const updateCountdown = () => {
+      setTrivia((previousState) => {
+        if (previousState.phase !== 'roundEnd' || !previousState.nextRoundStartsAt) {
+          return previousState
+        }
+
+        const nextTimeRemaining = getRemainingSeconds(previousState.nextRoundStartsAt)
+        if (nextTimeRemaining === previousState.timeRemaining) {
+          return previousState
+        }
+
+        return {
+          ...previousState,
+          timeRemaining: nextTimeRemaining,
+        }
+      })
+    }
+
+    updateCountdown()
+    const intervalId = window.setInterval(updateCountdown, 1000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [trivia.phase, trivia.nextRoundStartsAt])
+
   const leave = useCallback(() => {
     const socket = socketRef.current
     if (!socket) {
@@ -1240,4 +1345,23 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     chooseSkribbleWord,
     requestSkribbleSync,
   }
+}
+
+function getRemainingSeconds(nextRoundStartsAt?: string) {
+  if (!nextRoundStartsAt) {
+    return 0
+  }
+
+  return Math.max(0, Math.ceil((new Date(nextRoundStartsAt).getTime() - Date.now()) / 1000))
+}
+
+function resolveTriviaRevealDeadline(nextRoundStartsAt?: string) {
+  if (nextRoundStartsAt) {
+    const remainingSeconds = getRemainingSeconds(nextRoundStartsAt)
+    if (remainingSeconds > 0) {
+      return nextRoundStartsAt
+    }
+  }
+
+  return new Date(Date.now() + TRIVIA_REVEAL_SECONDS * 1000).toISOString()
 }

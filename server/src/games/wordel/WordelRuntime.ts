@@ -2,6 +2,8 @@ import {
   WORDEL_EVENTS,
   type GameConfig,
   type GameEventResult,
+  type GameResultData,
+  type WordelGameResultMetadata,
   type WordelSubmitGuessPayload,
   type UserId,
 } from '@mini-arcade/shared'
@@ -219,6 +221,31 @@ export class WordelRuntime extends BaseGameRuntime {
       scores: Object.fromEntries(this.scores),
       finalScores: this.phase === 'gameEnd' ? this.getFinalScores() : undefined,
       correctWord: this.secretWord,
+    }
+  }
+
+  protected override buildResultMetadata(playerId: UserId): GameResultData['metadata'] {
+    const state = this.playerState.get(playerId)
+
+    if (!state) {
+      return undefined
+    }
+
+    const guesses: WordelGameResultMetadata['guesses'] = state.guesses.map((guess) => ({
+      guess: guess.guess,
+      results: guess.results,
+      isCorrect: guess.isCorrect,
+      attemptsUsed: guess.attemptsUsed,
+    }))
+
+    return {
+      gameType: 'wordel',
+      wordLength: this.wordLength,
+      maxAttempts: this.maxAttempts,
+      correctWord: this.secretWord,
+      solved: state.solved,
+      attemptsUsed: state.guesses.length,
+      guesses,
     }
   }
 
