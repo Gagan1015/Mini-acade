@@ -1,4 +1,4 @@
-import { prisma } from '@mini-arcade/db'
+import { prisma } from '@arcado/db'
 import { notFound } from 'next/navigation'
 import { AdminUserDetailClient } from '@/components/admin/AdminUserDetailClient'
 

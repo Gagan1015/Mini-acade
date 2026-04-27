@@ -1,4 +1,4 @@
-import type { GameId, GameSettings } from '@mini-arcade/shared'
+import type { GameId, GameSettings } from '@arcado/shared'
 
 export function buildSoloPlayUrl(gameId: GameId, options?: { session?: string; settings?: GameSettings }) {
   const params = new URLSearchParams()

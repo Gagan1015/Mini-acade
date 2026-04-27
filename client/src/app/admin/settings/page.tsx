@@ -1,4 +1,4 @@
-import { prisma } from '@mini-arcade/db'
+import { prisma } from '@arcado/db'
 import { AdminSettingsClient } from '@/components/admin/AdminSettingsClient'
 
 export default async function AdminSettingsPage() {

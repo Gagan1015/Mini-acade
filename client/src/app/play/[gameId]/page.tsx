@@ -10,7 +10,7 @@ import {
   type GameId,
   type GameSettings,
   type TriviaCategory,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 
 import { RoomLobby } from '@/components/room/RoomLobby'
 import { authOptions } from '@/lib/auth'

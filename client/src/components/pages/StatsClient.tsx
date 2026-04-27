@@ -2,6 +2,7 @@
 
 import { motion } from 'motion/react'
 import Link from 'next/link'
+import { Eye } from 'lucide-react'
 import { GameIcon } from '@/components/ui/GameIcons'
 import {
   DonutChart,
@@ -517,13 +518,17 @@ export default function StatsClient({ gameStats, recentResults }: StatsClientPro
                             </span>
                           )}
                         </div>
-                        <div className="text-right">
+                        <div className="flex items-center gap-2">
                           <p className="font-semibold font-mono text-[var(--text-primary)]">
                             {result.score} pts
                           </p>
-                          <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--marketing-accent)]">
-                            View details
-                          </p>
+                          <span className="group/tooltip relative inline-flex h-7 w-7 items-center justify-center rounded-full text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--marketing-accent)]">
+                            <Eye className="h-3.5 w-3.5" />
+                            <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-xs font-medium text-[var(--text-primary)] opacity-0 shadow-lg transition-opacity group-hover/tooltip:opacity-100">
+                              View details
+                            </span>
+                            <span className="sr-only">View details</span>
+                          </span>
                         </div>
                       </div>
                     </Link>

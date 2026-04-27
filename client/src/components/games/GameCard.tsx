@@ -1087,7 +1087,15 @@ export function GameCard({ game, index, featured = false, compact = false }: Gam
           </div>
         </div>
 
-        <div className={`relative z-10 ${featured ? 'mt-10 max-w-md' : 'mt-6'}`}>
+        <div
+          className={`relative z-10 ${
+            featured
+              ? 'mt-10 max-w-md'
+              : game.id === 'flagel'
+                ? 'mt-6 pr-28 sm:pr-36'
+                : 'mt-6'
+          }`}
+        >
           <h3
             className={`font-display font-bold tracking-tight text-[var(--text-primary)] ${featured ? 'text-4xl' : 'text-2xl'}`}
           >
@@ -1101,7 +1109,13 @@ export function GameCard({ game, index, featured = false, compact = false }: Gam
         </div>
 
         <div
-          className={`relative z-10 flex flex-wrap gap-2 ${featured ? 'mt-7 max-w-lg' : 'mt-5'}`}
+          className={`relative z-10 flex flex-wrap gap-2 ${
+            featured
+              ? 'mt-7 max-w-lg'
+              : game.id === 'flagel'
+                ? 'mt-5 pr-24 sm:pr-36'
+                : 'mt-5'
+          }`}
         >
           {game.features.map((feature) => (
             <span
@@ -1118,11 +1132,13 @@ export function GameCard({ game, index, featured = false, compact = false }: Gam
         )}
 
         <div
-          className={`relative z-10 mt-auto flex items-center border-t border-[var(--border)] pt-6 ${
-            game.id === 'flagel' ? 'justify-start gap-6 pr-36 sm:pr-44' : 'justify-between'
+          className={`relative z-10 mt-auto flex border-t border-[var(--border)] pt-6 ${
+            game.id === 'flagel'
+              ? 'items-center justify-between gap-3 pr-20 sm:justify-start sm:gap-6 sm:pr-44'
+              : 'items-center justify-between'
           }`}
         >
-          <span className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+          <span className="flex items-center gap-2 whitespace-nowrap text-sm text-[var(--text-secondary)]">
             <IconUsers size={14} />
             {game.minPlayers}-{game.maxPlayers} players
           </span>

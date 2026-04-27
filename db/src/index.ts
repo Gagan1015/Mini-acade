@@ -1,21 +1,21 @@
 import { PrismaClient } from '@prisma/client'
 
 declare global {
-  var __miniArcadePrisma__: PrismaClient | undefined
+  var __arcadoPrisma__: PrismaClient | undefined
 }
 
 const globalForPrisma = globalThis as typeof globalThis & {
-  __miniArcadePrisma__?: PrismaClient
+  __arcadoPrisma__?: PrismaClient
 }
 
 export const prisma =
-  globalForPrisma.__miniArcadePrisma__ ??
+  globalForPrisma.__arcadoPrisma__ ??
   new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
   })
 
 if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.__miniArcadePrisma__ = prisma
+  globalForPrisma.__arcadoPrisma__ = prisma
 }
 
 export * from '@prisma/client'

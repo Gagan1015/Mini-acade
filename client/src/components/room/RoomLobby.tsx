@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { GAMES, type Room } from '@mini-arcade/shared'
+import { GAMES, type Room } from '@arcado/shared'
 import { FlagelPlayArea } from '@/components/room/FlagelPlayArea'
 import { SkribblePlayArea } from '@/components/room/SkribblePlayArea'
 import { TriviaPlayArea } from '@/components/room/TriviaPlayArea'
@@ -17,7 +17,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { GameIcon } from '@/components/ui/GameIcons'
 import { Toast } from '@/components/ui/Toast'
 
-/* ── SVG Icons ── */
+/* â”€â”€ SVG Icons â”€â”€ */
 
 function IconCopy({ size = 16 }: { size?: number }) {
   return (
@@ -259,7 +259,7 @@ export function RoomLobby({
     setTimeout(() => setCopyLabel('copy'), 1500)
   }
 
-  /* ── Game play areas ── */
+  /* â”€â”€ Game play areas â”€â”€ */
   const gamePlayArea = (
     <>
       {activeRoom.gameId === 'wordel' && activeRoom.status !== 'waiting' && (
@@ -378,9 +378,9 @@ export function RoomLobby({
     </>
   )
 
-  /* ═══════════════════════════════════════════════
+  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    *  SOLO MODE UI
-   * ═══════════════════════════════════════════════ */
+   * â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
   if (isSolo) {
     return (
       <AppLayout variant="marketing" showFooter={false}>
@@ -512,16 +512,16 @@ export function RoomLobby({
     )
   }
 
-  /* ═══════════════════════════════════════════════
+  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    *  MULTIPLAYER UI
-   * ═══════════════════════════════════════════════ */
+   * â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
   return (
     <AppLayout variant="marketing" showFooter={false}>
       <div className="marketing-rail-layout overflow-hidden bg-[var(--background)]">
         <section className="marketing-rail-section">
           <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
 
-            {/* ── Room Header ── */}
+            {/* â”€â”€ Room Header â”€â”€ */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -618,7 +618,7 @@ export function RoomLobby({
             {/* Divider */}
             <div className="mt-10 h-px bg-[var(--border)]" />
 
-            {/* ── Player list + Room controls ── */}
+            {/* â”€â”€ Player list + Room controls â”€â”€ */}
             <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_340px]">
 
               {/* Players section */}
@@ -630,7 +630,7 @@ export function RoomLobby({
                 <div className="mb-5 flex items-center justify-between">
                   <h2 className="font-display text-lg font-bold text-[var(--text-primary)]">Players</h2>
                   <span className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
-                    {isJoining ? 'Joining room…' : `${connectedPlayers} connected`}
+                    {isJoining ? 'Joining room\u2026' : `${connectedPlayers} connected`}
                   </span>
                 </div>
 
@@ -709,7 +709,7 @@ export function RoomLobby({
                         <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-[var(--border)]">
                           <IconUser size={16} />
                         </div>
-                        <span className="text-sm text-[var(--text-tertiary)]">Waiting for player…</span>
+                        <span className="text-sm text-[var(--text-tertiary)]">{'Waiting for player\u2026'}</span>
                       </div>
                     ))}
                   </div>

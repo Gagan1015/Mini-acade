@@ -13,7 +13,7 @@ import {
   type InterServerEvents,
   type ServerToClientEvents,
   type SocketData,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 
 import { GameManager } from '../games/GameManager'
 import { RoomService } from '../services/roomService'

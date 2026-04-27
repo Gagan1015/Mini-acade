@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { TRIVIA_EVENTS, type GameConfig, type GameEventResult } from '@mini-arcade/shared'
+import { TRIVIA_EVENTS, type GameConfig, type GameEventResult } from '@arcado/shared'
 
 import { TriviaRuntime } from './TriviaRuntime'
 import {

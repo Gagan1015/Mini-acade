@@ -1,4 +1,4 @@
-import type { WordelGuessResult } from '@mini-arcade/shared'
+import type { WordelGuessResult } from '@arcado/shared'
 
 import { WORDEL_ALLOWED_GUESSES, WORDEL_ANSWER_BANK } from './wordBank'
 

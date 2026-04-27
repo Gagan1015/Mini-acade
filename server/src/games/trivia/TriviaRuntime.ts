@@ -9,7 +9,7 @@ import {
   type TriviaDifficulty,
   type TriviaSubmitAnswerPayload,
   type UserId,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 import type { Server } from 'socket.io'
 
 import { RoomService } from '../../services/roomService'
@@ -43,6 +43,7 @@ type TriviaRoundSummary = {
 const DEFAULT_ROUND_TIME_SECONDS = 20
 const DEFAULT_ROUNDS = 10
 const ROUND_REVEAL_SECONDS = 5
+const SOLO_CORRECT_POINTS = 1000
 const POINTS_TIERS = [
   { maxSeconds: 5, points: 1000 },
   { maxSeconds: 10, points: 750 },
@@ -142,7 +143,11 @@ export class TriviaRuntime extends BaseGameRuntime {
 
     const elapsedSeconds = (answeredAt.getTime() - this.roundStartedAt.getTime()) / 1000
     const isCorrect = answerPayload.answerId === this.currentQuestion.correctId
-    const pointsEarned = isCorrect ? calculateTriviaPoints(elapsedSeconds) : 0
+    const pointsEarned = isCorrect
+      ? this.isSoloMode()
+        ? SOLO_CORRECT_POINTS
+        : calculateTriviaPoints(elapsedSeconds)
+      : 0
 
     if (isCorrect) {
       this.setPlayerScore(playerId, (this.scores.get(playerId) ?? 0) + pointsEarned)
@@ -346,7 +351,11 @@ export class TriviaRuntime extends BaseGameRuntime {
         answer && this.roundStartedAt
           ? (answer.answeredAt.getTime() - this.roundStartedAt.getTime()) / 1000
           : undefined
-      const pointsEarned = isCorrect ? calculateTriviaPoints(elapsedSeconds ?? this.roundTimeSeconds) : 0
+      const pointsEarned = isCorrect
+        ? this.isSoloMode()
+          ? SOLO_CORRECT_POINTS
+          : calculateTriviaPoints(elapsedSeconds ?? this.roundTimeSeconds)
+        : 0
 
       return {
         playerId,
@@ -412,6 +421,10 @@ export class TriviaRuntime extends BaseGameRuntime {
       success: true,
       broadcast: broadcasts,
     }
+  }
+
+  private isSoloMode() {
+    return this.players.size <= 1
   }
 
   private clearTimers() {

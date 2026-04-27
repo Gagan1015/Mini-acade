@@ -1,7 +1,7 @@
 'use client'
 
 import { io, type Socket } from 'socket.io-client'
-import type { ClientToServerEvents, ServerToClientEvents } from '@mini-arcade/shared'
+import type { ClientToServerEvents, ServerToClientEvents } from '@arcado/shared'
 
 export type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>
 

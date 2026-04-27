@@ -10,7 +10,7 @@ import type {
   TriviaQuestion,
   TriviaRoundEnded,
   TriviaRoundStarted,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 import type { TriviaRoundHistoryEntry } from '@/hooks/useRoom'
 import { TriviaResultsModal } from './TriviaResultsModal'
 import { TriviaDetailedResults } from './TriviaDetailedResults'
@@ -33,7 +33,7 @@ type TriviaPlayAreaProps = {
   onSubmitAnswer: (questionId: string, answerId: TriviaQuestion['answers'][number]['id']) => void
 }
 
-/* ── SVG Icons ── */
+/* â”€â”€ SVG Icons â”€â”€ */
 
 function IconTrophy({ size = 14 }: { size?: number }) {
   return (
@@ -200,9 +200,9 @@ export function TriviaPlayArea({
                   disabled={phase !== 'playing' || Boolean(selectedAnswerId)}
                   className={`rounded-xl border px-4 py-4 text-left text-sm transition-all duration-200 ${
                     showCorrectState
-                      ? 'border-[var(--success-600)] bg-[var(--success-500)] text-white shadow-[0_12px_28px_-18px_rgba(16,185,129,0.8)]'
+                      ? 'border-[var(--success-500)]/35 bg-[var(--success-500)]/12 text-[var(--success-500)] shadow-[0_16px_36px_-28px_rgba(16,185,129,0.45)]'
                       : showWrongState
-                        ? 'border-[var(--error-600)] bg-[var(--error-500)] text-white shadow-[0_12px_28px_-18px_rgba(239,68,68,0.8)]'
+                        ? 'border-[var(--error-500)]/30 bg-[var(--error-500)]/10 text-[var(--error-500)] shadow-[0_16px_36px_-28px_rgba(239,68,68,0.38)]'
                         : isSelected
                       ? 'border-[var(--primary-500)]/45 bg-[var(--primary-500)]/14 text-[var(--text-primary)]'
                       : 'border-[var(--border)]/40 bg-[var(--surface)]/20 text-[var(--text-primary)] hover:bg-[var(--surface)]/50'
@@ -228,8 +228,8 @@ export function TriviaPlayArea({
             animate={{ opacity: 1, y: 0 }}
             className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm ${
               answerFeedback.isCorrect
-                ? 'border-[var(--success-600)] bg-[var(--success-500)] text-white shadow-[0_12px_28px_-18px_rgba(16,185,129,0.75)]'
-                : 'border-[var(--error-600)] bg-[var(--error-500)] text-white shadow-[0_12px_28px_-18px_rgba(239,68,68,0.75)]'
+                ? 'border-[var(--success-500)]/35 bg-[var(--success-500)]/12 text-[var(--success-500)] shadow-[0_16px_36px_-28px_rgba(16,185,129,0.42)]'
+                : 'border-[var(--error-500)]/30 bg-[var(--error-500)]/10 text-[var(--error-500)] shadow-[0_16px_36px_-28px_rgba(239,68,68,0.34)]'
             }`}
           >
             {answerFeedback.isCorrect ? <IconCheck size={16} /> : <IconX size={16} />}

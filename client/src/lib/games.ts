@@ -1,4 +1,4 @@
-import type { GameId } from '@mini-arcade/shared'
+import type { GameId } from '@arcado/shared'
 
 export interface GameInfo {
   id: GameId
@@ -19,7 +19,7 @@ export const GAME_LIST: GameInfo[] = [
     name: 'Skribble',
     description:
       'Draw and guess words with friends. Take turns drawing while others try to guess the word!',
-    emoji: '🎨',
+    emoji: 'ðŸŽ¨',
     color: 'var(--game-skribble)',
     colorHex: '#EC4899',
     gradient: 'from-pink-500 to-rose-600',
@@ -32,7 +32,7 @@ export const GAME_LIST: GameInfo[] = [
     name: 'Trivia',
     description:
       'Test your knowledge against friends! Answer questions faster than everyone else to score big.',
-    emoji: '🧠',
+    emoji: 'ðŸ§ ',
     color: 'var(--game-trivia)',
     colorHex: '#3B82F6',
     gradient: 'from-blue-500 to-cyan-500',
@@ -45,7 +45,7 @@ export const GAME_LIST: GameInfo[] = [
     name: 'Wordel',
     description:
       'Guess the 5-letter word in 6 tries. Color-coded hints guide your guesses!',
-    emoji: '📝',
+    emoji: 'ðŸ“',
     color: 'var(--game-wordel)',
     colorHex: '#10B981',
     gradient: 'from-emerald-500 to-green-600',
@@ -58,7 +58,7 @@ export const GAME_LIST: GameInfo[] = [
     name: 'Flagel',
     description:
       'Identify countries by their flags. Progressive hints help you learn world geography!',
-    emoji: '🏳️',
+    emoji: 'ðŸ³ï¸',
     color: 'var(--game-flagel)',
     colorHex: '#F59E0B',
     gradient: 'from-amber-500 to-orange-500',

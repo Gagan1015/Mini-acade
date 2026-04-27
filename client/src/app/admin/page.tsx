@@ -1,4 +1,4 @@
-import { prisma } from '@mini-arcade/db'
+import { prisma } from '@arcado/db'
 import { AdminDashboardClient } from '@/components/admin/AdminDashboardClient'
 
 type RoomCreationPoint = {

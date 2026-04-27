@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { SKRIBBLE_EVENTS, type GameConfig, type GameEventResult } from '@mini-arcade/shared'
+import { SKRIBBLE_EVENTS, type GameConfig, type GameEventResult } from '@arcado/shared'
 
 import { SkribbleRuntime } from './SkribbleRuntime'
 

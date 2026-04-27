@@ -1,3 +1,4 @@
+import { prisma } from '@arcado/db'
 import {
   type ClientToServerEvents,
   type GameEventResult,
@@ -8,7 +9,7 @@ import {
   type ServerToClientEvents,
   type SocketData,
   type UserId,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 import type { Server, Socket } from 'socket.io'
 
 import { RoomService } from '../services/roomService'
@@ -20,7 +21,7 @@ import { WordelRuntime } from './wordel/WordelRuntime'
 type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>
 type TypedIo = Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>
 
-function getTriviaSettings(room: Room): GameSettings {
+async function getTriviaSettings(room: Room): Promise<GameSettings> {
   const configuredCategories =
     room.settings?.triviaCategories?.length
       ? room.settings.triviaCategories
@@ -28,12 +29,26 @@ function getTriviaSettings(room: Room): GameSettings {
         ? [room.settings.triviaCategory]
         : undefined
 
+  // Fall back to the admin-configured round time when the host hasn't
+  // overridden it via room settings.
+  let adminRoundTime: number | undefined
+  try {
+    const adminConfig = await prisma.gameConfig.findUnique({
+      where: { gameId: 'trivia' },
+      select: { roundTime: true, defaultRounds: true },
+    })
+    adminRoundTime = adminConfig?.roundTime ?? undefined
+  } catch {
+    // If the lookup fails for any reason, simply fall back to runtime defaults.
+  }
+
   return {
     rounds: room.settings?.rounds ?? 10,
     maxPlayers: room.maxPlayers,
     triviaCategory: room.settings?.triviaCategory,
     triviaCategories: configuredCategories,
     triviaDifficulty: room.settings?.triviaDifficulty,
+    triviaTimeLimit: room.settings?.triviaTimeLimit ?? adminRoundTime,
   }
 }
 
@@ -133,7 +148,7 @@ export class GameManager {
               gameId: room.gameId,
               roomCode: room.code,
               players: room.players,
-              settings: getTriviaSettings(room),
+              settings: await getTriviaSettings(room),
             },
             this.roomService
           )

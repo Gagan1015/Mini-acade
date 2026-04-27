@@ -1,9 +1,16 @@
 {
-  "name": "@mini-arcade/db",
+  "name": "@arcado/db",
   "version": "1.0.0",
   "private": true,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
   "files": [
     "dist",
     "prisma"
@@ -12,7 +19,7 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
     "lint": "eslint src --ext .ts",
-    "test": "node -e \"console.log('No tests yet for @mini-arcade/db')\"",
+    "test": "node -e \"console.log('No tests yet for @arcado/db')\"",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",

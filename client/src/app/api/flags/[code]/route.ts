@@ -26,7 +26,7 @@ export async function GET(
       const response = await fetch(upstreamUrl, {
         headers: {
           Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-          'User-Agent': 'Mini Arcade Flag Proxy',
+          'User-Agent': 'Arcado Flag Proxy',
         },
         next: { revalidate },
       })

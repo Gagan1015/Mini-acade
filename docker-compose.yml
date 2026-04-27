@@ -1,10 +1,10 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: mini-arcade-postgres
+    container_name: arcado-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: miniarcade
+      POSTGRES_DB: arcado
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -12,7 +12,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d miniarcade']
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d arcado']
       interval: 5s
       timeout: 5s
       retries: 10

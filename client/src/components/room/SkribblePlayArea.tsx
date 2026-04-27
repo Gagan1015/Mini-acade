@@ -10,9 +10,9 @@ import type {
   Player,
   SkribbleGuessResult,
   Stroke,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 
-/* ── Types ── */
+/* â”€â”€ Types â”€â”€ */
 
 type SkribblePlayAreaProps = {
   currentUserId: string
@@ -40,7 +40,7 @@ type SkribblePlayAreaProps = {
   onSubmitGuess: (guess: string) => void
 }
 
-/* ── Constants ── */
+/* â”€â”€ Constants â”€â”€ */
 
 const COLORS_PALETTE = [
   '#000000', '#FFFFFF', '#808080', '#C0C0C0',
@@ -51,7 +51,7 @@ const COLORS_PALETTE = [
 
 const BRUSH_SIZES = [3, 6, 10, 18]
 
-/* ── Drawing Canvas ── */
+/* â”€â”€ Drawing Canvas â”€â”€ */
 
 function DrawingCanvas({
   strokes,
@@ -226,7 +226,7 @@ function DrawingCanvas({
   )
 }
 
-/* ── Timer ── */
+/* â”€â”€ Timer â”€â”€ */
 
 function RoundTimer({ roundEndsAt }: { roundEndsAt: string | null }) {
   const [secondsLeft, setSecondsLeft] = useState(0)
@@ -287,7 +287,7 @@ function RoundTimer({ roundEndsAt }: { roundEndsAt: string | null }) {
   )
 }
 
-/* ── SVG Icons ── */
+/* â”€â”€ SVG Icons â”€â”€ */
 
 function IconBrush({ size = 16 }: { size?: number }) {
   return (
@@ -328,7 +328,7 @@ function IconSend({ size = 16 }: { size?: number }) {
   )
 }
 
-/* ── Main Component ── */
+/* â”€â”€ Main Component â”€â”€ */
 
 export function SkribblePlayArea({
   currentUserId,
@@ -379,7 +379,7 @@ export function SkribblePlayArea({
     if (guessResult.isCorrect) {
       setLocalMessages((prev) => [
         ...prev,
-        { id: `correct-${Date.now()}`, text: 'You guessed correctly! 🎉', type: 'correct' },
+        { id: `correct-${Date.now()}`, text: 'You guessed correctly! ðŸŽ‰', type: 'correct' },
       ])
     } else if (guessResult.isClose) {
       setLocalMessages((prev) => [
@@ -442,7 +442,7 @@ export function SkribblePlayArea({
     setGuessInput('')
   }
 
-  /* ── Word display ── */
+  /* â”€â”€ Word display â”€â”€ */
   const wordDisplay =
     phase === 'choosing'
       ? isDrawer
@@ -456,7 +456,7 @@ export function SkribblePlayArea({
             ? Array(wordLength).fill('_').join(' ')
             : ''
 
-  /* ── Sorted players by score ── */
+  /* â”€â”€ Sorted players by score â”€â”€ */
   const sortedPlayers = [...players].sort(
     (a, b) => (scores[b.id] ?? 0) - (scores[a.id] ?? 0)
   )
@@ -471,7 +471,7 @@ export function SkribblePlayArea({
         userSelect: 'none',
       }}
     >
-      {/* ── Header bar ── */}
+      {/* â”€â”€ Header bar â”€â”€ */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -512,8 +512,8 @@ export function SkribblePlayArea({
                 ? 'Pick your word'
                 : `${drawerPlayer?.name ?? 'Someone'} is choosing`
               : isDrawer
-                ? '🎨 You are drawing!'
-                : `🖌️ ${drawerPlayer?.name ?? 'Someone'} is drawing`}
+                ? 'ðŸŽ¨ You are drawing!'
+                : `ðŸ–Œï¸ ${drawerPlayer?.name ?? 'Someone'} is drawing`}
           </span>
         </div>
 
@@ -521,7 +521,7 @@ export function SkribblePlayArea({
         {phase === 'playing' && <RoundTimer roundEndsAt={roundEndsAt} />}
       </motion.div>
 
-      {/* ── Word choice ── */}
+      {/* â”€â”€ Word choice â”€â”€ */}
       {phase === 'choosing' && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -585,7 +585,7 @@ export function SkribblePlayArea({
         </motion.div>
       )}
 
-      {/* ── Word display ── */}
+      {/* â”€â”€ Word display â”€â”€ */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -621,7 +621,7 @@ export function SkribblePlayArea({
         )}
       </motion.div>
 
-      {/* ── Main game area ── */}
+      {/* â”€â”€ Main game area â”€â”€ */}
       <div
         style={{
           display: 'grid',
@@ -631,7 +631,7 @@ export function SkribblePlayArea({
         }}
         className="skribble-layout"
       >
-        {/* ── Left: Canvas + Drawing tools ── */}
+        {/* â”€â”€ Left: Canvas + Drawing tools â”€â”€ */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <DrawingCanvas
             strokes={strokes}
@@ -642,7 +642,7 @@ export function SkribblePlayArea({
             tool={tool}
           />
 
-          {/* Drawing toolbar — only for drawer */}
+          {/* Drawing toolbar â€” only for drawer */}
           {isDrawer && phase === 'playing' && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -788,7 +788,7 @@ export function SkribblePlayArea({
           )}
         </div>
 
-        {/* ── Right sidebar: Chat + Players ── */}
+        {/* â”€â”€ Right sidebar: Chat + Players â”€â”€ */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {/* Player scores */}
           <div
@@ -859,10 +859,10 @@ export function SkribblePlayArea({
                         {player.id === currentUserId ? ' (You)' : ''}
                       </span>
                       {isCurrentDrawer && (
-                        <span style={{ fontSize: '0.65rem' }}>🎨</span>
+                        <span style={{ fontSize: '0.65rem' }}>{'\u{1F3A8}'}</span>
                       )}
                       {hasGuessed && (
-                        <span style={{ fontSize: '0.65rem', color: '#22C55E' }}>✓</span>
+                        <span style={{ fontSize: '0.65rem', color: '#22C55E' }}>{'\u2713'}</span>
                       )}
                     </div>
                     <span
@@ -960,7 +960,7 @@ export function SkribblePlayArea({
               <div ref={chatEndRef} />
             </div>
 
-            {/* Guess input — only for guessers who haven't guessed correctly */}
+            {/* Guess input â€” only for guessers who haven't guessed correctly */}
             {!isDrawer && phase === 'playing' && !hasGuessedCorrectly && (
               <form
                 onSubmit={handleSubmitGuess}
@@ -1023,14 +1023,14 @@ export function SkribblePlayArea({
                   color: '#22C55E',
                 }}
               >
-                ✓ You guessed correctly! Waiting for others...
+                {'\u2713'} You guessed correctly! Waiting for others...
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* ── Round end overlay ── */}
+      {/* â”€â”€ Round end overlay â”€â”€ */}
       <AnimatePresence>
         {phase === 'roundEnd' && roundEndWord && (
           <motion.div

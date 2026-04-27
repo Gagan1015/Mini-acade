@@ -39,7 +39,7 @@ const bottomNavItems = [
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
-// ── Context for sidebar state ──
+// â”€â”€ Context for sidebar state â”€â”€
 export const SidebarContext = createContext<{
   collapsed: boolean
   setCollapsed: (v: boolean) => void
@@ -76,7 +76,7 @@ export function AdminSidebar({ userName, userEmail: _userEmail, userImage, userR
               exit={{ opacity: 0, width: 0 }}
               className="flex-1 overflow-hidden"
             >
-              <p className="text-sm font-semibold text-[var(--sidebar-text)] whitespace-nowrap">Mini Arcade</p>
+              <p className="text-sm font-semibold text-[var(--sidebar-text)] whitespace-nowrap">Arcado</p>
               <p className="text-xs text-[var(--sidebar-text-muted)] whitespace-nowrap">Admin Panel</p>
             </motion.div>
           )}
@@ -100,7 +100,7 @@ export function AdminSidebar({ userName, userEmail: _userEmail, userImage, userR
             </button>
           )}
         </div>
-        {/* Desktop: expand toggle (collapsed state — centered below logo) */}
+        {/* Desktop: expand toggle (collapsed state â€” centered below logo) */}
         {!mobile && collapsed && (
           <div className="flex justify-center pt-2">
             <button
@@ -243,7 +243,7 @@ export function AdminSidebar({ userName, userEmail: _userEmail, userImage, userR
 
   return (
     <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
-      {/* ── Desktop Sidebar ── */}
+      {/* â”€â”€ Desktop Sidebar â”€â”€ */}
       <motion.aside
         animate={{ width: sidebarWidth }}
         transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
@@ -259,7 +259,7 @@ export function AdminSidebar({ userName, userEmail: _userEmail, userImage, userR
         className="hidden flex-shrink-0 lg:block"
       />
 
-      {/* ── Mobile Hamburger ── */}
+      {/* â”€â”€ Mobile Hamburger â”€â”€ */}
       <button
         onClick={() => setMobileOpen(true)}
         className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] shadow-lg lg:hidden"
@@ -267,7 +267,7 @@ export function AdminSidebar({ userName, userEmail: _userEmail, userImage, userR
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* ── Mobile Overlay ── */}
+      {/* â”€â”€ Mobile Overlay â”€â”€ */}
       <AnimatePresence>
         {mobileOpen && (
           <>

@@ -10,7 +10,7 @@ import {
   type Stroke,
   type StrokeBatchPayload,
   type UserId,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 import type { Server } from 'socket.io'
 
 import { RoomService } from '../../services/roomService'
@@ -144,7 +144,7 @@ export class SkribbleRuntime extends BaseGameRuntime {
     const baseResult = super.onPlayerLeave(playerId)
 
     if (playerId === this.roundState.drawerId && this.phase === 'playing') {
-      // Drawer left — self-dispatch since there's no triggering socket
+      // Drawer left â€” self-dispatch since there's no triggering socket
       void this.finishRound(true)
     }
 

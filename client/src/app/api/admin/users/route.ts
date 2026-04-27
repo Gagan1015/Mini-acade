@@ -1,4 +1,4 @@
-import { prisma } from '@mini-arcade/db'
+import { prisma } from '@arcado/db'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { requireAdminApiSession } from '@/lib/admin'

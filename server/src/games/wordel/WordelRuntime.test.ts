@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { WORDEL_EVENTS, type GameConfig, type GameEventResult } from '@mini-arcade/shared'
+import { WORDEL_EVENTS, type GameConfig, type GameEventResult } from '@arcado/shared'
 
 import { WordelRuntime } from './WordelRuntime'
 

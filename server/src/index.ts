@@ -1,6 +1,6 @@
 import 'dotenv/config'
 
-import { prisma } from '@mini-arcade/db'
+import { prisma } from '@arcado/db'
 import cors from 'cors'
 import express from 'express'
 import { createServer } from 'node:http'
@@ -13,7 +13,7 @@ import {
   type InterServerEvents,
   type ServerToClientEvents,
   type SocketData,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 
 import { registerSocketHandlers } from './socket/socketHandler'
 

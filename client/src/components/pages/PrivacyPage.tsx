@@ -16,7 +16,7 @@ const sections = [
   {
     title: 'How We Use Your Information',
     content: [
-      'We use the information we collect to operate and maintain your account, display your profile in game rooms, track scores and statistics, and improve Mini Arcade.',
+      'We use the information we collect to operate and maintain your account, display your profile in game rooms, track scores and statistics, and improve Arcado.',
       'We do not sell, rent, or share your personal information with third parties for marketing purposes.',
     ],
   },
@@ -37,7 +37,7 @@ const sections = [
   {
     title: 'Third-Party Services',
     content: [
-      'Mini Arcade relies on third-party authentication providers (OAuth) for sign-in. These providers have their own privacy policies that govern how they handle your data.',
+      'Arcado relies on third-party authentication providers (OAuth) for sign-in. These providers have their own privacy policies that govern how they handle your data.',
       'We do not embed third-party analytics or advertising scripts.',
     ],
   },
@@ -51,13 +51,13 @@ const sections = [
   {
     title: 'Children\'s Privacy',
     content: [
-      'Mini Arcade is not directed at children under the age of 13. We do not knowingly collect personal information from children under 13. If we become aware that a child under 13 has provided us with personal data, we will take steps to delete it.',
+      'Arcado is not directed at children under the age of 13. We do not knowingly collect personal information from children under 13. If we become aware that a child under 13 has provided us with personal data, we will take steps to delete it.',
     ],
   },
   {
     title: 'Changes to This Policy',
     content: [
-      'We may update this privacy policy from time to time. When we do, we will revise the "last updated" date at the top of this page. Continued use of Mini Arcade after changes constitutes acceptance of the updated policy.',
+      'We may update this privacy policy from time to time. When we do, we will revise the "last updated" date at the top of this page. Continued use of Arcado after changes constitutes acceptance of the updated policy.',
     ],
   },
 ]
@@ -83,7 +83,7 @@ export function PrivacyPage() {
                 Last updated: {lastUpdated}
               </p>
               <p className="mt-6 text-base leading-7 text-[var(--text-secondary)]">
-                Mini Arcade is built to be fun and respectful of your privacy. This policy explains
+                Arcado is built to be fun and respectful of your privacy. This policy explains
                 what data we collect, why we collect it, and how we handle it.
               </p>
             </motion.div>

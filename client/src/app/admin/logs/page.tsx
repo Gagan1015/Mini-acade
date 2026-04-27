@@ -1,4 +1,4 @@
-import { prisma } from '@mini-arcade/db'
+import { prisma } from '@arcado/db'
 import { AdminLogsClient } from '@/components/admin/AdminLogsClient'
 
 export default async function AdminLogsPage() {

@@ -6,7 +6,7 @@ import {
   type WordelGameResultMetadata,
   type WordelSubmitGuessPayload,
   type UserId,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 import type { Server } from 'socket.io'
 
 import { RoomService } from '../../services/roomService'
@@ -17,7 +17,7 @@ import {
   normalizeWordelGuess,
   pickWord,
 } from './wordRules'
-import type { WordelGuessResult } from '@mini-arcade/shared'
+import type { WordelGuessResult } from '@arcado/shared'
 
 type PlayerWordelState = {
   guesses: WordelGuessResult[]

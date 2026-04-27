@@ -7,7 +7,7 @@ import { useSearchParams } from 'next/navigation'
 import { motion } from 'motion/react'
 import { SignInButtons } from '@/components/auth/SignInButtons'
 
-/* ── SVG Logo Icon ── */
+/* â”€â”€ SVG Logo Icon â”€â”€ */
 function LogoIcon() {
   return (
     <svg viewBox="0 0 48 48" fill="none" width={28} height={28}>
@@ -19,7 +19,7 @@ function LogoIcon() {
   )
 }
 
-/* ── Arrow Left Icon ── */
+/* â”€â”€ Arrow Left Icon â”€â”€ */
 function IconArrowLeft() {
   return (
     <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -29,7 +29,7 @@ function IconArrowLeft() {
   )
 }
 
-/* ── Sign-in form (uses useSearchParams → needs Suspense) ── */
+/* â”€â”€ Sign-in form (uses useSearchParams â†’ needs Suspense) â”€â”€ */
 function SignInForm() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams?.get('callbackUrl') ?? '/'
@@ -94,7 +94,7 @@ function SignInForm() {
 export default function SignInPage() {
   return (
     <main className="auth-page-bg flex min-h-screen bg-[var(--background)] transition-colors duration-200">
-      {/* ── LEFT: Visual panel with mosaic art + rounded corners ── */}
+      {/* â”€â”€ LEFT: Visual panel with mosaic art + rounded corners â”€â”€ */}
       <motion.div
         className="hidden lg:block lg:w-1/2 xl:w-[55%] p-5"
         initial={{ opacity: 0, x: -20 }}
@@ -149,11 +149,11 @@ export default function SignInPage() {
         </div>
       </motion.div>
 
-      {/* ── RIGHT: Sign-in form panel ── */}
+      {/* â”€â”€ RIGHT: Sign-in form panel â”€â”€ */}
       <div className="flex flex-1 items-center justify-center px-6 py-12 sm:px-10 lg:px-16">
         <div className="flex w-full max-w-[400px] flex-col" style={{ minHeight: 'min(680px, calc(100vh - 96px))' }}>
 
-          {/* Brand — top right area */}
+          {/* Brand â€” top right area */}
           <motion.div
             className="mb-auto pb-6"
             initial={{ opacity: 0, y: -8 }}
@@ -167,7 +167,7 @@ export default function SignInPage() {
               <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)]">
                 <LogoIcon />
               </div>
-              <span className="font-display text-lg font-bold tracking-tight">Mini Arcade</span>
+              <span className="font-display text-lg font-bold tracking-tight">Arcado</span>
             </Link>
           </motion.div>
 

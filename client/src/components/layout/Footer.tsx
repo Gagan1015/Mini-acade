@@ -35,7 +35,7 @@ export function Footer({ variant = 'default' }: FooterProps) {
             <div className="flex items-center gap-2.5 text-[var(--text-tertiary)]">
               <LogoMarkSmall />
               <span className="text-sm font-medium tracking-tight">
-                &copy; {new Date().getFullYear()} Mini Arcade
+                &copy; {new Date().getFullYear()} Arcado
               </span>
             </div>
             {isMarketing && (

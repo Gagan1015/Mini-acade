@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { createPortal } from 'react-dom'
 import { useDeferredValue, useEffect, useId, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 
@@ -13,7 +14,7 @@ import {
   type FlagelGameEnded,
   type FlagelGuessResult,
   type Player,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 
 type FlagelPlayAreaProps = {
   currentUserId: string
@@ -52,15 +53,15 @@ const FULL_FLAG_GRID_HIDE_DELAY_MS = 1100
 const DROPDOWN_LIMIT = 8
 
 const DIRECTION_ARROWS: Record<string, string> = {
-  N: '↑',
-  NE: '↗',
-  E: '→',
-  SE: '↘',
-  S: '↓',
-  SW: '↙',
-  W: '←',
-  NW: '↖',
-  HERE: '◎',
+  N: '\u2191',
+  NE: '\u2197',
+  E: '\u2192',
+  SE: '\u2198',
+  S: '\u2193',
+  SW: '\u2199',
+  W: '\u2190',
+  NW: '\u2196',
+  HERE: '\u25CE',
 }
 
 function IconTrophy({ size = 14 }: { size?: number }) {
@@ -153,7 +154,7 @@ function IconSkip({ size = 15 }: { size?: number }) {
 
 function getDirectionArrow(direction?: string) {
   if (!direction) {
-    return '•'
+    return '\u2022'
   }
 
   return DIRECTION_ARROWS[direction] ?? direction
@@ -336,7 +337,7 @@ export function FlagelPlayArea({
       ? flagEmoji.trim().toUpperCase()
       : flagEmoji ?? 'FLAG'
 
-  // ── Search: prioritize common name matches ──
+  // â”€â”€ Search: prioritize common name matches â”€â”€
   const matchingCountries = FLAGEL_COUNTRIES
     .map((country) => ({
       country,
@@ -408,7 +409,7 @@ export function FlagelPlayArea({
       transition={{ duration: reducedMotion ? 0 : 0.35 }}
       className="mx-auto w-full max-w-[680px] space-y-5"
     >
-      {/* ── Header ── */}
+      {/* â”€â”€ Header â”€â”€ */}
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--game-flagel)]">
@@ -445,7 +446,7 @@ export function FlagelPlayArea({
         </div>
       </div>
 
-      {/* ── Flag Card ── */}
+      {/* â”€â”€ Flag Card â”€â”€ */}
       <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)]">
         <div className="p-3 sm:p-4">
           <div className="overflow-hidden rounded-xl border border-[var(--border)]/60">
@@ -458,7 +459,7 @@ export function FlagelPlayArea({
                     alt=""
                     draggable={false}
                     onError={() => {
-                      console.warn('[mini-arcade][flagel:image-error]', {
+                      console.warn('[arcado][flagel:image-error]', {
                         flagEmoji,
                         flagImageUrl,
                         effectiveFlagImageUrl,
@@ -502,7 +503,7 @@ export function FlagelPlayArea({
                               alt=""
                               draggable={false}
                               onError={() => {
-                                console.warn('[mini-arcade][flagel:image-error]', {
+                                console.warn('[arcado][flagel:image-error]', {
                                   flagEmoji,
                                   flagImageUrl,
                                   effectiveFlagImageUrl,
@@ -549,7 +550,7 @@ export function FlagelPlayArea({
         </div>
       </div>
 
-      {/* ── Input Area ── */}
+      {/* â”€â”€ Input Area â”€â”€ */}
       <div className="space-y-3">
         <form
           className="space-y-3"
@@ -681,7 +682,7 @@ export function FlagelPlayArea({
         </div>
       </div>
 
-      {/* ── Answer Reveal ── */}
+      {/* â”€â”€ Answer Reveal â”€â”€ */}
       <AnimatePresence>
         {correctCountry && (
           <motion.div
@@ -705,18 +706,18 @@ export function FlagelPlayArea({
                 </div>
               </div>
               <div className="rounded-full bg-emerald-500/12 px-3 py-1 text-xs font-medium text-emerald-400">
-                {solved ? '✓ You found it!' : 'Flag fully revealed'}
+                {solved ? '\u2713 You found it!' : 'Flag fully revealed'}
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Guesses List ── */}
+      {/* â”€â”€ Guesses List â”€â”€ */}
       <div className="space-y-2">
         {displayGuesses.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)]/40 px-5 py-8 text-center">
-            <span className="text-2xl opacity-40">🌍</span>
+            <span className="text-2xl opacity-40">{'\u{1F30D}'}</span>
             <p className="text-[13px] text-[var(--text-tertiary)]">
               Your guesses will appear here with distance, direction, and accuracy hints.
             </p>
@@ -741,12 +742,12 @@ export function FlagelPlayArea({
                   {entry.guess}
                 </div>
                 <div className="flex items-center gap-1.5 text-sm text-[var(--text-secondary)]">
-                  <span className="text-[11px]">📍</span>
+                  <span className="text-[11px]">{'\u{1F4CD}'}</span>
                   {entry.isCorrect ? '0 km' : `${(entry.distance ?? 0).toLocaleString()} km`}
                 </div>
                 <div className="flex items-center justify-center gap-1.5 text-sm font-semibold text-[var(--text-primary)]">
                   <IconCompass size={13} />
-                  <span>{entry.isCorrect ? '✓' : getDirectionArrow(entry.direction)}</span>
+                  <span>{entry.isCorrect ? '\u2713' : getDirectionArrow(entry.direction)}</span>
                 </div>
                 <div
                   className="flex items-center justify-center rounded-lg px-2 py-1.5 text-xs font-bold"
@@ -776,12 +777,12 @@ export function FlagelPlayArea({
               borderRadius: '12px',
             }}
           >
-            {finished ? '✓ Round complete' : `Guess ${currentGuessNumber} / ${maxAttempts}`}
+            {finished ? '\u2713 Round complete' : `Guess ${currentGuessNumber} / ${maxAttempts}`}
           </div>
         </div>
       </div>
 
-      {/* ── Multiplayer Panels ── */}
+      {/* â”€â”€ Multiplayer Panels â”€â”€ */}
       {players.length > 1 && (
         <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
           <div>
@@ -812,7 +813,7 @@ export function FlagelPlayArea({
                       </p>
                       <p className="mt-1 text-xs text-[var(--text-tertiary)]">
                         Attempts {status?.attemptCount ?? 0} / {maxAttempts}
-                        {status?.solved ? ' • Solved ✓' : status?.finished ? ' • Finished' : ' • Guessing…'}
+                        {status?.solved ? ' \u2022 Solved \u2713' : status?.finished ? ' \u2022 Finished' : ' \u2022 Guessing\u2026'}
                       </p>
                     </div>
                     <p className="text-sm font-bold text-[var(--game-flagel)]">
@@ -849,26 +850,28 @@ export function FlagelPlayArea({
         </div>
       )}
 
-      {/* ── Solo Result Popup Modal ── */}
-      <AnimatePresence>
-        {showResultPopup && isSolo && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', backgroundColor: 'rgba(0,0,0,0.55)' }}
-            onClick={() => setShowResultPopup(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 24 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 24 }}
-              transition={{ type: 'spring', stiffness: 380, damping: 30, delay: 0.05 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-[420px] overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] shadow-[0_24px_64px_rgba(0,0,0,0.3)]"
-            >
+      {/* â”€â”€ Solo Result Popup Modal â”€â”€ */}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {showResultPopup && isSolo && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+                onClick={() => setShowResultPopup(false)}
+              >
+                <div className="absolute inset-0 bg-black/55 backdrop-blur-md" aria-hidden="true" />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.92, y: 24 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.92, y: 24 }}
+                  transition={{ type: 'spring', stiffness: 380, damping: 30, delay: 0.05 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="relative z-[71] w-full max-w-[420px] overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] shadow-[0_24px_64px_rgba(0,0,0,0.3)]"
+                >
               {/* Decorative top gradient bar */}
               <div
                 className="h-1.5 w-full"
@@ -893,10 +896,10 @@ export function FlagelPlayArea({
                     background: solved
                       ? 'linear-gradient(145deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05))'
                       : 'linear-gradient(145deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05))',
-                    border: `2px solid ${solved ? 'rgba(16,185,129,0.25)' : 'rgba(245,158,11,0.25)'}`,
+                    border: `2px solid ${solved ? 'rgba(16,185,129,0.35)' : 'rgba(245,158,11,0.35)'}`,
                   }}
                 >
-                  <span className="text-3xl">{solved ? '🎉' : '🏁'}</span>
+                  <span className="text-3xl">{solved ? '\u2713' : '\u2717'}</span>
                 </motion.div>
 
                 {/* Title */}
@@ -906,7 +909,7 @@ export function FlagelPlayArea({
                   transition={{ delay: 0.2 }}
                   className="text-xl font-bold tracking-tight text-[var(--text-primary)]"
                 >
-                  {solved ? 'Correct!' : 'Round Complete'}
+                  {solved ? 'You found it!' : 'Round complete'}
                 </motion.h3>
 
                 {/* Subtitle */}
@@ -959,7 +962,7 @@ export function FlagelPlayArea({
                         color: solved ? '#34d399' : '#94a3b8',
                       }}
                     >
-                      {solved ? '✓' : '✗'}
+                      {solved ? '\u2713' : '\u2717'}
                     </div>
                   </motion.div>
                 )}
@@ -1023,10 +1026,12 @@ export function FlagelPlayArea({
                   )}
                 </motion.div>
               </div>
-            </motion.div>
-          </motion.div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
         )}
-      </AnimatePresence>
     </motion.section>
   )
 }

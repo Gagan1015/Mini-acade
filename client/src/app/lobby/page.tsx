@@ -11,14 +11,14 @@ import {
   type GameId,
   type TriviaCategory,
   type TriviaDifficulty,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { GAME_LIST, getGameInfo } from '@/lib/games'
 import { Spinner } from '@/components/ui/Animated'
 import { GameIcon } from '@/components/ui/GameIcons'
 import { buildSoloPlayUrl } from '@/lib/soloPlay'
 
-/* ── SVG Icons ── */
+/* â”€â”€ SVG Icons â”€â”€ */
 
 function IconPlus({ size = 16 }: { size?: number }) {
   return (
@@ -252,11 +252,11 @@ function LobbyPageContent() {
 
   function getPlayerLabel(game: { minPlayers: number; maxPlayers: number }) {
     if (game.minPlayers <= 1 && game.maxPlayers === 1) return 'Solo only'
-    if (game.minPlayers <= 1) return `Solo or 2–${game.maxPlayers} players`
-    return `${game.minPlayers}–${game.maxPlayers} players`
+    if (game.minPlayers <= 1) return `Solo or 2\u2013${game.maxPlayers} players`
+    return `${game.minPlayers}\u2013${game.maxPlayers} players`
   }
 
-  /* ── Loading state ── */
+  /* â”€â”€ Loading state â”€â”€ */
   if (status === 'loading') {
     return (
       <AppLayout variant="marketing">
@@ -269,7 +269,7 @@ function LobbyPageContent() {
     )
   }
 
-  /* ── Unauthenticated state ── */
+  /* â”€â”€ Unauthenticated state â”€â”€ */
   if (status === 'unauthenticated') {
     return (
       <AppLayout variant="marketing">
@@ -303,14 +303,14 @@ function LobbyPageContent() {
     )
   }
 
-  /* ── Main lobby ── */
+  /* â”€â”€ Main lobby â”€â”€ */
   return (
     <AppLayout variant="marketing">
       <div className="marketing-rail-layout overflow-hidden bg-[var(--background)]">
         <section className="marketing-rail-section">
           <div className="mx-auto max-w-7xl px-6 py-12 sm:py-16 lg:px-8">
 
-          {/* ── Page header ── */}
+          {/* â”€â”€ Page header â”€â”€ */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -328,10 +328,10 @@ function LobbyPageContent() {
             </p>
           </motion.div>
 
-          {/* ── Two-column layout ── */}
+          {/* â”€â”€ Two-column layout â”€â”€ */}
           <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
 
-            {/* ── Left: Main content area ── */}
+            {/* â”€â”€ Left: Main content area â”€â”€ */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -648,7 +648,7 @@ function LobbyPageContent() {
                               >
                                 <IconUser size={16} />
                                 <p className="text-xs text-[var(--text-secondary)]">
-                                  You&apos;ll play solo — practice your skills or go for a high score!
+                                  You&apos;ll play solo {'\u2014'} practice your skills or go for a high score!
                                 </p>
                               </motion.div>
                             )}
@@ -664,7 +664,7 @@ function LobbyPageContent() {
                               {isLoading ? (
                                 <>
                                   <IconLoader size={18} />
-                                  Creating…
+                                  {'Creating\u2026'}
                                 </>
                               ) : (
                                 <>
@@ -725,7 +725,7 @@ function LobbyPageContent() {
                           {isLoading ? (
                             <>
                               <IconLoader size={18} />
-                              Joining…
+                              {'Joining\u2026'}
                             </>
                           ) : (
                             <>
@@ -742,7 +742,7 @@ function LobbyPageContent() {
               </AnimatePresence>
             </motion.div>
 
-            {/* ── Right: Sidebar with info cards ── */}
+            {/* â”€â”€ Right: Sidebar with info cards â”€â”€ */}
             <motion.aside
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -781,7 +781,7 @@ function LobbyPageContent() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-[var(--text-primary)]">{game.name}</p>
                           <p className="text-[10px] text-[var(--text-tertiary)]">
-                            {game.minPlayers}–{game.maxPlayers} players
+                            {`${game.minPlayers}\u2013${game.maxPlayers} players`}
                           </p>
                         </div>
                         {selectedGame === game.id && (

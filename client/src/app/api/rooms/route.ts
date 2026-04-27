@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { gameIdSchema, triviaCategoryListSchema, triviaCategorySchema, triviaDifficultySchema } from '@mini-arcade/shared'
+import { gameIdSchema, triviaCategoryListSchema, triviaCategorySchema, triviaDifficultySchema } from '@arcado/shared'
 
 import { requireSession } from '@/lib/admin'
 import { createRoomForUser } from '@/lib/rooms'

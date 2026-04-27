@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'motion/react'
-import { DonutChart, ProgressRing, SparkLine } from '@/components/ui/Charts'
+
+import { DonutChart } from '@/components/ui/Charts'
 import type { TriviaRoundHistoryEntry } from '@/hooks/useRoom'
-import type { TriviaGameEnded } from '@mini-arcade/shared'
+import type { TriviaGameEnded } from '@arcado/shared'
 
 type TriviaResultsModalProps = {
   isOpen: boolean
@@ -49,6 +50,13 @@ function IconBarChart({ size = 18 }: { size?: number }) {
   )
 }
 
+function getRankBadge(rank: number) {
+  if (rank === 1) return '\u{1F947}'
+  if (rank === 2) return '\u{1F948}'
+  if (rank === 3) return '\u{1F949}'
+  return `#${rank}`
+}
+
 export function TriviaResultsModal({
   isOpen,
   onClose,
@@ -69,12 +77,7 @@ export function TriviaResultsModal({
 
   const currentPlayer = finalScores.find((s) => s.playerId === currentUserId)
   const rank = currentPlayer?.rank ?? 1
-
-  const cumulativeScores = roundHistory.reduce<number[]>((acc, r) => {
-    const prev = acc.length > 0 ? acc[acc.length - 1] : 0
-    acc.push(prev + r.pointsEarned)
-    return acc
-  }, [])
+  const title = rank === 1 ? 'Victory!' : `Rank #${rank}`
 
   const donutSegments = [
     { value: correct, color: 'var(--success-500)', label: 'Correct' },
@@ -102,19 +105,16 @@ export function TriviaResultsModal({
           className="fixed inset-0 z-[60] flex items-center justify-center p-4"
           onClick={onClose}
         >
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-          {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 30 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-[var(--border)] bg-[var(--background)] shadow-2xl"
+            className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-[var(--border)] bg-[var(--background)] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
             <button
               onClick={onClose}
               className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] cursor-pointer"
@@ -122,7 +122,6 @@ export function TriviaResultsModal({
               <IconX size={16} />
             </button>
 
-            {/* Header */}
             <div className="relative overflow-hidden rounded-t-3xl bg-gradient-to-br from-[var(--game-trivia)]/20 via-[var(--game-trivia)]/5 to-transparent px-8 pb-6 pt-8">
               <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-[var(--game-trivia)]/10 blur-2xl" />
               <motion.div
@@ -139,7 +138,7 @@ export function TriviaResultsModal({
                 transition={{ delay: 0.2 }}
                 className="font-display text-2xl font-bold text-[var(--text-primary)]"
               >
-                {rank === 1 ? '🏆 Victory!' : `Rank #${rank}`}
+                {title}
               </motion.h2>
               <motion.p
                 initial={{ opacity: 0 }}
@@ -151,7 +150,6 @@ export function TriviaResultsModal({
               </motion.p>
             </div>
 
-            {/* Tabs */}
             <div className="flex gap-1 border-b border-[var(--border)] px-8">
               {(['overview', 'leaderboard'] as const).map((tab) => (
                 <button
@@ -174,11 +172,9 @@ export function TriviaResultsModal({
               ))}
             </div>
 
-            {/* Content */}
             <div className="px-8 py-6">
               {activeTab === 'overview' ? (
                 <div className="space-y-6">
-                  {/* Donut + Stats */}
                   <div className="flex items-center gap-6">
                     <DonutChart
                       segments={donutSegments}
@@ -204,23 +200,6 @@ export function TriviaResultsModal({
                     </div>
                   </div>
 
-                  {/* Score Progress Sparkline */}
-                  {cumulativeScores.length > 1 && (
-                    <div className="rounded-2xl border border-[var(--border)]/40 bg-[var(--surface)]/30 p-4">
-                      <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-                        Score Progression
-                      </p>
-                      <SparkLine
-                        data={[0, ...cumulativeScores]}
-                        width={360}
-                        height={60}
-                        color="var(--game-trivia)"
-                        style={{ width: '100%' }}
-                      />
-                    </div>
-                  )}
-
-                  {/* Category Breakdown */}
                   {Object.keys(categoryBreakdown).length > 0 && (
                     <div className="rounded-2xl border border-[var(--border)]/40 bg-[var(--surface)]/30 p-4">
                       <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
@@ -231,13 +210,13 @@ export function TriviaResultsModal({
                           const pct = Math.round((data.correct / data.total) * 100)
                           return (
                             <div key={cat}>
-                              <div className="flex items-center justify-between mb-1.5">
+                              <div className="mb-1.5 flex items-center justify-between">
                                 <span className="text-xs font-medium text-[var(--text-primary)]">{cat}</span>
                                 <span className="text-xs font-mono text-[var(--text-secondary)]">
                                   {data.correct}/{data.total}
                                 </span>
                               </div>
-                              <div className="h-1.5 rounded-full bg-[var(--border)]/60 overflow-hidden">
+                              <div className="h-1.5 overflow-hidden rounded-full bg-[var(--border)]/60">
                                 <motion.div
                                   className="h-full rounded-full bg-[var(--game-trivia)]"
                                   initial={{ width: 0 }}
@@ -253,7 +232,6 @@ export function TriviaResultsModal({
                   )}
                 </div>
               ) : (
-                /* Leaderboard Tab */
                 <div className="space-y-2">
                   {finalScores.map((entry) => {
                     const isMe = entry.playerId === currentUserId
@@ -277,7 +255,7 @@ export function TriviaResultsModal({
                                 ? 'bg-[var(--text-tertiary)]/15 text-[var(--text-secondary)]'
                                 : 'bg-[var(--border)]/30 text-[var(--text-tertiary)]'
                           }`}>
-                            {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : `#${entry.rank}`}
+                            {getRankBadge(entry.rank)}
                           </span>
                           <div>
                             <p className="text-sm font-medium text-[var(--text-primary)]">
@@ -299,7 +277,6 @@ export function TriviaResultsModal({
               )}
             </div>
 
-            {/* Footer */}
             <div className="border-t border-[var(--border)] px-8 py-5">
               <motion.button
                 whileHover={{ scale: 1.01 }}

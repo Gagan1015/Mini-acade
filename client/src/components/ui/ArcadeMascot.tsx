@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence, type Variants } from 'motion/react'
 
-/* ── Game data ──────────────────────────────────────────────── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Game data ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 
 const GAMES = [
   { id: 'skribble', name: 'Skribble', sub: 'draw & guess', color: '#EC4899', darkSide: '#BE185D' },
@@ -14,7 +14,7 @@ const GAMES = [
 
 type Game = (typeof GAMES)[number]
 
-/* ── Slot machine animation variants ────────────────────────── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Slot machine animation variants ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 
 const slotVariants: Variants = {
   initial: { opacity: 0, y: 24, scale: 0.97 },
@@ -32,7 +32,7 @@ const slotVariants: Variants = {
   },
 }
 
-/* ── SVG icons rendered inside the tower SVG context ────────── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ SVG icons rendered inside the tower SVG context ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 
 function SlotIcon({ id, x, y }: { id: string; x: number; y: number }) {
   const s = { stroke: '#fff', strokeWidth: 1.5, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
@@ -72,7 +72,7 @@ function SlotIcon({ id, x, y }: { id: string; x: number; y: number }) {
   }
 }
 
-/* ── Standalone SVG icons for floating HTML badges ──────────── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Standalone SVG icons for floating HTML badges ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 
 function IconPencil({ size = 14 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3l4 4L7 21H3v-4z"/><path d="M14.5 5.5l4 4"/></svg>
@@ -87,7 +87,7 @@ function IconFlag({ size = 14 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 2v20"/><path d="M4 4c3-2 6-1 9 1s6 2 9 0v12c-3 2-6 1-9-1s-6-2-9 0"/></svg>
 }
 
-/* ── Geometry helpers ───────────────────────────────────────── */
+/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Geometry helpers ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */
 
 function renderSlotContent(game: Game, y1: number, y2: number) {
   const centerY = (y1 + y2) / 2
@@ -107,9 +107,9 @@ function renderSlotContent(game: Game, y1: number, y2: number) {
   )
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
    COMPONENT
-   ══════════════════════════════════════════════════════════════ */
+   ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */
 
 export function ArcadeMascot({ className = '' }: { className?: string }) {
   const [cycle, setCycle] = useState(0)
@@ -134,7 +134,7 @@ export function ArcadeMascot({ className = '' }: { className?: string }) {
         transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      {/* ── Floating chips (top-left & bottom-right) ── */}
+      {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Floating chips (top-left & bottom-right) ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
       <motion.div
         className="absolute -left-6 top-16 z-20 rounded-full border border-[var(--border)] bg-[var(--mascot-chip-bg)] px-3 py-1 font-mono text-[10px] text-[var(--marketing-accent)] shadow-[var(--marketing-shadow)] backdrop-blur-md"
         animate={{ y: [0, -6, 0] }}
@@ -150,7 +150,7 @@ export function ArcadeMascot({ className = '' }: { className?: string }) {
         room live
       </motion.div>
 
-      {/* ═══════ ISOMETRIC TOWER ═══════ */}
+      {/* ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â ISOMETRIC TOWER ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â */}
       <motion.svg
         width="330"
         height="460"
@@ -174,7 +174,7 @@ export function ArcadeMascot({ className = '' }: { className?: string }) {
         {/* Ground shadow */}
         <ellipse cx="175" cy="452" rx="120" ry="10" fill="var(--mascot-shell-stroke)" opacity="0.06" />
 
-        {/* ═══ BASE (410→438) ═══ */}
+        {/* Base */}
         <path d="M40,438 L260,438 L260,410 L40,410 Z" fill="var(--mascot-shell)" stroke="var(--mascot-shell-stroke)" strokeWidth="1.5" />
         <path d="M260,438 L310,413 L310,385 L260,410 Z" fill="var(--mascot-shell)" fillOpacity={0.4} stroke="var(--mascot-shell-stroke)" strokeWidth="1.5" />
         <rect x="134" y="418" width="32" height="3" rx="1.5" fill="var(--mascot-screen)" opacity="0.25" />
@@ -182,48 +182,47 @@ export function ArcadeMascot({ className = '' }: { className?: string }) {
         <motion.circle cx="244" cy="426" r="2.5" fill="#10B981" filter="url(#sg)" animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2, repeat: Infinity }} />
         {[0,1,2].map(i => <g key={`sp${i}`}><rect x={56+i*12} y={420} width="8" height="1.5" rx=".75" fill="var(--mascot-shell-stroke)" opacity=".15"/><rect x={56+i*12} y={424} width="8" height="1.5" rx=".75" fill="var(--mascot-shell-stroke)" opacity=".15"/><rect x={56+i*12} y={428} width="8" height="1.5" rx=".75" fill="var(--mascot-shell-stroke)" opacity=".15"/></g>)}
 
-        {/* ═══ SLOT 3 (374→410) ═══ */}
+        {/* Slot 3 */}
         <AnimatePresence initial={false}>
           <motion.g key={`s3-${getGame(3).id}`} custom={0.24} variants={slotVariants} initial="initial" animate="enter" exit="exit">
             {renderSlotContent(getGame(3), 374, 410)}
           </motion.g>
         </AnimatePresence>
 
-        {/* ═══ SLOT 2 (338→374) ═══ */}
+        {/* Slot 2 */}
         <AnimatePresence initial={false}>
           <motion.g key={`s2-${getGame(2).id}`} custom={0.16} variants={slotVariants} initial="initial" animate="enter" exit="exit">
             {renderSlotContent(getGame(2), 338, 374)}
           </motion.g>
         </AnimatePresence>
 
-        {/* ═══ SLOT 1 (302→338) ═══ */}
+        {/* Slot 1 */}
         <AnimatePresence initial={false}>
           <motion.g key={`s1-${getGame(1).id}`} custom={0.08} variants={slotVariants} initial="initial" animate="enter" exit="exit">
             {renderSlotContent(getGame(1), 302, 338)}
           </motion.g>
         </AnimatePresence>
 
-        {/* ═══ MAIN PANEL (166→302) ═══ */}
+        {/* Main panel */}
         <path d="M40,302 L260,302 L260,166 L40,166 Z" fill="url(#gA)" stroke="var(--mascot-shell-stroke)" strokeWidth="1.5" />
         <path d="M260,302 L310,277 L310,141 L260,166 Z" fill="url(#gAS)" stroke="var(--mascot-shell-stroke)" strokeWidth="1.5" />
-        <text x="150" y="228" textAnchor="middle" fontSize="38" fontWeight="700" fill="#fff" fontFamily="'Space Grotesk',sans-serif" letterSpacing="0.02em">Mini</text>
-        <text x="150" y="272" textAnchor="middle" fontSize="38" fontWeight="700" fill="#fff" fontFamily="'Space Grotesk',sans-serif" letterSpacing="0.02em">Arcade</text>
+        <text x="150" y="252" textAnchor="middle" fontSize="36" fontWeight="700" fill="#fff" fontFamily="'Space Grotesk',sans-serif" letterSpacing="0.02em">Arcado</text>
         <rect x="210" y="173" width="40" height="16" rx="4" fill="rgba(255,255,255,0.16)" />
-        <text x="218" y="184" fontSize="8" fontWeight="600" fill="#fff" fontFamily="Inter,sans-serif">▶ Play</text>
+        <text x="218" y="184" fontSize="8" fontWeight="600" fill="#fff" fontFamily="Inter,sans-serif">Play</text>
 
-        {/* ═══ TOP SLOT (130→166) ═══ */}
+        {/* Top slot */}
         <AnimatePresence initial={false}>
           <motion.g key={`st-${getGame(0).id}`} custom={0} variants={slotVariants} initial="initial" animate="enter" exit="exit">
             {renderSlotContent(getGame(0), 130, 166)}
           </motion.g>
         </AnimatePresence>
 
-        {/* ═══ SCREEN (68→130) ═══ */}
+        {/* Screen */}
         <path d="M40,130 L260,130 L260,68 L40,68 Z" fill="var(--mascot-shell)" stroke="var(--mascot-shell-stroke)" strokeWidth="1.5" />
         <path d="M260,130 L310,105 L310,43 L260,68 Z" fill="var(--mascot-shell)" fillOpacity={0.4} stroke="var(--mascot-shell-stroke)" strokeWidth="1.5" />
         <rect x="50" y="76" width="200" height="46" rx="7" fill="url(#gSc)" />
         <rect x="50" y="76" width="200" height="46" rx="7" fill="url(#sl)" />
-        {/* ═══ FACE — changes with top slot game ═══ */}
+        {/* Top slot */}
         <AnimatePresence initial={false}>
           <motion.g
             key={`face-${getGame(0).id}`}
@@ -251,7 +250,7 @@ export function ArcadeMascot({ className = '' }: { className?: string }) {
               </>
             )}
             {getGame(0).id === 'trivia' && (
-              /* Trivia: curious thinking — one eye bigger, wavy mouth */
+              /* Trivia: curious thinking ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â one eye bigger, wavy mouth */
               <>
                 <motion.g
                   animate={{ y: [0, -2, 0] }}
@@ -269,7 +268,7 @@ export function ArcadeMascot({ className = '' }: { className?: string }) {
                 </motion.g>
                 <circle cx="110" cy="105" r="3" fill="#3B82F6" opacity="0.3" />
                 <circle cx="190" cy="105" r="3" fill="#3B82F6" opacity="0.3" />
-                {/* Thinking mouth — wavy */}
+                {/* Thinking mouth ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â wavy */}
                 <motion.g
                   animate={{ y: [0, 1, 0] }}
                   transition={{ duration: 3, repeat: Infinity }}
@@ -279,7 +278,7 @@ export function ArcadeMascot({ className = '' }: { className?: string }) {
               </>
             )}
             {getGame(0).id === 'wordel' && (
-              /* Wordel: focused determination — squinting eyes, flat mouth */
+              /* Wordel: focused determination ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â squinting eyes, flat mouth */
               <>
                 <motion.ellipse cx="125" cy="96" rx="7" ry="3.5" fill="var(--mascot-eye)"
                   animate={{ ry: [3.5, 2.5, 3.5] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }} />
@@ -297,7 +296,7 @@ export function ArcadeMascot({ className = '' }: { className?: string }) {
               </>
             )}
             {getGame(0).id === 'flagel' && (
-              /* Flagel: excited star-eyes — big smile */
+              /* Flagel: excited star-eyes ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â big smile */
               <>
                 {/* Star eyes */}
                 <motion.path d="M125 90 l2 4 4 0.5 -3 3 1 4 -4-2 -4 2 1-4 -3-3 4-0.5z" fill="var(--mascot-eye)"
@@ -324,11 +323,11 @@ export function ArcadeMascot({ className = '' }: { className?: string }) {
         <motion.circle cx="245" cy="80" r="2" fill="var(--marketing-accent)" filter="url(#sg)"
           animate={{ opacity: [0.3, 0.85, 0.3] }} transition={{ duration: 2.5, repeat: Infinity, delay: 1.25 }} />
 
-        {/* ═══ TOP CAP (52→68) ═══ */}
+        {/* Top cap */}
         <path d="M40,68 L260,68 L260,52 L40,52 Z" fill="var(--mascot-shell)" stroke="var(--mascot-shell-stroke)" strokeWidth="1.5" />
         <path d="M260,68 L310,43 L310,27 L260,52 Z" fill="var(--mascot-shell)" fillOpacity={0.4} stroke="var(--mascot-shell-stroke)" strokeWidth="1.5" />
 
-        {/* ═══ TOP FACE (y=52) ═══ */}
+        {/* Top face */}
         <path d="M40,52 L90,27 L310,27 L260,52 Z" fill="var(--mascot-shell)" fillOpacity={0.6} stroke="var(--mascot-shell-stroke)" strokeWidth="1.5" />
 
         {/* Antenna */}
@@ -346,7 +345,7 @@ export function ArcadeMascot({ className = '' }: { className?: string }) {
         {[0,1,2].map(i => <circle key={`w${i}`} cx={293} cy={326 + i * 12} r="1.5" fill="var(--mascot-shell-stroke)" opacity=".1" />)}
       </motion.svg>
 
-      {/* ── Floating game icon badges (arranged symmetrically) ── */}
+      {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Floating game icon badges (arranged symmetrically) ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
       {/* Top-right */}
       <motion.div className="absolute -right-6 top-24 z-20 flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--mascot-chip-bg)] text-[var(--game-trivia)] shadow-[var(--marketing-shadow)] backdrop-blur-md"
         animate={{ y: [0, -5, 0], rotate: [0, -4, 0] }} transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}>

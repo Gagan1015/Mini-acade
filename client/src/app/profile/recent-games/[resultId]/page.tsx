@@ -1,5 +1,5 @@
-import { prisma } from '@mini-arcade/db'
-import type { PersistedGameResultMetadata } from '@mini-arcade/shared'
+import { prisma } from '@arcado/db'
+import type { PersistedGameResultMetadata } from '@arcado/shared'
 import { notFound } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
 import RecentGameDetailClient from '@/components/pages/RecentGameDetailClient'

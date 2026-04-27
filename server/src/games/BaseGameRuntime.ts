@@ -1,4 +1,4 @@
-import { prisma, type Prisma } from '@mini-arcade/db'
+import { prisma, type Prisma } from '@arcado/db'
 import type {
   GameConfig,
   GameEventResult,
@@ -9,7 +9,7 @@ import type {
   Player,
   GameId,
   UserId,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 import type { Server } from 'socket.io'
 
 import { RoomService } from '../services/roomService'
@@ -163,7 +163,7 @@ export abstract class BaseGameRuntime implements IGameRuntime {
             target.emit(broadcast.event as string, broadcast.data as never)
           }
         } catch {
-          // Socket lookup failed — player may have disconnected
+          // Socket lookup failed â€” player may have disconnected
         }
       }
     }

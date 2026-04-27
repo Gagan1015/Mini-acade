@@ -1,5 +1,5 @@
 {
-  "name": "@mini-arcade/shared",
+  "name": "@arcado/shared",
   "version": "1.0.0",
   "private": true,
   "main": "./dist/index.js",
@@ -18,7 +18,7 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
     "lint": "eslint src --ext .ts",
-    "test": "node -e \"console.log('No tests yet for @mini-arcade/shared')\"",
+    "test": "node -e \"console.log('No tests yet for @arcado/shared')\"",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
   },
   "dependencies": {

@@ -59,10 +59,10 @@ async function main() {
 
   await prisma.systemSetting.upsert({
     where: { key: 'platform.name' },
-    update: { value: 'Mini Arcade', type: 'string', category: 'general' },
+    update: { value: 'Arcado', type: 'string', category: 'general' },
     create: {
       key: 'platform.name',
-      value: 'Mini Arcade',
+      value: 'Arcado',
       type: 'string',
       category: 'general',
     },

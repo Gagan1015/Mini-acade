@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import type { TriviaCategory, TriviaDifficulty } from '@mini-arcade/shared'
+import type { TriviaCategory, TriviaDifficulty } from '@arcado/shared'
 
 import {
   QuestionService,

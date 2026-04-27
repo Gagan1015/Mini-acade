@@ -50,7 +50,7 @@ import {
   type WordelRoundEnded,
   type WordelRoundStarted,
   type WordelSyncPayload,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 
 import { createSocket, type AppSocket } from '@/lib/socket'
 
@@ -331,7 +331,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
 
     const handleError = (payload: RoomError) => {
-      console.debug('[mini-arcade][room:error]', {
+      console.debug('[arcado][room:error]', {
         roomCode,
         userId: currentUserId,
         payload,
@@ -342,7 +342,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
 
     const handleGameStarted = (payload: RoomGameStartedPayload) => {
-      console.debug('[mini-arcade][room:gameStarted]', {
+      console.debug('[arcado][room:gameStarted]', {
         roomCode,
         userId: currentUserId,
         payload,
@@ -449,7 +449,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
 
     const handleWordelRoundStarted = (payload: WordelRoundStarted) => {
-      console.debug('[mini-arcade][wordel:roundStarted]', {
+      console.debug('[arcado][wordel:roundStarted]', {
         roomCode,
         userId: currentUserId,
         payload,
@@ -558,7 +558,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
 
     const handleWordelSync = (payload: WordelSyncPayload) => {
-      console.debug('[mini-arcade][wordel:sync]', {
+      console.debug('[arcado][wordel:sync]', {
         roomCode,
         userId: currentUserId,
         payload,
@@ -739,7 +739,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
 
     const handleFlagelRoundStarted = (payload: FlagelRoundStarted) => {
-      console.debug('[mini-arcade][flagel:roundStarted]', {
+      console.debug('[arcado][flagel:roundStarted]', {
         roomCode,
         userId: currentUserId,
         payload,
@@ -834,7 +834,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
 
     const handleFlagelSync = (payload: FlagelSyncPayload) => {
-      console.debug('[mini-arcade][flagel:sync]', {
+      console.debug('[arcado][flagel:sync]', {
         roomCode,
         userId: currentUserId,
         payload,
@@ -866,10 +866,10 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
       })
     }
 
-    /* ── Skribble event handlers ── */
+    /* â”€â”€ Skribble event handlers â”€â”€ */
 
     const handleSkribbleWordChoosingStarted = (payload: DrawWordChoosingStartedPayload) => {
-      console.debug('[mini-arcade][skribble:wordChoosingStarted]', { roomCode, userId: currentUserId, payload })
+      console.debug('[arcado][skribble:wordChoosingStarted]', { roomCode, userId: currentUserId, payload })
       setSkribble((prev) => ({
         ...prev,
         phase: 'choosing',
@@ -891,7 +891,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
 
     const handleSkribbleWordChoices = (payload: DrawWordChoicesPayload) => {
-      console.debug('[mini-arcade][skribble:wordChoices]', { roomCode, userId: currentUserId, payload })
+      console.debug('[arcado][skribble:wordChoices]', { roomCode, userId: currentUserId, payload })
       setSkribble((prev) => ({
         ...prev,
         phase: 'choosing',
@@ -904,7 +904,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
 
     const handleSkribbleRoundStarted = (payload: SkribbleRoundStarted) => {
-      console.debug('[mini-arcade][skribble:roundStarted]', { roomCode, userId: currentUserId, payload })
+      console.debug('[arcado][skribble:roundStarted]', { roomCode, userId: currentUserId, payload })
       setSkribble((prev) => ({
         ...prev,
         phase: 'playing',
@@ -926,7 +926,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
 
     const handleSkribbleTurnStarted = (payload: DrawTurnStartedPayload) => {
-      console.debug('[mini-arcade][skribble:turnStarted]', { roomCode, userId: currentUserId, payload })
+      console.debug('[arcado][skribble:turnStarted]', { roomCode, userId: currentUserId, payload })
       setSkribble((prev) => ({
         ...prev,
         phase: 'playing',
@@ -1009,7 +1009,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     }
 
     const handleSkribbleSync = (payload: DrawSyncPayload) => {
-      console.debug('[mini-arcade][skribble:sync]', { roomCode, userId: currentUserId, payload })
+      console.debug('[arcado][skribble:sync]', { roomCode, userId: currentUserId, payload })
       setSkribble((prev) => ({
         ...prev,
         phase: payload.isChoosing ? 'choosing' : prev.phase,
@@ -1250,7 +1250,7 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
     })
   }, [roomCode])
 
-  /* ── Skribble actions ── */
+  /* â”€â”€ Skribble actions â”€â”€ */
 
   const sendSkribbleStrokes = useCallback(
     (strokes: Stroke[]) => {

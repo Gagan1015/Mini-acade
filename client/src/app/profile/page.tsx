@@ -1,4 +1,4 @@
-import { prisma } from '@mini-arcade/db'
+import { prisma } from '@arcado/db'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { requireSession } from '@/lib/admin'
 import ProfileClient from '@/components/pages/ProfileClient'

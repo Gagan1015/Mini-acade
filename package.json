@@ -1,5 +1,5 @@
 {
-  "name": "mini-arcade",
+  "name": "arcado",
   "version": "1.0.0",
   "private": true,
   "packageManager": "pnpm@10.30.1",
@@ -7,7 +7,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "dev": "pnpm --filter @mini-arcade/shared build && turbo run dev",
+    "dev": "pnpm --filter @arcado/shared build && turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
@@ -15,10 +15,10 @@
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
-    "db:generate": "pnpm --filter @mini-arcade/db db:generate",
-    "db:push": "pnpm --filter @mini-arcade/db db:push",
-    "db:studio": "pnpm --filter @mini-arcade/db db:studio",
-    "db:seed": "pnpm --filter @mini-arcade/db db:seed"
+    "db:generate": "pnpm --filter @arcado/db db:generate",
+    "db:push": "pnpm --filter @arcado/db db:push",
+    "db:studio": "pnpm --filter @arcado/db db:studio",
+    "db:seed": "pnpm --filter @arcado/db db:seed"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.18.0",

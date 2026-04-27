@@ -8,7 +8,7 @@ import {
   type GameEventResult,
   type GameResultData,
   type UserId,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 import type { Server } from 'socket.io'
 
 import { RoomService } from '../../services/roomService'

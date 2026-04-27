@@ -10,7 +10,7 @@ import type {
   TriviaGameResultMetadata,
   WordelGameResultMetadata,
   WordelLetterResult,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 import {
   ArrowLeft,
   CalendarDays,
@@ -465,7 +465,7 @@ function SkribbleBreakdown({ metadata }: { metadata: SkribbleGameResultMetadata 
                 </div>
                 <p className="mt-3 text-base font-semibold text-[var(--text-primary)]">Word: {round.word}</p>
                 <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                  Drawer: {round.drawerName} · Hint: {round.wordHint}
+                  Drawer: {round.drawerName} {'\u00B7'} Hint: {round.wordHint}
                 </p>
               </div>
 

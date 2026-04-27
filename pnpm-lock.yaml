@@ -26,15 +26,15 @@ importers:
 
   client:
     dependencies:
+      '@arcado/db':
+        specifier: workspace:*
+        version: link:../db
+      '@arcado/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@auth/prisma-adapter':
         specifier: ^2.10.0
         version: 2.11.1(@prisma/client@6.19.2(prisma@6.19.2(typescript@5.9.3))(typescript@5.9.3))
-      '@mini-arcade/db':
-        specifier: workspace:*
-        version: link:../db
-      '@mini-arcade/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@react-three/drei':
         specifier: ^9.122.0
         version: 9.122.0(@react-three/fiber@8.18.0(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.184.0))(@types/react@18.3.28)(@types/three@0.184.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.184.0)(use-sync-external-store@1.6.0(react@18.3.1))
@@ -133,10 +133,10 @@ importers:
 
   server:
     dependencies:
-      '@mini-arcade/db':
+      '@arcado/db':
         specifier: workspace:*
         version: link:../db
-      '@mini-arcade/shared':
+      '@arcado/shared':
         specifier: workspace:*
         version: link:../shared
       cors:

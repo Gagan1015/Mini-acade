@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import Link from 'next/link'
+import { Eye } from 'lucide-react'
 import { GameIcon } from '@/components/ui/GameIcons'
 import { ProgressRing, SparkLine, HorizontalBarChart } from '@/components/ui/Charts'
 import { UserAvatar } from '@/components/ui/UserAvatar'
@@ -108,6 +109,42 @@ function statusTone(status: string) {
   return { bg: 'rgba(239, 68, 68, 0.12)', color: 'var(--error-500)' }
 }
 
+/**
+ * Triangular XP curve.
+ *
+ *  - Cost to advance from level L to L+1:  100 * L
+ *  - Total cumulative XP to reach level L: 50 * L * (L - 1)
+ *
+ * Examples:
+ *  - L1 → L2: 100 XP   (cum 100)
+ *  - L2 → L3: 200 XP   (cum 300)
+ *  - L10 → L11: 1000 XP (cum 4500)
+ *  - L50 → L51: 5000 XP (cum 122500)
+ */
+const XP_CURVE_COEFFICIENT = 100
+
+function xpForNextLevelAt(level: number) {
+  return XP_CURVE_COEFFICIENT * Math.max(1, level)
+}
+
+function cumulativeXpForLevel(level: number) {
+  if (level <= 1) return 0
+  return (XP_CURVE_COEFFICIENT / 2) * level * (level - 1)
+}
+
+function computeLevelProgress(totalXp: number) {
+  const safeXp = Math.max(0, Math.floor(totalXp))
+  // Closed-form inverse of cumulativeXpForLevel:
+  //   safeXp >= 50 * L * (L - 1)  =>  L <= (1 + sqrt(1 + safeXp / 12.5)) / 2
+  const level = Math.max(
+    1,
+    Math.floor((1 + Math.sqrt(1 + safeXp / (XP_CURVE_COEFFICIENT / 8))) / 2)
+  )
+  const xpInLevel = safeXp - cumulativeXpForLevel(level)
+  const xpForNextLevel = xpForNextLevelAt(level)
+  return { level, xpInLevel, xpForNextLevel }
+}
+
 /* ── Stagger animation ── */
 const stagger = {
   hidden: { opacity: 0,  y: 24 },
@@ -134,11 +171,12 @@ export default function ProfileClient({
   const totalScore = gameStats.reduce((s, g) => s + g.totalScore, 0)
   const recentScores = recentResults.map((r) => r.score).reverse()
 
-  // XP system (illustrative: total score → level)
-  const xpPerLevel = 500
-  const level = Math.floor(totalScore / xpPerLevel) + 1
-  const xpInLevel = totalScore % xpPerLevel
-  const xpPercent = (xpInLevel / xpPerLevel) * 100
+  // XP system: triangular curve so each level costs more than the last.
+  //   xp required to advance from level L to L+1   = 100 * L
+  //   total xp accumulated to reach level L         = 50 * L * (L - 1)
+  // i.e. L1→L2 costs 100, L2→L3 costs 200, ... L10→L11 costs 1000.
+  const { level, xpInLevel, xpForNextLevel } = computeLevelProgress(totalScore)
+  const xpPercent = xpForNextLevel > 0 ? (xpInLevel / xpForNextLevel) * 100 : 0
 
 
 
@@ -241,7 +279,7 @@ export default function ProfileClient({
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-[var(--text-tertiary)]">LEVEL {level}</span>
               <span className="font-mono font-semibold text-[var(--text-secondary)]">
-                {xpInLevel} / {xpPerLevel} XP
+                {xpInLevel} / {xpForNextLevel} XP
               </span>
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--border)]">
@@ -254,7 +292,7 @@ export default function ProfileClient({
               />
             </div>
             <p className="mt-2 text-xs text-[var(--text-tertiary)]">
-              {xpPerLevel - xpInLevel} XP to next level
+              {Math.max(0, xpForNextLevel - xpInLevel)} XP to next level
             </p>
           </div>
         </div>
@@ -435,8 +473,12 @@ export default function ProfileClient({
                         <span className="font-semibold font-mono text-[var(--text-primary)]">
                           {result.score} pts
                         </span>
-                        <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--marketing-accent)]">
-                          View details
+                        <span className="group/tooltip relative inline-flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--marketing-accent)]">
+                          <Eye className="h-4 w-4" />
+                          <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-xs font-medium text-[var(--text-primary)] opacity-0 shadow-lg transition-opacity group-hover/tooltip:opacity-100">
+                            View details
+                          </span>
+                          <span className="sr-only">View details</span>
                         </span>
                       </div>
                     </Link>

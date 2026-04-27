@@ -1,4 +1,4 @@
-import { prisma } from '@mini-arcade/db'
+import { prisma } from '@arcado/db'
 import {
   GAMES,
   ROOM_CONFIG,
@@ -14,7 +14,7 @@ import {
   type ServerToClientEvents,
   type SocketData,
   type UserId,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 import type { Server, Socket } from 'socket.io'
 
 type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>

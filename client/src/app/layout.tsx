@@ -7,7 +7,7 @@ import { AuthProvider } from '@/components/providers/AuthProvider'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Mini Arcade — Play Together, Anywhere',
+  title: 'Arcado - Play Together, Anywhere',
   description:
     'Classic party games reimagined for the browser. Create private rooms, share a code, and start playing Skribble, Trivia, Wordel and Flagel with friends in seconds.',
   keywords: ['arcade', 'games', 'multiplayer', 'skribble', 'trivia', 'wordel', 'flagel'],
@@ -19,19 +19,21 @@ export default function RootLayout({
   children: ReactNode
 }>) {
   return (
-    <html lang="en" data-theme="light" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body>
         <Script id="theme-init" strategy="beforeInteractive">
           {`
             (function() {
               try {
-                var storedTheme = localStorage.getItem('theme');
-                var theme = storedTheme === 'dark' || storedTheme === 'light' ? storedTheme : 'light';
+                var storedTheme = localStorage.getItem('theme-preference');
+                var systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                var theme = storedTheme === 'dark' || storedTheme === 'light' ? storedTheme : systemTheme;
                 document.documentElement.dataset.theme = theme;
                 document.documentElement.style.colorScheme = theme;
               } catch (error) {
-                document.documentElement.dataset.theme = 'light';
-                document.documentElement.style.colorScheme = 'light';
+                var fallbackTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                document.documentElement.dataset.theme = fallbackTheme;
+                document.documentElement.style.colorScheme = fallbackTheme;
               }
             })();
           `}

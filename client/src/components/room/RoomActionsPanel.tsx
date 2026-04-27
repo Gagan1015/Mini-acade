@@ -11,12 +11,12 @@ import {
   type GameId,
   type TriviaCategory,
   type TriviaDifficulty,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 import { GAME_LIST, getGameInfo } from '@/lib/games'
 import { GameIcon } from '@/components/ui/GameIcons'
 import { buildSoloPlayUrl } from '@/lib/soloPlay'
 
-/* ── SVG Icons ── */
+/* â”€â”€ SVG Icons â”€â”€ */
 
 function IconLoader({ size = 20 }: { size?: number }) {
   return (
@@ -284,7 +284,7 @@ export function RoomActionsPanel() {
           </div>
         </label>
 
-        {/* Trivia Settings – Compact Summary + Gear */}
+        {/* Trivia Settings â€“ Compact Summary + Gear */}
         {gameId === 'trivia' && (
           <div className="mb-5">
             <button
@@ -298,7 +298,7 @@ export function RoomActionsPanel() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-[var(--text-primary)]">Trivia Settings</p>
                 <p className="mt-0.5 text-[11px] text-[var(--text-tertiary)] truncate">
-                  {triviaRounds} questions · {triviaTimeLimit}s per Q · {difficultyLabel} · {categoryLabel}
+                  {triviaRounds} questions {'\u00B7'} {triviaTimeLimit}s per Q {'\u00B7'} {difficultyLabel} {'\u00B7'} {categoryLabel}
                 </p>
               </div>
               <span className="shrink-0 text-[var(--text-tertiary)] transition-transform group-hover:rotate-45">
@@ -334,7 +334,7 @@ export function RoomActionsPanel() {
           className="btn btn-primary w-full py-3"
         >
           {isCreating ? (
-            <><IconLoader /> Creating room…</>
+            <><IconLoader /> {'Creating room\u2026'}</>
           ) : (
             <><IconSparkle /> Create {selectedGame.name} room</>
           )}
@@ -398,7 +398,7 @@ export function RoomActionsPanel() {
             className="btn btn-secondary w-full py-3"
           >
             {isJoining ? (
-              <><IconLoader /> Checking room…</>
+              <><IconLoader /> {'Checking room\u2026'}</>
             ) : (
               <><IconLogIn /> Join by code</>
             )}
@@ -481,7 +481,7 @@ function TriviaSettingsModal({
 
         <div className="px-6 py-5 space-y-6">
 
-          {/* Questions – Plus/Minus Stepper */}
+          {/* Questions â€“ Plus/Minus Stepper */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <div>

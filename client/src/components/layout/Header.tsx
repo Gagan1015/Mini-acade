@@ -3,9 +3,60 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signIn, signOut, useSession } from 'next-auth/react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { UserAvatar } from '@/components/ui/UserAvatar'
+
+const THEME_STORAGE_KEY = 'theme-preference'
+const LEGACY_THEME_STORAGE_KEY = 'theme'
+type ThemePreference = 'light' | 'dark' | 'system'
+type ResolvedTheme = 'light' | 'dark'
+type ThemeTransitionCorner = 'top-right' | 'bottom-left'
+
+type ThemeTransitionHandle = {
+  finished: Promise<void>
+}
+
+type ThemeTransitionDocument = Document & {
+  startViewTransition?: (update: () => void | Promise<void>) => ThemeTransitionHandle
+}
+
+function getSystemTheme(): ResolvedTheme {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+function applyTheme(theme: ResolvedTheme) {
+  document.documentElement.dataset.theme = theme
+  document.documentElement.style.colorScheme = theme
+}
+
+async function applyThemeTransition(
+  theme: ResolvedTheme,
+  corner: ThemeTransitionCorner,
+  reduceMotion: boolean
+) {
+  const root = document.documentElement
+  const transitionDocument = document as ThemeTransitionDocument
+
+  if (reduceMotion || typeof transitionDocument.startViewTransition !== 'function') {
+    applyTheme(theme)
+    return
+  }
+
+  root.dataset.themeTransition = corner
+
+  try {
+    const transition = transitionDocument.startViewTransition(() => {
+      applyTheme(theme)
+    })
+
+    await transition.finished
+  } catch {
+    applyTheme(theme)
+  } finally {
+    root.removeAttribute('data-theme-transition')
+  }
+}
 
 function LogoMark({ className = '' }: { className?: string }) {
   return (
@@ -160,21 +211,93 @@ function IconBarChart({ size = 16 }: { size?: number }) {
 function ThemeToggle({
   theme,
   mounted,
+  reduceMotion,
   onToggle,
 }: {
-  theme: 'light' | 'dark'
+  theme: ResolvedTheme
   mounted: boolean
+  reduceMotion: boolean
   onToggle: () => void
 }) {
   return (
-    <button
+    <motion.button
       type="button"
       onClick={onToggle}
       aria-label={mounted ? `Switch to ${theme === 'light' ? 'dark' : 'light'} theme` : 'Toggle theme'}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+      whileHover={
+        reduceMotion
+          ? undefined
+          : {
+              scale: 1.04,
+              rotate: theme === 'dark' ? -6 : 6,
+            }
+      }
+      whileTap={reduceMotion ? undefined : { scale: 0.94 }}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+      className="group relative inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-[12px] border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
     >
-      {mounted && theme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
-    </button>
+      <motion.span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-[4px] rounded-[10px]"
+        animate={
+          theme === 'dark'
+            ? {
+                background:
+                  'radial-gradient(circle at 35% 35%, rgba(255, 213, 79, 0.24), rgba(255, 213, 79, 0) 68%)',
+                scale: 1,
+                opacity: 1,
+              }
+            : {
+                background:
+                  'radial-gradient(circle at 70% 30%, rgba(96, 165, 250, 0.18), rgba(96, 165, 250, 0) 70%)',
+                scale: 0.94,
+                opacity: 0.92,
+              }
+        }
+        transition={{ duration: reduceMotion ? 0.01 : 0.45, ease: [0.22, 1, 0.36, 1] }}
+      />
+      <span className="relative z-10 flex h-5 w-5 items-center justify-center">
+        <AnimatePresence initial={false} mode="wait">
+          <motion.span
+            key={mounted ? theme : 'placeholder'}
+            initial={
+              reduceMotion
+                ? { opacity: 0 }
+                : {
+                    opacity: 0,
+                    scale: 0.6,
+                    rotate: theme === 'dark' ? -80 : 80,
+                    y: theme === 'dark' ? 4 : -4,
+                  }
+            }
+            animate={
+              reduceMotion
+                ? { opacity: 1 }
+                : {
+                    opacity: 1,
+                    scale: 1,
+                    rotate: 0,
+                    y: 0,
+                  }
+            }
+            exit={
+              reduceMotion
+                ? { opacity: 0 }
+                : {
+                    opacity: 0,
+                    scale: 0.55,
+                    rotate: theme === 'dark' ? 72 : -72,
+                    y: theme === 'dark' ? -5 : 5,
+                  }
+            }
+            transition={{ duration: reduceMotion ? 0.01 : 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            {mounted && theme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
+          </motion.span>
+        </AnimatePresence>
+      </span>
+    </motion.button>
   )
 }
 
@@ -232,22 +355,75 @@ export function Header({ variant = 'default' }: HeaderProps) {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [themePreference, setThemePreference] = useState<ThemePreference>('system')
+  const [theme, setTheme] = useState<ResolvedTheme>('light')
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
+  const pendingThemeTransitionRef = useRef<{
+    theme: ResolvedTheme
+    corner: ThemeTransitionCorner
+  } | null>(null)
+  const reduceMotion = useReducedMotion()
 
   useEffect(() => {
     setMounted(true)
-    const currentTheme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
-    setTheme(currentTheme)
+
+    window.localStorage.removeItem(LEGACY_THEME_STORAGE_KEY)
+
+    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
+    const nextPreference: ThemePreference =
+      storedTheme === 'dark' || storedTheme === 'light' ? storedTheme : 'system'
+    const resolvedTheme =
+      nextPreference === 'system'
+        ? getSystemTheme()
+        : nextPreference
+
+    setThemePreference(nextPreference)
+    setTheme(resolvedTheme)
+    applyTheme(resolvedTheme)
   }, [])
 
   useEffect(() => {
     if (!mounted) return
 
-    document.documentElement.dataset.theme = theme
-    document.documentElement.style.colorScheme = theme
-    localStorage.setItem('theme', theme)
-  }, [mounted, theme])
+    const resolvedTheme = themePreference === 'system' ? getSystemTheme() : themePreference
+    setTheme((currentTheme) => (currentTheme === resolvedTheme ? currentTheme : resolvedTheme))
+
+    const pendingThemeTransition = pendingThemeTransitionRef.current
+    if (pendingThemeTransition?.theme === resolvedTheme) {
+      pendingThemeTransitionRef.current = null
+      void applyThemeTransition(resolvedTheme, pendingThemeTransition.corner, Boolean(reduceMotion))
+    } else {
+      applyTheme(resolvedTheme)
+    }
+
+    if (themePreference === 'system') {
+      window.localStorage.removeItem(THEME_STORAGE_KEY)
+      return
+    }
+
+    window.localStorage.setItem(THEME_STORAGE_KEY, themePreference)
+  }, [mounted, reduceMotion, themePreference])
+
+  useEffect(() => {
+    if (!mounted || themePreference !== 'system') {
+      return
+    }
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = () => {
+      const nextTheme = mediaQuery.matches ? 'dark' : 'light'
+      setTheme(nextTheme)
+      applyTheme(nextTheme)
+    }
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange)
+      return () => mediaQuery.removeEventListener('change', handleChange)
+    }
+
+    mediaQuery.addListener(handleChange)
+    return () => mediaQuery.removeListener(handleChange)
+  }, [mounted, themePreference])
 
   useEffect(() => {
     if (variant !== 'marketing') return
@@ -375,7 +551,7 @@ export function Header({ variant = 'default' }: HeaderProps) {
               <LogoMark />
             </div>
             <div className="flex flex-col">
-              <span className="font-display text-lg font-bold tracking-tight">Mini Arcade</span>
+              <span className="font-display text-lg font-bold tracking-tight">Arcado</span>
             </div>
           </Link>
 
@@ -393,7 +569,20 @@ export function Header({ variant = 'default' }: HeaderProps) {
             <ThemeToggle
               theme={theme}
               mounted={mounted}
-              onToggle={() => setTheme((value) => (value === 'light' ? 'dark' : 'light'))}
+              reduceMotion={Boolean(reduceMotion)}
+              onToggle={() =>
+                setThemePreference((currentPreference) => {
+                  const currentTheme = currentPreference === 'system' ? theme : currentPreference
+                  const nextTheme = currentTheme === 'light' ? 'dark' : 'light'
+
+                  pendingThemeTransitionRef.current = {
+                    theme: nextTheme,
+                    corner: nextTheme === 'dark' ? 'top-right' : 'bottom-left',
+                  }
+
+                  return nextTheme
+                })
+              }
             />
 
             {status === 'loading' ? (
@@ -593,7 +782,7 @@ export function Header({ variant = 'default' }: HeaderProps) {
                     </div>
                   ) : (
                     <p className="mt-1 text-base font-semibold text-[var(--text-primary)]">
-                      Mini Arcade
+                      Arcado
                     </p>
                   )}
                 </div>

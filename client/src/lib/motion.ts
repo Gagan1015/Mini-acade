@@ -1,4 +1,4 @@
-/** Mini Arcade – Motion (Framer Motion) configuration
+/** Arcado â€“ Motion (Framer Motion) configuration
  *  Shared animation constants for consistent, purposeful motion. */
 
 export const durations = {
@@ -25,7 +25,7 @@ export const spring = {
   slow: { type: 'spring' as const, stiffness: 100, damping: 20 },
 }
 
-/* ── Variants ── */
+/* â”€â”€ Variants â”€â”€ */
 
 export const pageVariants = {
   initial: { opacity: 0, y: 20 },

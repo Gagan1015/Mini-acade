@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { DonutChart, SparkLine, VerticalBarChart } from '@/components/ui/Charts'
 import type { TriviaRoundHistoryEntry } from '@/hooks/useRoom'
-import type { TriviaGameEnded } from '@mini-arcade/shared'
+import type { TriviaGameEnded } from '@arcado/shared'
 
 type FilterType = 'all' | 'correct' | 'wrong' | 'unanswered'
 
@@ -132,7 +132,7 @@ export function TriviaDetailedResults({
           <div className="flex-1 min-w-0">
             <h1 className="font-display text-lg font-bold text-[var(--text-primary)]">Trivia Results</h1>
             <p className="text-xs text-[var(--text-tertiary)]">
-              {roundHistory.length} questions · {totalPoints.toLocaleString()} pts
+              {roundHistory.length} questions {'\u00B7'} {totalPoints.toLocaleString()} pts
             </p>
           </div>
           <div className="text-right">

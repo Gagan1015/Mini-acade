@@ -9,21 +9,21 @@ const sections = [
   {
     title: 'Acceptance of Terms',
     content: [
-      'By accessing or using Mini Arcade, you agree to be bound by these Terms of Service. If you do not agree to these terms, you should not use the platform.',
+      'By accessing or using Arcado, you agree to be bound by these Terms of Service. If you do not agree to these terms, you should not use the platform.',
       'We reserve the right to update these terms at any time. Continued use after changes are posted constitutes acceptance of the revised terms.',
     ],
   },
   {
     title: 'Account & Authentication',
     content: [
-      'You sign in to Mini Arcade using a third-party OAuth provider. You are responsible for maintaining the security of your provider account and any activity that occurs under your session.',
+      'You sign in to Arcado using a third-party OAuth provider. You are responsible for maintaining the security of your provider account and any activity that occurs under your session.',
       'You must provide accurate information during sign-in. We reserve the right to suspend or terminate accounts that violate these terms or engage in abusive behavior.',
     ],
   },
   {
     title: 'Acceptable Use',
     content: [
-      'You agree to use Mini Arcade only for lawful purposes. You must not use the platform to harass, abuse, or threaten other users, transmit harmful or offensive content, or attempt to disrupt the service.',
+      'You agree to use Arcado only for lawful purposes. You must not use the platform to harass, abuse, or threaten other users, transmit harmful or offensive content, or attempt to disrupt the service.',
       'In-game content you create (such as drawings in Skribble or chat messages) must not contain hate speech, explicit material, or content that violates the rights of others.',
       'We reserve the right to remove content and restrict access to users who violate these guidelines without prior notice.',
     ],
@@ -38,35 +38,35 @@ const sections = [
   {
     title: 'Intellectual Property',
     content: [
-      'Mini Arcade, including its design, code, graphics, and game mechanics, is protected by intellectual property laws. You may not copy, modify, distribute, or reverse-engineer any part of the platform.',
-      'Content you create during gameplay (drawings, messages) is yours, but you grant Mini Arcade a limited license to display it within the context of the game session.',
+      'Arcado, including its design, code, graphics, and game mechanics, is protected by intellectual property laws. You may not copy, modify, distribute, or reverse-engineer any part of the platform.',
+      'Content you create during gameplay (drawings, messages) is yours, but you grant Arcado a limited license to display it within the context of the game session.',
     ],
   },
   {
     title: 'Availability & Warranties',
     content: [
-      'Mini Arcade is provided "as is" without warranties of any kind, express or implied. We do not guarantee that the service will be uninterrupted, error-free, or available at all times.',
+      'Arcado is provided "as is" without warranties of any kind, express or implied. We do not guarantee that the service will be uninterrupted, error-free, or available at all times.',
       'We may modify, suspend, or discontinue any part of the service at any time without liability.',
     ],
   },
   {
     title: 'Limitation of Liability',
     content: [
-      'To the maximum extent permitted by law, Mini Arcade and its creators shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the platform.',
+      'To the maximum extent permitted by law, Arcado and its creators shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the platform.',
       'This includes, but is not limited to, loss of data, loss of profits, or damages resulting from service interruptions.',
     ],
   },
   {
     title: 'Termination',
     content: [
-      'We may terminate or suspend your access to Mini Arcade at our discretion, without prior notice, for conduct that we believe violates these terms or is harmful to other users or the platform.',
+      'We may terminate or suspend your access to Arcado at our discretion, without prior notice, for conduct that we believe violates these terms or is harmful to other users or the platform.',
       'Upon termination, your right to use the service ceases immediately. Provisions that by their nature should survive termination will remain in effect.',
     ],
   },
   {
     title: 'Governing Law',
     content: [
-      'These terms are governed by and construed in accordance with applicable laws. Any disputes arising from these terms or your use of Mini Arcade will be resolved through appropriate legal channels.',
+      'These terms are governed by and construed in accordance with applicable laws. Any disputes arising from these terms or your use of Arcado will be resolved through appropriate legal channels.',
     ],
   },
 ]
@@ -92,7 +92,7 @@ export function TermsPage() {
                 Last updated: {lastUpdated}
               </p>
               <p className="mt-6 text-base leading-7 text-[var(--text-secondary)]">
-                These terms govern your use of Mini Arcade. By playing, you agree to the rules
+                These terms govern your use of Arcado. By playing, you agree to the rules
                 below -- they keep the experience fair and fun for everyone.
               </p>
             </motion.div>

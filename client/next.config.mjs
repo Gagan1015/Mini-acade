@@ -1,11 +1,10 @@
-import { PHASE_DEVELOPMENT_SERVER } from 'next/constants.js'
-
 /** @type {import('next').NextConfig} */
-export default function nextConfig(phase) {
+export default function nextConfig() {
+  const isDevelopment = process.env.NODE_ENV === 'development'
+
   return {
+    distDir: isDevelopment ? '.next-dev' : '.next',
     reactStrictMode: true,
-    // Keep dev and production artifacts separate so `next build`
-    // never stomps on a running `next dev` server.
-    distDir: phase === PHASE_DEVELOPMENT_SERVER ? '.next-dev' : '.next',
+    transpilePackages: ['@arcado/db', '@arcado/shared'],
   }
 }

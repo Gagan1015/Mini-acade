@@ -1,4 +1,4 @@
-import { prisma, type Prisma } from '@mini-arcade/db'
+import { prisma, type Prisma } from '@arcado/db'
 import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { NextResponse } from 'next/server'

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 
-import type { Player, WordelGuessResult, WordelLetterResult } from '@mini-arcade/shared'
+import type { Player, WordelGuessResult, WordelLetterResult } from '@arcado/shared'
 
 type WordelPlayAreaProps = {
   currentUserId: string
@@ -33,7 +33,7 @@ type WordelPlayAreaProps = {
   onPlayAgain: () => void
 }
 
-/* ── Constants ── */
+/* â”€â”€ Constants â”€â”€ */
 
 const KEYBOARD_ROWS = [
   ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
@@ -44,7 +44,7 @@ const KEYBOARD_ROWS = [
 const FLIP_DURATION = 0.75 // seconds per tile
 const FLIP_STAGGER = 0.32 // seconds between tiles
 
-/* ── Color helpers ── */
+/* â”€â”€ Color helpers â”€â”€ */
 
 const COLORS = {
   correct: '#538d4e',
@@ -73,7 +73,7 @@ function getKeyBg(status?: WordelLetterResult): string {
 }
 
 
-/* ── SVG Icons ── */
+/* â”€â”€ SVG Icons â”€â”€ */
 
 function IconBackspace({ size = 20 }: { size?: number }) {
   return (
@@ -98,7 +98,7 @@ function IconTrophy({ size = 14 }: { size?: number }) {
   )
 }
 
-/* ── Main component ── */
+/* â”€â”€ Main component â”€â”€ */
 
 export function WordelPlayArea({
   currentUserId,
@@ -121,10 +121,10 @@ export function WordelPlayArea({
   const [popCol, setPopCol] = useState(-1)
   const [isWaitingForResult, setIsWaitingForResult] = useState(false)
 
-  // ── Flip animation state ──
+  // â”€â”€ Flip animation state â”€â”€
   // Which row index is currently playing the flip animation (-1 = none)
   const [flippingRow, setFlippingRow] = useState(-1)
-  // Which tiles in the flipping row have passed the 180° midpoint (color revealed)
+  // Which tiles in the flipping row have passed the 180Â° midpoint (color revealed)
   const [revealedTiles, setRevealedTiles] = useState<Set<number>>(new Set())
   // Is the full flip sequence still running?
   const [isFlipAnimating, setIsFlipAnimating] = useState(false)
@@ -143,10 +143,10 @@ export function WordelPlayArea({
   const visualFlippingRow = pendingIncomingRow !== -1 ? pendingIncomingRow : flippingRow
   const showPendingGuessInGrid = isWaitingForResult && pendingIncomingRow === -1
 
-  /* ────────────────────────────────────────────────────
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    * Detect when a NEW guess arrives from the server
    * and kick off the sequential tile-flip animation.
-   * ──────────────────────────────────────────────────── */
+   * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   useEffect(() => {
     if (guesses.length < prevGuessCountRef.current) {
       setFlippingRow(-1)
@@ -171,7 +171,7 @@ export function WordelPlayArea({
       setCurrentGuess('')
       setFlipKey((k) => k + 1) // force re-mount so animation replays
 
-      // Stagger color reveals at each tile's 180° midpoint
+      // Stagger color reveals at each tile's 180Â° midpoint
       const timers: ReturnType<typeof setTimeout>[] = []
       for (let i = 0; i < wordLength; i++) {
         const midpointMs = (i * FLIP_STAGGER + FLIP_DURATION / 2) * 1000
@@ -280,7 +280,7 @@ export function WordelPlayArea({
 
       if (key === 'ENTER') {
         if (currentGuess.length === wordLength) {
-          // Send guess to server — don't clear or animate yet.
+          // Send guess to server â€” don't clear or animate yet.
           // The flip will start when the server response arrives.
           const submittedGuess = currentGuess.toUpperCase()
           setPendingGuess(submittedGuess)
@@ -330,7 +330,7 @@ export function WordelPlayArea({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyPress])
 
-  /* ── Render ── */
+  /* â”€â”€ Render â”€â”€ */
   return (
     <div
       style={{
@@ -350,7 +350,7 @@ export function WordelPlayArea({
         className={isSolo ? '' : 'grid gap-8 xl:grid-cols-[minmax(0,1fr)_280px]'}
         style={{ width: '100%' }}
       >
-        {/* ── Left: grid + keyboard ── */}
+        {/* â”€â”€ Left: grid + keyboard â”€â”€ */}
         <div className="flex flex-col items-center">
           {/* Attempt counter */}
           <div className="mb-2">
@@ -359,7 +359,7 @@ export function WordelPlayArea({
             </span>
           </div>
 
-          {/* ── TILE GRID ── */}
+          {/* â”€â”€ TILE GRID â”€â”€ */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '10px 0' }}>
             {rows.map((row, rowIndex) => {
               const isCurrentRow = rowIndex === guesses.length && !row.isRevealed
@@ -376,7 +376,7 @@ export function WordelPlayArea({
                     const isFlipping = rowIndex === visualFlippingRow
                     // Show color ONLY if:
                     // - row belongs to a finished guess, OR
-                    // - row is mid-flip AND this tile passed the 180° midpoint
+                    // - row is mid-flip AND this tile passed the 180Â° midpoint
                     const tileColorRevealed =
                       rowIndex < guesses.length &&
                       (isFlipping
@@ -385,7 +385,7 @@ export function WordelPlayArea({
                           : revealedTiles.has(colIndex)
                         : true)
 
-                    // Color swaps at the 180° midpoint of the flip
+                    // Color swaps at the 180Â° midpoint of the flip
                     const bg = tileColorRevealed ? getTileBg(result) : COLORS.tileEmpty
                     const border = tileColorRevealed
                       ? getTileBorder(result)
@@ -443,7 +443,7 @@ export function WordelPlayArea({
             })}
           </div>
 
-          {/* ── Result banner ── */}
+          {/* â”€â”€ Result banner â”€â”€ */}
           <AnimatePresence>
             {(showCorrectWord || canPlayAgain) && (
               <motion.div
@@ -508,7 +508,7 @@ export function WordelPlayArea({
             )}
           </AnimatePresence>
 
-          {/* ── ON-SCREEN KEYBOARD ── */}
+          {/* â”€â”€ ON-SCREEN KEYBOARD â”€â”€ */}
           <div
             style={{
               display: 'flex',
@@ -575,7 +575,7 @@ export function WordelPlayArea({
           </div>
         </div>
 
-        {/* ── Right sidebar: Player Progress — multiplayer only ── */}
+        {/* â”€â”€ Right sidebar: Player Progress â€” multiplayer only â”€â”€ */}
         {!isSolo && (
           <div className="space-y-6">
             <div>
@@ -611,10 +611,10 @@ export function WordelPlayArea({
                         </p>
                         <p className="mt-1 text-xs text-[var(--text-tertiary)]">
                           {status?.solved
-                            ? '✓ Solved'
+                            ? '\u2713 Solved'
                             : status?.finished
-                              ? '✗ Out'
-                              : 'Guessing…'}
+                              ? '\u2717 Out'
+                              : 'Guessing\u2026'}
                         </p>
                       </div>
                     </div>

@@ -1,4 +1,4 @@
-import { prisma, type Prisma } from '@mini-arcade/db'
+import { prisma, type Prisma } from '@arcado/db'
 import {
   GAMES,
   ROOM_CONFIG,
@@ -7,7 +7,7 @@ import {
   type GameSettings,
   type Room,
   type RoomCode,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 
 const ROOM_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 

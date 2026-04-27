@@ -1,11 +1,11 @@
-import { prisma, type Prisma } from '@mini-arcade/db'
+import { prisma, type Prisma } from '@arcado/db'
 import {
   triviaCategories,
   triviaQuestionSchema,
   type TriviaCategory,
   type TriviaDifficulty,
   type TriviaQuestion,
-} from '@mini-arcade/shared'
+} from '@arcado/shared'
 import { z } from 'zod'
 
 export type TriviaQuestionData = TriviaQuestion & {

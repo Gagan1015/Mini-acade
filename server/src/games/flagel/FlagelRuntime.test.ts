@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { FLAGEL_EVENTS, type GameConfig, type GameEventResult } from '@mini-arcade/shared'
+import { FLAGEL_EVENTS, type GameConfig, type GameEventResult } from '@arcado/shared'
 
 import { FlagelRuntime } from './FlagelRuntime'
 import type { Country } from './countryData'
@@ -75,7 +75,7 @@ function createRuntime() {
 const GERMANY: Country = {
   code: 'DE',
   name: 'Germany',
-  flagEmoji: '🇩🇪',
+  flagEmoji: 'ðŸ‡©ðŸ‡ª',
   capital: 'Berlin',
   continent: 'Europe',
   latitude: 51.1657,
