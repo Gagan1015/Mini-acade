@@ -1,0 +1,37 @@
+# Source control + IDE
+.git
+.gitignore
+.idea
+.vscode
+.cursor
+.windsurf
+.agent
+.logs
+*.log
+
+# Node + build artifacts (will be regenerated inside the image)
+**/node_modules
+**/.next
+**/.next-dev
+**/.turbo
+**/dist
+**/coverage
+**/out
+**/.cache
+**/tsconfig.tsbuildinfo
+
+# Local env files (secrets are passed at runtime via task definition)
+**/.env
+**/.env.*
+!**/.env.example
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Misc
+README.md
+DESIGN.md
+docker-compose.yml
+.eslintrc.cjs
+.prettierrc

@@ -13,12 +13,15 @@ out
 .env
 .env.local
 .env.*.local
+.env.deploy
 !.env.example
+!.env.deploy.example
 
 # Logs
 *.log
 npm-debug.log*
 pnpm-debug.log*
+.logs/
 
 # IDE
 .idea
