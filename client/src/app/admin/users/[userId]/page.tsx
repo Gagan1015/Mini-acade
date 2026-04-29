@@ -1,12 +1,15 @@
 import { prisma } from '@arcado/db'
 import { notFound } from 'next/navigation'
 import { AdminUserDetailClient } from '@/components/admin/AdminUserDetailClient'
+import { requireAdminSession } from '@/lib/admin'
 
 export default async function AdminUserDetailPage({
   params,
 }: {
   params: { userId: string }
 }) {
+  const session = await requireAdminSession()
+
   const user = await prisma.user.findUnique({
     where: { id: params.userId },
     select: {
@@ -81,6 +84,8 @@ export default async function AdminUserDetailPage({
 
   return (
     <AdminUserDetailClient
+      currentAdminId={session.user.id}
+      currentAdminRole={session.user.role}
       user={{
         ...user,
         name: user.name ?? 'Unnamed',

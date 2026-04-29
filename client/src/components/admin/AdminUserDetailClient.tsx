@@ -2,32 +2,32 @@
 
 import { motion } from 'motion/react'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
+  Activity,
+  AlertTriangle,
   ArrowLeft,
-  Shield,
-  ShieldCheck,
-  ShieldAlert,
-  Crown,
   Ban,
-  CheckCircle2,
-  PauseCircle,
-  Clock,
   Calendar,
-  Mail,
+  CheckCircle2,
+  Clock,
+  Crown,
   Gamepad2,
-  Trophy,
+  Hash,
+  Mail,
+  PauseCircle,
+  Server,
+  Shield,
+  ShieldAlert,
+  ShieldCheck,
   Target,
   Timer,
-  Hash,
-  Activity,
-  Server,
-  AlertTriangle,
+  Trophy,
 } from 'lucide-react'
 import { staggerContainer, staggerItem } from '@/lib/motion'
+import { canAssignRole, canManageRole } from '@/lib/adminRoles'
 import { UserAvatar } from '@/components/ui/UserAvatar'
 
-/* ── Types ── */
 interface UserData {
   id: string
   name: string
@@ -92,20 +92,51 @@ interface Props {
   recentResults: RecentResult[]
   recentRooms: RecentRoom[]
   adminLogs: AdminLog[]
+  currentAdminId: string
+  currentAdminRole: string
 }
 
-/* ── Config ── */
 const ROLE_CONFIG: Record<string, { label: string; color: string; bg: string; icon: typeof Shield }> = {
   USER: { label: 'User', color: 'var(--primary-500)', bg: 'rgba(59,130,246,0.1)', icon: Shield },
-  MODERATOR: { label: 'Moderator', color: 'var(--warning-500)', bg: 'rgba(245,158,11,0.1)', icon: ShieldCheck },
-  ADMIN: { label: 'Admin', color: 'var(--success-500)', bg: 'rgba(16,185,129,0.1)', icon: ShieldAlert },
-  SUPER_ADMIN: { label: 'Super Admin', color: 'var(--error-500)', bg: 'rgba(239,68,68,0.1)', icon: Crown },
+  MODERATOR: {
+    label: 'Moderator',
+    color: 'var(--warning-500)',
+    bg: 'rgba(245,158,11,0.1)',
+    icon: ShieldCheck,
+  },
+  ADMIN: {
+    label: 'Admin',
+    color: 'var(--success-500)',
+    bg: 'rgba(16,185,129,0.1)',
+    icon: ShieldAlert,
+  },
+  SUPER_ADMIN: {
+    label: 'Super Admin',
+    color: 'var(--error-500)',
+    bg: 'rgba(239,68,68,0.1)',
+    icon: Crown,
+  },
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; dot: string }> = {
-  ACTIVE: { label: 'Active', color: 'var(--success-500)', bg: 'rgba(16,185,129,0.1)', dot: 'bg-[var(--success-500)]' },
-  SUSPENDED: { label: 'Suspended', color: 'var(--warning-500)', bg: 'rgba(245,158,11,0.1)', dot: 'bg-[var(--warning-500)]' },
-  BANNED: { label: 'Banned', color: 'var(--error-500)', bg: 'rgba(239,68,68,0.1)', dot: 'bg-[var(--error-500)]' },
+  ACTIVE: {
+    label: 'Active',
+    color: 'var(--success-500)',
+    bg: 'rgba(16,185,129,0.1)',
+    dot: 'bg-[var(--success-500)]',
+  },
+  SUSPENDED: {
+    label: 'Suspended',
+    color: 'var(--warning-500)',
+    bg: 'rgba(245,158,11,0.1)',
+    dot: 'bg-[var(--warning-500)]',
+  },
+  BANNED: {
+    label: 'Banned',
+    color: 'var(--error-500)',
+    bg: 'rgba(239,68,68,0.1)',
+    dot: 'bg-[var(--error-500)]',
+  },
 }
 
 const GAME_LABELS: Record<string, string> = {
@@ -129,7 +160,6 @@ const ROOM_STATUS_STYLE: Record<string, string> = {
   ABANDONED: 'badge-error',
 }
 
-/* ── Helpers ── */
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -168,62 +198,80 @@ function formatDuration(seconds: number): string {
   return `${h}h ${m}m`
 }
 
-/* ══════════════════════════════════════════════
-   Admin User Detail Client
-   ══════════════════════════════════════════════ */
-
 export function AdminUserDetailClient({
   user,
   gameStats,
   recentResults,
   recentRooms,
   adminLogs,
+  currentAdminId,
+  currentAdminRole,
 }: Props) {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState(user)
   const [loading, setLoading] = useState(false)
-  const [confirmAction, setConfirmAction] = useState<{ type: 'role' | 'status'; value: string } | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'role' | 'status'
+    value: string
+  } | null>(null)
 
   const roleInfo = ROLE_CONFIG[currentUser.role] ?? ROLE_CONFIG.USER
   const statusInfo = STATUS_CONFIG[currentUser.status] ?? STATUS_CONFIG.ACTIVE
   const RoleIcon = roleInfo.icon
 
-  // Computed stats
-  const totalGames = gameStats.reduce((s, g) => s + g.gamesPlayed, 0)
-  const totalWins = gameStats.reduce((s, g) => s + g.gamesWon, 0)
-  const totalScore = gameStats.reduce((s, g) => s + g.totalScore, 0)
-  const bestScore = gameStats.reduce((s, g) => Math.max(s, g.highScore), 0)
-  const totalTime = gameStats.reduce((s, g) => s + g.totalTime, 0)
+  const permissions = useMemo(() => {
+    const isSelf = currentUser.id === currentAdminId
+    const canManage = !isSelf && canManageRole(currentAdminRole, currentUser.role)
+
+    return {
+      isSelf,
+      canManage,
+    }
+  }, [currentAdminId, currentAdminRole, currentUser.id, currentUser.role])
+
+  const totalGames = gameStats.reduce((sum, stat) => sum + stat.gamesPlayed, 0)
+  const totalWins = gameStats.reduce((sum, stat) => sum + stat.gamesWon, 0)
+  const totalScore = gameStats.reduce((sum, stat) => sum + stat.totalScore, 0)
+  const bestScore = gameStats.reduce((sum, stat) => Math.max(sum, stat.highScore), 0)
+  const totalTime = gameStats.reduce((sum, stat) => sum + stat.totalTime, 0)
   const winRate = totalGames > 0 ? Math.round((totalWins / totalGames) * 100) : 0
 
   async function applyAction(type: 'role' | 'status', value: string) {
     setLoading(true)
+    setErrorMessage(null)
+
     try {
       const body = type === 'role' ? { role: value } : { status: value }
-      const res = await fetch(`/api/admin/users/${currentUser.id}`, {
+      const response = await fetch(`/api/admin/users/${currentUser.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-      if (res.ok) {
-        const updated = await res.json()
-        setCurrentUser((prev) => ({
-          ...prev,
-          role: updated.role ?? prev.role,
-          status: updated.status ?? prev.status,
-        }))
+
+      const payload = (await response.json().catch(() => null)) as
+        | { role?: string; status?: string; error?: string }
+        | null
+
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Unable to update this user right now.')
       }
-    } catch {
-      // silently fail
+
+      setCurrentUser((previous) => ({
+        ...previous,
+        role: payload?.role ?? previous.role,
+        status: payload?.status ?? previous.status,
+      }))
+      setConfirmAction(null)
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to update this user.')
     } finally {
       setLoading(false)
-      setConfirmAction(null)
     }
   }
 
   return (
     <div className="space-y-6">
-      {/* ── Back + title ── */}
       <div className="flex items-center gap-4">
         <button
           onClick={() => router.push('/admin/users')}
@@ -242,7 +290,20 @@ export function AdminUserDetailClient({
         </div>
       </div>
 
-      {/* ── Profile hero ── */}
+      {errorMessage && (
+        <div className="rounded-xl border border-[var(--error-500)]/30 bg-[var(--error-500)]/8 px-4 py-3 text-sm text-[var(--error-500)]">
+          {errorMessage}
+        </div>
+      )}
+
+      {!permissions.canManage && (
+        <div className="rounded-xl border border-[var(--warning-500)]/30 bg-[var(--warning-500)]/8 px-4 py-3 text-sm text-[var(--warning-500)]">
+          {permissions.isSelf
+            ? 'This account is protected because admins cannot change their own role or status.'
+            : 'This account is protected because it has an equal or higher role than the current admin.'}
+        </div>
+      )}
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -250,7 +311,6 @@ export function AdminUserDetailClient({
         className="card"
       >
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-          {/* Avatar */}
           <div className="flex-shrink-0">
             <UserAvatar
               src={currentUser.image}
@@ -262,17 +322,15 @@ export function AdminUserDetailClient({
             />
           </div>
 
-          {/* Info */}
-          <div className="flex-1 min-w-0 space-y-3">
+          <div className="min-w-0 flex-1 space-y-3">
             <div>
               <h2 className="text-xl font-bold text-[var(--text-primary)]">{currentUser.name}</h2>
-              <p className="mt-0.5 text-sm text-[var(--text-secondary)] flex items-center gap-1.5">
+              <p className="mt-0.5 flex items-center gap-1.5 text-sm text-[var(--text-secondary)]">
                 <Mail className="h-3.5 w-3.5" />
                 {currentUser.email || 'No email'}
               </p>
             </div>
 
-            {/* Badges */}
             <div className="flex flex-wrap gap-2">
               <span
                 className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
@@ -297,7 +355,6 @@ export function AdminUserDetailClient({
             </div>
           </div>
 
-          {/* Quick meta */}
           <div className="flex-shrink-0 space-y-2 text-sm">
             <div className="flex items-center gap-2 text-[var(--text-tertiary)]">
               <Calendar className="h-3.5 w-3.5" />
@@ -306,8 +363,7 @@ export function AdminUserDetailClient({
             <div className="flex items-center gap-2 text-[var(--text-tertiary)]">
               <Clock className="h-3.5 w-3.5" />
               <span>
-                Last login{' '}
-                {currentUser.lastLoginAt ? formatRelative(currentUser.lastLoginAt) : 'never'}
+                Last login {currentUser.lastLoginAt ? formatRelative(currentUser.lastLoginAt) : 'never'}
               </span>
             </div>
             <div className="flex items-center gap-2 text-[var(--text-tertiary)]">
@@ -322,7 +378,6 @@ export function AdminUserDetailClient({
         </div>
       </motion.div>
 
-      {/* ── Quick Stats ── */}
       <motion.div
         variants={staggerContainer}
         initial="initial"
@@ -333,9 +388,19 @@ export function AdminUserDetailClient({
           { label: 'Games Played', value: totalGames, icon: Gamepad2, color: 'var(--primary-500)' },
           { label: 'Wins', value: totalWins, icon: Trophy, color: 'var(--success-500)' },
           { label: 'Win Rate', value: `${winRate}%`, icon: Target, color: 'var(--warning-500)' },
-          { label: 'Total Score', value: totalScore.toLocaleString(), icon: Hash, color: 'var(--game-skribble)' },
+          {
+            label: 'Total Score',
+            value: totalScore.toLocaleString(),
+            icon: Hash,
+            color: 'var(--game-skribble)',
+          },
           { label: 'Best Score', value: bestScore, icon: Trophy, color: 'var(--game-flagel)' },
-          { label: 'Time Played', value: formatDuration(totalTime), icon: Timer, color: 'var(--game-trivia)' },
+          {
+            label: 'Time Played',
+            value: formatDuration(totalTime),
+            icon: Timer,
+            color: 'var(--game-trivia)',
+          },
         ].map((stat) => {
           const Icon = stat.icon
           return (
@@ -350,11 +415,8 @@ export function AdminUserDetailClient({
         })}
       </motion.div>
 
-      {/* ── Content grid ── */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-        {/* Left column */}
         <div className="space-y-6">
-          {/* ── Admin Actions ── */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -363,10 +425,9 @@ export function AdminUserDetailClient({
           >
             <h3 className="text-base font-semibold text-[var(--text-primary)]">Admin Actions</h3>
             <p className="mt-1 text-xs text-[var(--text-tertiary)]">
-              Change role or account status for this user.
+              Role and status changes follow role hierarchy checks and are fully audited.
             </p>
 
-            {/* Confirm dialog */}
             {confirmAction && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
@@ -390,12 +451,9 @@ export function AdminUserDetailClient({
                         disabled={loading}
                         className="btn btn-primary btn-sm"
                       >
-                        {loading ? 'Applying…' : 'Confirm'}
+                        {loading ? 'Applying...' : 'Confirm'}
                       </button>
-                      <button
-                        onClick={() => setConfirmAction(null)}
-                        className="btn btn-ghost btn-sm"
-                      >
+                      <button onClick={() => setConfirmAction(null)} className="btn btn-ghost btn-sm">
                         Cancel
                       </button>
                     </div>
@@ -405,29 +463,30 @@ export function AdminUserDetailClient({
             )}
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              {/* Role panel */}
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
                   Change Role
                 </p>
                 <div className="mt-2 space-y-1">
-                  {(['USER', 'MODERATOR', 'ADMIN'] as const).map((role) => {
-                    const r = ROLE_CONFIG[role]
-                    const Icon = r.icon
+                  {(['USER', 'MODERATOR', 'ADMIN', 'SUPER_ADMIN'] as const).map((role) => {
+                    const info = ROLE_CONFIG[role]
+                    const Icon = info.icon
                     const isActive = currentUser.role === role
+                    const allowed = permissions.canManage && canAssignRole(currentAdminRole, role)
+
                     return (
                       <button
                         key={role}
-                        onClick={() => !isActive && setConfirmAction({ type: 'role', value: role })}
-                        disabled={isActive || loading}
+                        onClick={() => !isActive && allowed && setConfirmAction({ type: 'role', value: role })}
+                        disabled={isActive || !allowed || loading}
                         className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                           isActive
-                            ? 'bg-[var(--primary-500)]/10 text-[var(--primary-500)] cursor-default'
+                            ? 'cursor-default bg-[var(--primary-500)]/10 text-[var(--primary-500)]'
                             : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'
                         } disabled:opacity-40`}
                       >
                         <Icon className="h-4 w-4" />
-                        <span className="flex-1 text-left">{r.label}</span>
+                        <span className="flex-1 text-left">{info.label}</span>
                         {isActive && (
                           <span className="text-[10px] font-bold uppercase tracking-wider opacity-60">
                             Current
@@ -439,7 +498,6 @@ export function AdminUserDetailClient({
                 </div>
               </div>
 
-              {/* Status panel */}
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
                   Account Status
@@ -451,21 +509,23 @@ export function AdminUserDetailClient({
                     { status: 'BANNED', icon: Ban, label: 'Ban' },
                   ] as const).map((item) => {
                     const Icon = item.icon
-                    const s = STATUS_CONFIG[item.status]
+                    const info = STATUS_CONFIG[item.status]
                     const isActive = currentUser.status === item.status
+                    const allowed = permissions.canManage
+
                     return (
                       <button
                         key={item.status}
-                        onClick={() => !isActive && setConfirmAction({ type: 'status', value: item.status })}
-                        disabled={isActive || loading}
+                        onClick={() =>
+                          !isActive && allowed && setConfirmAction({ type: 'status', value: item.status })
+                        }
+                        disabled={isActive || !allowed || loading}
                         className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                          isActive
-                            ? 'cursor-default'
-                            : 'hover:bg-[var(--surface-hover)]'
+                          isActive ? 'cursor-default' : 'hover:bg-[var(--surface-hover)]'
                         } disabled:opacity-40`}
                         style={{
-                          color: isActive ? s.color : undefined,
-                          background: isActive ? s.bg : undefined,
+                          color: isActive ? info.color : undefined,
+                          background: isActive ? info.bg : undefined,
                         }}
                       >
                         <Icon className="h-4 w-4" />
@@ -483,7 +543,6 @@ export function AdminUserDetailClient({
             </div>
           </motion.div>
 
-          {/* ── Game Stats ── */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -498,8 +557,10 @@ export function AdminUserDetailClient({
             {gameStats.length > 0 ? (
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {gameStats.map((stat) => {
-                  const gameWr = stat.gamesPlayed > 0 ? Math.round((stat.gamesWon / stat.gamesPlayed) * 100) : 0
+                  const gameWinRate =
+                    stat.gamesPlayed > 0 ? Math.round((stat.gamesWon / stat.gamesPlayed) * 100) : 0
                   const color = GAME_COLORS[stat.gameId] ?? 'var(--primary-500)'
+
                   return (
                     <div
                       key={stat.id}
@@ -507,10 +568,7 @@ export function AdminUserDetailClient({
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span
-                            className="h-3 w-3 rounded-full"
-                            style={{ backgroundColor: color }}
-                          />
+                          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: color }} />
                           <span className="text-sm font-semibold text-[var(--text-primary)]">
                             {GAME_LABELS[stat.gameId] ?? stat.gameId}
                           </span>
@@ -520,16 +578,15 @@ export function AdminUserDetailClient({
                         </span>
                       </div>
 
-                      {/* Win rate bar */}
                       <div className="mt-3 flex items-center gap-2">
                         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--border)]">
                           <div
                             className="h-full rounded-full transition-all duration-500"
-                            style={{ width: `${gameWr}%`, background: color }}
+                            style={{ width: `${gameWinRate}%`, background: color }}
                           />
                         </div>
                         <span className="text-xs font-mono font-semibold text-[var(--text-secondary)]">
-                          {gameWr}%
+                          {gameWinRate}%
                         </span>
                       </div>
 
@@ -548,7 +605,9 @@ export function AdminUserDetailClient({
                         </div>
                         <div className="flex justify-between">
                           <span className="text-[var(--text-tertiary)]">Time</span>
-                          <span className="font-semibold text-[var(--text-primary)]">{formatDuration(stat.totalTime)}</span>
+                          <span className="font-semibold text-[var(--text-primary)]">
+                            {formatDuration(stat.totalTime)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -562,14 +621,13 @@ export function AdminUserDetailClient({
             )}
           </motion.div>
 
-          {/* ── Recent Game Results ── */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
             className="card !p-0"
           >
-            <div className="px-5 py-4 border-b border-[var(--border)]">
+            <div className="border-b border-[var(--border)] px-5 py-4">
               <h3 className="text-base font-semibold text-[var(--text-primary)]">Recent Game Results</h3>
               <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">
                 Last {recentResults.length} game outcomes
@@ -603,12 +661,17 @@ export function AdminUserDetailClient({
                   </thead>
                   <tbody>
                     {recentResults.map((result) => (
-                      <tr key={result.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-hover)] transition-colors">
+                      <tr
+                        key={result.id}
+                        className="border-b border-[var(--border-subtle)] transition-colors hover:bg-[var(--surface-hover)]"
+                      >
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-2">
                             <span
                               className="h-2.5 w-2.5 rounded-full"
-                              style={{ backgroundColor: GAME_COLORS[result.gameId] ?? 'var(--primary-500)' }}
+                              style={{
+                                backgroundColor: GAME_COLORS[result.gameId] ?? 'var(--primary-500)',
+                              }}
                             />
                             <span className="font-medium text-[var(--text-primary)]">
                               {GAME_LABELS[result.gameId] ?? result.gameId}
@@ -622,13 +685,13 @@ export function AdminUserDetailClient({
                           {result.score}
                         </td>
                         <td className="px-5 py-3 text-[var(--text-secondary)]">
-                          {result.rank ? `#${result.rank}` : '—'}
+                          {result.rank ? `#${result.rank}` : '-'}
                         </td>
                         <td className="px-5 py-3">
                           {result.isWinner ? (
                             <span className="badge badge-success">Winner</span>
                           ) : (
-                            <span className="text-xs text-[var(--text-tertiary)]">—</span>
+                            <span className="text-xs text-[var(--text-tertiary)]">-</span>
                           )}
                         </td>
                         <td className="px-5 py-3 text-xs text-[var(--text-tertiary)]">
@@ -647,9 +710,7 @@ export function AdminUserDetailClient({
           </motion.div>
         </div>
 
-        {/* Right column */}
         <div className="space-y-6">
-          {/* ── Account Details ── */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -660,17 +721,27 @@ export function AdminUserDetailClient({
             <dl className="mt-4 space-y-3 text-sm">
               {[
                 { label: 'User ID', value: currentUser.id, mono: true },
-                { label: 'Email', value: currentUser.email || '—' },
-                { label: 'Email Verified', value: currentUser.emailVerified ? formatDate(currentUser.emailVerified) : 'Not verified' },
+                { label: 'Email', value: currentUser.email || '-' },
+                {
+                  label: 'Email Verified',
+                  value: currentUser.emailVerified ? formatDate(currentUser.emailVerified) : 'Not verified',
+                },
                 { label: 'Created', value: formatDateTime(currentUser.createdAt) },
                 { label: 'Last Updated', value: formatDateTime(currentUser.updatedAt) },
-                { label: 'Last Login', value: currentUser.lastLoginAt ? formatDateTime(currentUser.lastLoginAt) : 'Never' },
+                {
+                  label: 'Last Login',
+                  value: currentUser.lastLoginAt ? formatDateTime(currentUser.lastLoginAt) : 'Never',
+                },
                 { label: 'Active Sessions', value: String(currentUser._count.sessions) },
                 { label: 'Linked Accounts', value: String(currentUser._count.accounts) },
               ].map((item) => (
                 <div key={item.label} className="flex items-start justify-between gap-4">
-                  <dt className="text-[var(--text-tertiary)] whitespace-nowrap">{item.label}</dt>
-                  <dd className={`text-right font-medium text-[var(--text-primary)] ${item.mono ? 'font-mono text-xs break-all' : ''}`}>
+                  <dt className="whitespace-nowrap text-[var(--text-tertiary)]">{item.label}</dt>
+                  <dd
+                    className={`text-right font-medium text-[var(--text-primary)] ${
+                      item.mono ? 'break-all font-mono text-xs' : ''
+                    }`}
+                  >
                     {item.value}
                   </dd>
                 </div>
@@ -678,7 +749,6 @@ export function AdminUserDetailClient({
             </dl>
           </motion.div>
 
-          {/* ── Activity Summary ── */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -710,7 +780,6 @@ export function AdminUserDetailClient({
             </dl>
           </motion.div>
 
-          {/* ── Recent Rooms ── */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -753,7 +822,6 @@ export function AdminUserDetailClient({
             )}
           </motion.div>
 
-          {/* ── Admin Audit Log ── */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -773,19 +841,15 @@ export function AdminUserDetailClient({
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="text-sm font-medium text-[var(--text-primary)]">
-                          {log.action}
-                        </p>
-                        <p className="text-xs text-[var(--text-tertiary)]">
-                          by {log.actorName}
-                        </p>
+                        <p className="text-sm font-medium text-[var(--text-primary)]">{log.action}</p>
+                        <p className="text-xs text-[var(--text-tertiary)]">by {log.actorName}</p>
                       </div>
                       <span className="shrink-0 text-xs text-[var(--text-tertiary)]">
                         {formatRelative(log.createdAt)}
                       </span>
                     </div>
                     {log.details && (
-                      <pre className="mt-2 overflow-auto rounded bg-[var(--surface-hover)] px-2 py-1 text-[10px] font-mono text-[var(--text-secondary)]">
+                      <pre className="mt-2 overflow-auto rounded bg-[var(--surface-hover)] px-2 py-1 text-[10px] text-[var(--text-secondary)]">
                         {JSON.stringify(log.details, null, 2)}
                       </pre>
                     )}

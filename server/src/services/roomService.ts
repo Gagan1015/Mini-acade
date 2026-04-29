@@ -319,6 +319,208 @@ export class RoomService {
     return room ? this.serializeRoom(room) : null
   }
 
+  async adminForceCloseRoom(input: {
+    roomCode: RoomCode
+    message: string
+  }) {
+    const existingRoom = await prisma.room.findUnique({
+      where: { code: input.roomCode },
+      include: {
+        players: {
+          where: { leftAt: null },
+          select: {
+            userId: true,
+            isHost: true,
+          },
+        },
+      },
+    })
+
+    if (!existingRoom) {
+      return {
+        success: false as const,
+        error: 'Room not found.',
+      }
+    }
+
+    if (!ACTIVE_DB_STATUSES.has(existingRoom.status)) {
+      return {
+        success: false as const,
+        error: 'Room is no longer active.',
+      }
+    }
+
+    const room = this.rooms.get(input.roomCode) ?? (await this.getOrHydrateRoom(input.roomCode))
+    const endedAt = new Date()
+    const sockets = await this.io.in(input.roomCode).fetchSockets().catch(() => [])
+
+    for (const socket of sockets) {
+      socket.emit(ROOM_EVENTS.ERROR, {
+        code: 'ROOM_CLOSED',
+        message: input.message,
+      })
+      socket.emit(ROOM_EVENTS.LEFT, { roomCode: input.roomCode })
+      socket.data.roomCode = undefined
+      await socket.leave(input.roomCode)
+
+      if (socket.data.userId) {
+        this.userRooms.delete(socket.data.userId)
+      }
+
+      this.socketRooms.delete(socket.id)
+    }
+
+    await prisma.$transaction([
+      prisma.room.update({
+        where: { id: existingRoom.id },
+        data: {
+          status: 'ABANDONED',
+          endedAt,
+        },
+      }),
+      prisma.roomPlayer.updateMany({
+        where: {
+          roomId: existingRoom.id,
+          leftAt: null,
+        },
+        data: {
+          leftAt: endedAt,
+          isHost: false,
+        },
+      }),
+    ])
+
+    if (room) {
+      for (const player of room.players.values()) {
+        this.clearDisconnectTimer(player.id)
+        this.cleanupSocketState(player.socketId, player.id, room.code)
+      }
+
+      this.rooms.delete(room.code)
+    } else {
+      for (const player of existingRoom.players) {
+        this.clearDisconnectTimer(player.userId as UserId)
+        if (this.userRooms.get(player.userId as UserId) === input.roomCode) {
+          this.userRooms.delete(player.userId as UserId)
+        }
+      }
+    }
+
+    return {
+      success: true as const,
+      roomId: existingRoom.id,
+      statusBefore: existingRoom.status,
+      activePlayerCount: existingRoom.players.length,
+      hadLiveRoomState: Boolean(room),
+      notifiedSocketCount: sockets.length,
+    }
+  }
+
+  async adminRemovePlayer(input: {
+    roomCode: RoomCode
+    targetUserId: UserId
+    message: string
+  }) {
+    const existingRoom = await prisma.room.findUnique({
+      where: { code: input.roomCode },
+      include: {
+        players: {
+          where: { leftAt: null },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    if (!existingRoom) {
+      return {
+        success: false as const,
+        error: 'Room not found.',
+      }
+    }
+
+    if (!ACTIVE_DB_STATUSES.has(existingRoom.status)) {
+      return {
+        success: false as const,
+        error: 'Room is no longer active.',
+      }
+    }
+
+    const targetMembership = existingRoom.players.find(
+      (player) => player.userId === input.targetUserId,
+    )
+
+    if (!targetMembership) {
+      return {
+        success: false as const,
+        error: 'Player is no longer active in this room.',
+      }
+    }
+
+    const room = this.rooms.get(input.roomCode) ?? (await this.getOrHydrateRoom(input.roomCode))
+    if (!room) {
+      return {
+        success: false as const,
+        error: 'Live room state is unavailable right now.',
+      }
+    }
+
+    const targetPlayer = room.players.get(input.targetUserId)
+    if (!targetPlayer) {
+      return {
+        success: false as const,
+        error: 'Player is no longer active in this room.',
+      }
+    }
+
+    const wasHost = room.hostId === input.targetUserId
+
+    this.clearDisconnectTimer(input.targetUserId)
+
+    const targetSockets = (await this.io.in(room.code).fetchSockets().catch(() => [])).filter(
+      (socket) => socket.data.userId === input.targetUserId,
+    )
+
+    for (const socket of targetSockets) {
+      socket.data.roomCode = undefined
+      await socket.leave(room.code)
+      socket.emit(ROOM_EVENTS.PLAYER_KICKED, { playerId: input.targetUserId })
+      socket.emit(ROOM_EVENTS.ERROR, {
+        code: 'ROOM_REMOVED_BY_ADMIN',
+        message: input.message,
+      })
+      this.socketRooms.delete(socket.id)
+    }
+
+    await this.finalizePlayerRemoval(room, input.targetUserId, false)
+    this.io.to(room.code).emit(ROOM_EVENTS.PLAYER_KICKED, { playerId: input.targetUserId })
+
+    const updatedRoom = this.rooms.get(room.code)
+
+    return {
+      success: true as const,
+      roomId: existingRoom.id,
+      targetUserId: input.targetUserId,
+      targetName:
+        targetMembership.user.name ??
+        targetMembership.user.email ??
+        `Player ${input.targetUserId.slice(0, 4)}`,
+      targetEmail: targetMembership.user.email ?? '',
+      wasHost,
+      roomClosed: !updatedRoom,
+      nextHostId: updatedRoom?.hostId ?? null,
+      remainingPlayerCount: updatedRoom?.players.size ?? 0,
+      notifiedSocketCount: targetSockets.length,
+    }
+  }
+
   async applyGameResults(input: {
     roomCode: RoomCode
     status?: RoomStatus

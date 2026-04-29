@@ -234,6 +234,20 @@ export class GameManager {
     runtime.onPlayerLeave(userId)
   }
 
+  async adminAbortGame(roomCode: string) {
+    const runtime = this.games.get(roomCode)
+    if (!runtime) {
+      return false
+    }
+
+    await runtime.dispose()
+    this.games.delete(roomCode)
+    this.logDebug('adminAbortGame:success', {
+      roomCode,
+    })
+    return true
+  }
+
   async dispatchRuntimeResult(
     result: GameEventResult,
     roomCode: string,

@@ -113,14 +113,149 @@ function IconHash({ size = 16 }: { size?: number }) {
   )
 }
 
+function IconMinus({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  )
+}
+
+function IconClock({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <polyline points="12 7 12 12 15 14" />
+    </svg>
+  )
+}
+
 type TabType = 'create' | 'join'
 type PlayMode = 'solo' | 'multiplayer'
-const triviaDifficultyOptions: Array<{ value: TriviaDifficulty; label: string }> = [
-  { value: 'easy', label: 'Chill' },
-  { value: 'medium', label: 'Classic' },
-  { value: 'hard', label: 'Expert' },
+const triviaDifficultyOptions: Array<{ value: TriviaDifficulty; label: string; description: string }> = [
+  { value: 'easy', label: 'Chill', description: 'Easy going' },
+  { value: 'medium', label: 'Classic', description: 'Balanced' },
+  { value: 'hard', label: 'Expert', description: 'Brain bender' },
 ]
+function CategoryGlyph({ category, size = 16 }: { category: TriviaCategory; size?: number }) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: '0 0 24 24',
+    fill: 'none' as const,
+    stroke: 'currentColor' as const,
+    strokeWidth: 1.8,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  }
+  switch (category) {
+    case 'Mixed':
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="18" height="18" rx="3" />
+          <circle cx="8" cy="8" r="1" fill="currentColor" stroke="none" />
+          <circle cx="16" cy="8" r="1" fill="currentColor" stroke="none" />
+          <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+          <circle cx="8" cy="16" r="1" fill="currentColor" stroke="none" />
+          <circle cx="16" cy="16" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      )
+    case 'Movies & TV':
+      return (
+        <svg {...common}>
+          <rect x="2" y="3" width="20" height="18" rx="2" />
+          <line x1="7" y1="3" x2="7" y2="21" />
+          <line x1="17" y1="3" x2="17" y2="21" />
+          <line x1="2" y1="12" x2="22" y2="12" />
+          <line x1="2" y1="7" x2="7" y2="7" />
+          <line x1="2" y1="17" x2="7" y2="17" />
+          <line x1="17" y1="7" x2="22" y2="7" />
+          <line x1="17" y1="17" x2="22" y2="17" />
+        </svg>
+      )
+    case 'Music':
+      return (
+        <svg {...common}>
+          <path d="M9 18V5l12-2v13" />
+          <circle cx="6" cy="18" r="3" />
+          <circle cx="18" cy="16" r="3" />
+        </svg>
+      )
+    case 'Sports':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 3v18" />
+          <path d="M3 12h18" />
+          <path d="M5.6 5.6l12.8 12.8" />
+          <path d="M18.4 5.6L5.6 18.4" />
+        </svg>
+      )
+    case 'Gaming':
+      return (
+        <svg {...common}>
+          <line x1="6" y1="11" x2="10" y2="11" />
+          <line x1="8" y1="9" x2="8" y2="13" />
+          <circle cx="15" cy="12" r="0.6" fill="currentColor" stroke="none" />
+          <circle cx="18" cy="10" r="0.6" fill="currentColor" stroke="none" />
+          <path d="M17.3 5H6.7a4 4 0 0 0-4 3.6C2.6 9.4 2 14.5 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.4-1.4a2 2 0 0 1 1.4-.6h4.4a2 2 0 0 1 1.4.6L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.5-.6-6.6-.7-7.4A4 4 0 0 0 17.3 5z" />
+        </svg>
+      )
+    case 'Science & Nature':
+      return (
+        <svg {...common}>
+          <path d="M9 2v6.5L3.5 19a2 2 0 0 0 1.7 3h13.6a2 2 0 0 0 1.7-3L15 8.5V2" />
+          <line x1="8" y1="2" x2="16" y2="2" />
+          <line x1="6.5" y1="14" x2="17.5" y2="14" />
+        </svg>
+      )
+    case 'History & Culture':
+      return (
+        <svg {...common}>
+          <line x1="3" y1="22" x2="21" y2="22" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+          <line x1="6" y1="18" x2="6" y2="11" />
+          <line x1="10" y1="18" x2="10" y2="11" />
+          <line x1="14" y1="18" x2="14" y2="11" />
+          <line x1="18" y1="18" x2="18" y2="11" />
+          <line x1="2" y1="11" x2="22" y2="11" />
+          <polygon points="12 3 21 8 3 8" />
+        </svg>
+      )
+    case 'Geography & Travel':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <path d="M12 3a14 14 0 0 1 4 9 14 14 0 0 1-4 9 14 14 0 0 1-4-9 14 14 0 0 1 4-9z" />
+        </svg>
+      )
+    case 'Internet & Tech':
+      return (
+        <svg {...common}>
+          <rect x="3" y="4" width="18" height="12" rx="2" />
+          <line x1="2" y1="20" x2="22" y2="20" />
+        </svg>
+      )
+    case 'Food & Lifestyle':
+      return (
+        <svg {...common}>
+          <path d="M3 2v7a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2V2" />
+          <line x1="5.5" y1="11" x2="5.5" y2="22" />
+          <path d="M21 14V3a4 4 0 0 0-4 4v5a2 2 0 0 0 2 2h2z" />
+          <line x1="19" y1="14" x2="19" y2="22" />
+        </svg>
+      )
+  }
+}
 const defaultTriviaCategories: TriviaCategory[] = ['Mixed']
+
+function formatMatchDuration(rounds: number) {
+  const seconds = Math.max(1, rounds) * 30
+  if (seconds < 60) return `~${seconds}s match`
+  const minutes = Math.round(seconds / 60)
+  return `~${minutes} min match`
+}
 
 function toggleTriviaCategorySelection(
   selectedCategories: TriviaCategory[],
@@ -427,7 +562,7 @@ function LobbyPageContent() {
                                 <motion.div
                                   initial={{ scale: 0 }}
                                   animate={{ scale: 1 }}
-                                  className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--primary-500)] text-white"
+                                  className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--text-primary)] text-[var(--text-inverse)]"
                                 >
                                   <IconCheck size={10} />
                                 </motion.div>
@@ -490,83 +625,182 @@ function LobbyPageContent() {
                             {/* Divider */}
                             <div className="h-px bg-[var(--border)]" />
 
-                            {selectedGameData.id === 'trivia' && (
-                              <div className="space-y-5">
-                                <div>
-                                  <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
-                                    Category
-                                  </label>
-                                  <p className="mb-3 text-[10px] uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
-                                    Pick one or more categories
-                                  </p>
-                                  <div className="flex flex-wrap gap-2">
-                                    {triviaCategories.map((category) => {
-                                      const isSelected = selectedTriviaCategories.includes(category)
-                                      return (
-                                        <button
-                                          key={category}
-                                          type="button"
-                                          onClick={() =>
-                                            setSelectedTriviaCategories((currentCategories) =>
-                                              toggleTriviaCategorySelection(currentCategories, category)
-                                            )
-                                          }
-                                          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
-                                            isSelected
-                                              ? 'border-[var(--game-trivia)]/50 bg-[var(--game-trivia)]/10 text-[var(--game-trivia)]'
-                                              : 'border-[var(--border)] bg-[var(--background)]/50 text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]'
-                                          }`}
+                            {selectedGameData.id === 'trivia' && (() => {
+                              const isMixedSelected = selectedTriviaCategories.includes('Mixed')
+                              const nonMixedCategories = triviaCategories.filter((c) => c !== 'Mixed')
+                              const customCount = isMixedSelected ? 0 : selectedTriviaCategories.length
+                              const roundsValue = Math.max(3, Math.min(20, Number(triviaRounds) || 10))
+                              return (
+                                <div className="space-y-6">
+                                  {/* Topics */}
+                                  <div>
+                                    <div className="mb-3 flex items-baseline justify-between gap-3">
+                                      <h4 className="text-sm font-semibold text-[var(--text-primary)]">Topics</h4>
+                                      <span className="text-[11px] text-[var(--text-tertiary)]">
+                                        {isMixedSelected ? 'Surprise me' : `${customCount} selected`}
+                                      </span>
+                                    </div>
+
+                                    {/* Mixed - featured row */}
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedTriviaCategories(defaultTriviaCategories)}
+                                      className={`mb-2 flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors cursor-pointer ${
+                                        isMixedSelected
+                                          ? 'border-[var(--game-trivia)]/50 bg-[var(--game-trivia)]/10'
+                                          : 'border-[var(--border)] bg-[var(--background)]/50 hover:bg-[var(--surface-hover)]'
+                                      }`}
+                                    >
+                                      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--game-trivia)]/15 ${
+                                        isMixedSelected ? 'text-[var(--game-trivia)]' : 'text-[var(--text-secondary)]'
+                                      }`}>
+                                        <CategoryGlyph category="Mixed" size={18} />
+                                      </span>
+                                      <div className="flex-1 min-w-0">
+                                        <p className={`text-sm font-semibold ${isMixedSelected ? 'text-[var(--game-trivia)]' : 'text-[var(--text-primary)]'}`}>
+                                          Mixed
+                                        </p>
+                                        <p className="mt-0.5 text-[11px] text-[var(--text-tertiary)]">
+                                          A bit of everything &mdash; let chance decide
+                                        </p>
+                                      </div>
+                                      {isMixedSelected && (
+                                        <motion.span
+                                          initial={{ scale: 0 }}
+                                          animate={{ scale: 1 }}
+                                          className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--game-trivia)] text-white"
                                         >
-                                          {category}
-                                        </button>
-                                      )
-                                    })}
+                                          <IconCheck size={10} />
+                                        </motion.span>
+                                      )}
+                                    </button>
+
+                                    {/* Or pick specific topics */}
+                                    <p className="mt-3 mb-2 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                                      Or pick specific topics
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                      {nonMixedCategories.map((category) => {
+                                        const isSelected = !isMixedSelected && selectedTriviaCategories.includes(category)
+                                        return (
+                                          <button
+                                            key={category}
+                                            type="button"
+                                            onClick={() =>
+                                              setSelectedTriviaCategories((currentCategories) =>
+                                                toggleTriviaCategorySelection(currentCategories, category)
+                                              )
+                                            }
+                                            className={`relative flex items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-colors cursor-pointer ${
+                                              isSelected
+                                                ? 'border-[var(--game-trivia)]/50 bg-[var(--game-trivia)]/10'
+                                                : 'border-[var(--border)] bg-[var(--background)]/50 hover:bg-[var(--surface-hover)]'
+                                            }`}
+                                          >
+                                            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${
+                                              isSelected
+                                                ? 'bg-[var(--game-trivia)]/15 text-[var(--game-trivia)]'
+                                                : 'bg-[var(--surface)]/60 text-[var(--text-secondary)]'
+                                            }`}>
+                                              <CategoryGlyph category={category} size={13} />
+                                            </span>
+                                            <span className={`flex-1 truncate text-[11px] font-medium ${
+                                              isSelected ? 'text-[var(--game-trivia)]' : 'text-[var(--text-secondary)]'
+                                            }`}>
+                                              {category}
+                                            </span>
+                                            {isSelected && (
+                                              <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-[var(--game-trivia)] text-white">
+                                                <IconCheck size={8} />
+                                              </span>
+                                            )}
+                                          </button>
+                                        )
+                                      })}
+                                    </div>
+                                  </div>
+
+                                  {/* Difficulty */}
+                                  <div>
+                                    <h4 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">Difficulty</h4>
+                                    <div className="grid grid-cols-3 gap-2">
+                                      {triviaDifficultyOptions.map((option) => {
+                                        const isSelected = triviaDifficulty === option.value
+                                        return (
+                                          <button
+                                            key={option.value}
+                                            type="button"
+                                            onClick={() => setTriviaDifficulty(option.value)}
+                                            className={`relative rounded-xl border px-3 py-3 text-center transition-colors cursor-pointer ${
+                                              isSelected
+                                                ? 'border-[var(--game-trivia)]/50 bg-[var(--game-trivia)]/10'
+                                                : 'border-[var(--border)] bg-[var(--background)]/50 hover:bg-[var(--surface-hover)]'
+                                            }`}
+                                          >
+                                            <p className={`text-sm font-semibold ${
+                                              isSelected ? 'text-[var(--game-trivia)]' : 'text-[var(--text-primary)]'
+                                            }`}>
+                                              {option.label}
+                                            </p>
+                                            <p className={`mt-0.5 text-[10px] ${
+                                              isSelected ? 'text-[var(--game-trivia)]/70' : 'text-[var(--text-tertiary)]'
+                                            }`}>
+                                              {option.description}
+                                            </p>
+                                          </button>
+                                        )
+                                      })}
+                                    </div>
+                                  </div>
+
+                                  {/* Length stepper */}
+                                  <div>
+                                    <div className="mb-3 flex items-baseline justify-between gap-3">
+                                      <h4 className="text-sm font-semibold text-[var(--text-primary)]">Length</h4>
+                                      <span className="inline-flex items-center gap-1 text-[11px] text-[var(--text-tertiary)]">
+                                        <IconClock size={11} />
+                                        {formatMatchDuration(roundsValue)}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1 rounded-2xl border border-[var(--border)] bg-[var(--background)]/50 p-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => setTriviaRounds(String(Math.max(3, roundsValue - 1)))}
+                                        disabled={roundsValue <= 3}
+                                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                                      >
+                                        <IconMinus size={16} />
+                                      </button>
+                                      <div className="flex-1 text-center">
+                                        <motion.p
+                                          key={roundsValue}
+                                          initial={{ scale: 0.85, opacity: 0 }}
+                                          animate={{ scale: 1, opacity: 1 }}
+                                          transition={{ duration: 0.15 }}
+                                          className="font-display text-2xl font-bold text-[var(--text-primary)] leading-none"
+                                        >
+                                          {roundsValue}
+                                        </motion.p>
+                                        <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.15em] text-[var(--text-tertiary)]">
+                                          Questions
+                                        </p>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => setTriviaRounds(String(Math.min(20, roundsValue + 1)))}
+                                        disabled={roundsValue >= 20}
+                                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                                      >
+                                        <IconPlus size={16} />
+                                      </button>
+                                    </div>
+                                    <p className="mt-2 text-[10px] text-[var(--text-tertiary)]">
+                                      Match score is out of {roundsValue * 1000} points
+                                    </p>
                                   </div>
                                 </div>
-
-                                <div>
-                                  <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
-                                    Difficulty
-                                  </label>
-                                  <div className="grid grid-cols-3 gap-2">
-                                    {triviaDifficultyOptions.map((option) => {
-                                      const isSelected = triviaDifficulty === option.value
-                                      return (
-                                        <button
-                                          key={option.value}
-                                          type="button"
-                                          onClick={() => setTriviaDifficulty(option.value)}
-                                          className={`rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors cursor-pointer ${
-                                            isSelected
-                                              ? 'border-[var(--game-trivia)]/50 bg-[var(--game-trivia)]/10 text-[var(--game-trivia)]'
-                                              : 'border-[var(--border)] bg-[var(--background)]/50 text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]'
-                                          }`}
-                                        >
-                                          {option.label}
-                                        </button>
-                                      )
-                                    })}
-                                  </div>
-                                </div>
-
-                                <label className="block">
-                                  <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
-                                    Questions
-                                  </span>
-                                  <input
-                                    type="number"
-                                    min={3}
-                                    max={20}
-                                    value={triviaRounds}
-                                    onChange={(event) => setTriviaRounds(event.target.value)}
-                                    className="input"
-                                  />
-                                  <span className="mt-1.5 block text-[10px] text-[var(--text-tertiary)]">
-                                    Match score is out of {Math.max(1, Number(triviaRounds) || 10) * 1000} points.
-                                  </span>
-                                </label>
-                              </div>
-                            )}
+                              )
+                            })()}
 
                             {/* Play mode toggle (only for singleplayer-capable games) */}
                             {supportsSolo && (
@@ -612,31 +846,59 @@ function LobbyPageContent() {
                               </div>
                             )}
 
-                            {/* Max players input (only in multiplayer mode) */}
-                            {playMode === 'multiplayer' && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                              >
-                                <label className="block">
-                                  <span className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
-                                    Max players
-                                  </span>
-                                  <input
-                                    type="number"
-                                    min={Math.max(2, selectedGameData.minPlayers)}
-                                    max={selectedGameData.maxPlayers}
-                                    value={maxPlayers}
-                                    onChange={(e) => setMaxPlayers(e.target.value)}
-                                    className="input mt-2"
-                                  />
-                                  <p className="mt-1.5 text-[10px] text-[var(--text-tertiary)]">
-                                    Between {Math.max(2, selectedGameData.minPlayers)} and {selectedGameData.maxPlayers} players
-                                  </p>
-                                </label>
-                              </motion.div>
-                            )}
+                            {/* Max players stepper (only in multiplayer mode) */}
+                            {playMode === 'multiplayer' && (() => {
+                              const minP = Math.max(2, selectedGameData.minPlayers)
+                              const maxP = selectedGameData.maxPlayers
+                              const playersValue = Math.max(minP, Math.min(maxP, Number(maxPlayers) || minP))
+                              return (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: 'auto' }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                >
+                                  <div className="mb-3 flex items-baseline justify-between gap-3">
+                                    <h4 className="text-sm font-semibold text-[var(--text-primary)]">Max players</h4>
+                                    <span className="inline-flex items-center gap-1 text-[11px] text-[var(--text-tertiary)]">
+                                      <IconUsers size={11} />
+                                      {minP}&ndash;{maxP}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1 rounded-2xl border border-[var(--border)] bg-[var(--background)]/50 p-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setMaxPlayers(String(Math.max(minP, playersValue - 1)))}
+                                      disabled={playersValue <= minP}
+                                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                                    >
+                                      <IconMinus size={16} />
+                                    </button>
+                                    <div className="flex-1 text-center">
+                                      <motion.p
+                                        key={playersValue}
+                                        initial={{ scale: 0.85, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 1 }}
+                                        transition={{ duration: 0.15 }}
+                                        className="font-display text-2xl font-bold text-[var(--text-primary)] leading-none"
+                                      >
+                                        {playersValue}
+                                      </motion.p>
+                                      <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.15em] text-[var(--text-tertiary)]">
+                                        Players
+                                      </p>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => setMaxPlayers(String(Math.min(maxP, playersValue + 1)))}
+                                      disabled={playersValue >= maxP}
+                                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                                    >
+                                      <IconPlus size={16} />
+                                    </button>
+                                  </div>
+                                </motion.div>
+                              )
+                            })()}
 
                             {/* Solo mode info */}
                             {playMode === 'solo' && (
@@ -788,7 +1050,7 @@ function LobbyPageContent() {
                           <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--primary-500)] text-white"
+                            className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--text-primary)] text-[var(--text-inverse)]"
                           >
                             <IconCheck size={10} />
                           </motion.div>

@@ -99,6 +99,10 @@ export class SkribbleRuntime extends BaseGameRuntime {
     }
   }
 
+  override async dispose() {
+    this.clearTimers()
+  }
+
   async onClientEvent(
     playerId: UserId,
     eventName: string,

@@ -246,6 +246,12 @@ export function AdminDashboardClient({
               <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">Room creation over time</p>
             </div>
             <div className="flex items-center gap-2">
+              <Link
+                href="/admin/analytics"
+                className="hidden items-center gap-1 text-xs font-medium text-[var(--primary-400)] hover:text-[var(--primary-300)] sm:flex"
+              >
+                Open analytics <ArrowRight className="h-3 w-3" />
+              </Link>
               <select
                 value={analyticsRange}
                 onChange={(event) => setAnalyticsRange(event.target.value as AnalyticsRange)}
@@ -418,6 +424,12 @@ export function AdminDashboardClient({
                 </p>
               </div>
             </div>
+            <Link
+              href="/admin/games"
+              className="flex items-center gap-1 text-xs font-medium text-[var(--primary-400)] hover:text-[var(--primary-300)]"
+            >
+              Open games <ArrowRight className="h-3 w-3" />
+            </Link>
           </div>
 
           {/* Game config grid (heatmap-style) */}

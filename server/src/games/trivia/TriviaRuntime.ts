@@ -211,6 +211,10 @@ export class TriviaRuntime extends BaseGameRuntime {
     }
   }
 
+  override async dispose() {
+    this.clearTimers()
+  }
+
   getPlayerSyncData(_playerId: UserId) {
     return {
       phase: this.phase,

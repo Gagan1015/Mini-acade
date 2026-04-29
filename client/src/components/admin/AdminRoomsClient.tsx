@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'motion/react'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import {
   DoorOpen,
@@ -67,6 +68,7 @@ function formatDate(dateString: string): string {
 }
 
 export function AdminRoomsClient({ rooms }: AdminRoomsClientProps) {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [gameFilter, setGameFilter] = useState('ALL')
   const [statusFilter, setStatusFilter] = useState('ALL')
@@ -220,7 +222,8 @@ export function AdminRoomsClient({ rooms }: AdminRoomsClientProps) {
                   return (
                     <tr
                       key={room.id}
-                      className="border-b border-[var(--border-subtle)] transition-colors hover:bg-[var(--surface-hover)]"
+                      onClick={() => router.push(`/admin/rooms/${room.id}`)}
+                      className="cursor-pointer border-b border-[var(--border-subtle)] transition-colors hover:bg-[var(--surface-hover)]"
                     >
                       {/* Room code */}
                       <td className="px-5 py-4">

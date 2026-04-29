@@ -6,28 +6,8 @@ import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import { motion } from 'motion/react'
 import { SignInButtons } from '@/components/auth/SignInButtons'
-
-/* â”€â”€ SVG Logo Icon â”€â”€ */
-function LogoIcon() {
-  return (
-    <svg viewBox="0 0 48 48" fill="none" width={28} height={28}>
-      <rect x="4" y="14" width="40" height="26" rx="8" stroke="currentColor" strokeWidth="2.5" fill="none" />
-      <circle cx="16" cy="27" r="2.5" fill="currentColor" opacity="0.7" />
-      <circle cx="32" cy="27" r="2.5" fill="currentColor" opacity="0.7" />
-      <path d="M18 6V14M30 6V14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-/* â”€â”€ Arrow Left Icon â”€â”€ */
-function IconArrowLeft() {
-  return (
-    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="19" y1="12" x2="5" y2="12" />
-      <polyline points="12 19 5 12 12 5" />
-    </svg>
-  )
-}
+import { LogoTile, Wordmark } from '@/components/ui/Logo'
+import { IconArrowLeft } from '@/components/ui/icons'
 
 /* â”€â”€ Sign-in form (uses useSearchParams â†’ needs Suspense) â”€â”€ */
 function SignInForm() {
@@ -53,39 +33,18 @@ function SignInForm() {
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.2 }}
-        className="mb-6"
       >
         <SignInButtons callbackUrl={callbackUrl} />
       </motion.div>
 
-      {/* OR Divider */}
-      <motion.div
-        className="flex items-center gap-4 my-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.35, duration: 0.4 }}
-      >
-        <div className="flex-1 h-px bg-[var(--border)]" />
-        <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-[var(--text-tertiary)]">
-          OR
-        </span>
-        <div className="flex-1 h-px bg-[var(--border)]" />
-      </motion.div>
-
-      {/* Already have an account */}
+      {/* New + returning users use the same OAuth buttons */}
       <motion.p
-        className="text-sm text-center text-[var(--text-secondary)]"
+        className="mt-5 text-center text-[11px] leading-relaxed text-[var(--text-tertiary)]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.4 }}
       >
-        Already have an account?{' '}
-        <Link
-          href="/auth/signin"
-          className="font-semibold text-[var(--text-primary)] underline underline-offset-[3px] decoration-[var(--border-strong)] hover:decoration-[var(--text-primary)] transition-colors"
-        >
-          Login
-        </Link>
+        New here? An account is created automatically on your first sign in.
       </motion.p>
     </>
   )
@@ -164,10 +123,8 @@ export default function SignInPage() {
               href="/"
               className="inline-flex items-center gap-2.5 text-[var(--text-primary)] transition-opacity hover:opacity-80"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)]">
-                <LogoIcon />
-              </div>
-              <span className="font-display text-lg font-bold tracking-tight">Arcado</span>
+              <LogoTile size="md" />
+              <Wordmark size="lg" />
             </Link>
           </motion.div>
 
@@ -179,19 +136,19 @@ export default function SignInPage() {
             className="mb-8"
           >
             <h1 className="font-display text-[2rem] sm:text-4xl font-bold tracking-[-0.04em] leading-[1.1] text-[var(--text-primary)]">
-              Create an account
+              Sign in to Arcado
             </h1>
             <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)] max-w-[320px]">
-              Sign in to create rooms, track scores, and play with friends
+              Continue with Google or GitHub to create rooms, track scores, and play with friends.
             </p>
           </motion.div>
 
           {/* Form area */}
           <Suspense
             fallback={
-              <div className="space-y-4 animate-pulse">
-                <div className="h-12 rounded-xl bg-[var(--surface)]" />
-                <div className="h-12 rounded-xl bg-[var(--surface)]" />
+              <div className="space-y-3 animate-pulse">
+                <div className="h-12 rounded-[12px] bg-[var(--surface)]" />
+                <div className="h-12 rounded-[12px] bg-[var(--surface)]" />
               </div>
             }
           >
@@ -209,7 +166,7 @@ export default function SignInPage() {
               href="/"
               className="inline-flex items-center gap-1.5 text-xs text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-secondary)]"
             >
-              <IconArrowLeft />
+              <IconArrowLeft size={14} />
               Back to home
             </Link>
             <span className="text-[var(--border-strong)]">/</span>

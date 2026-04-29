@@ -24,12 +24,12 @@ type TypedIo = TypedSocket['server']
 let roomService: RoomService | undefined
 let gameManager: GameManager | undefined
 
-function getRoomService(io: TypedIo) {
+export function getRoomService(io: TypedIo) {
   roomService ??= new RoomService(io)
   return roomService
 }
 
-function getGameManager(io: TypedIo) {
+export function getGameManager(io: TypedIo) {
   const activeRoomService = getRoomService(io)
   gameManager ??= new GameManager(io, activeRoomService)
   return gameManager

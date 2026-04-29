@@ -6,6 +6,7 @@ import { signIn, signOut, useSession } from 'next-auth/react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { UserAvatar } from '@/components/ui/UserAvatar'
+import { LogoMark, Wordmark } from '@/components/ui/Logo'
 
 const THEME_STORAGE_KEY = 'theme-preference'
 const LEGACY_THEME_STORAGE_KEY = 'theme'
@@ -56,37 +57,6 @@ async function applyThemeTransition(
   } finally {
     root.removeAttribute('data-theme-transition')
   }
-}
-
-function LogoMark({ className = '' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 28 28" fill="none" className={className} width={28} height={28}>
-      <motion.rect
-        x="2"
-        y="8"
-        width="24"
-        height="16"
-        rx="5"
-        stroke="currentColor"
-        strokeWidth="2"
-        fill="none"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 0.6, ease: [0, 0, 0.2, 1] }}
-      />
-      <circle cx="9" cy="16" r="1.5" fill="currentColor" opacity="0.7" />
-      <circle cx="19" cy="16" r="1.5" fill="currentColor" opacity="0.7" />
-      <motion.path
-        d="M11 4V8M17 4V8"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        initial={{ pathLength: 0, opacity: 0 }}
-        animate={{ pathLength: 1, opacity: 1 }}
-        transition={{ delay: 0.4, duration: 0.3 }}
-      />
-    </svg>
-  )
 }
 
 function IconUser({ size = 16 }: { size?: number }) {
@@ -548,15 +518,15 @@ export function Header({ variant = 'default' }: HeaderProps) {
             }`}
           >
             <div className="relative flex h-10 w-10 items-center justify-center rounded-[12px] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
-              <LogoMark />
+              <LogoMark size={26} animated />
             </div>
             <div className="flex flex-col">
-              <span className="font-display text-lg font-bold tracking-tight">Arcado</span>
+              <Wordmark size="lg" />
             </div>
           </Link>
 
           {navItems.length > 0 && (
-            <nav className="hidden items-center gap-8 md:flex">
+            <nav aria-label="Main" className="hidden items-center gap-8 md:flex">
               {navItems.map((item) => (
                 <NavLink key={item.label} href={item.href} variant={variant}>
                   {item.label}

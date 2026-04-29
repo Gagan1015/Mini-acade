@@ -1,24 +1,26 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { useState, useRef, useCallback } from 'react'
+import Link from 'next/link'
+import { useCallback, useRef, useState } from 'react'
 import {
-  Users,
-  Search,
-  Shield,
-  ShieldCheck,
-  ShieldAlert,
-  Crown,
-  MoreVertical,
   Ban,
   CheckCircle2,
-  PauseCircle,
-  UserCog,
   ChevronDown,
+  Crown,
   Eye,
+  MoreVertical,
+  PauseCircle,
+  Search,
+  Shield,
+  ShieldAlert,
+  ShieldCheck,
+  Users,
+  UserCog,
+  X,
 } from 'lucide-react'
-import Link from 'next/link'
 import { staggerContainer, staggerItem } from '@/lib/motion'
+import { canAssignRole, canManageRole } from '@/lib/adminRoles'
 import { UserAvatar } from '@/components/ui/UserAvatar'
 
 interface User {
@@ -31,8 +33,16 @@ interface User {
   createdAt: string
 }
 
+interface PendingAction {
+  user: User
+  type: 'role' | 'status'
+  value: string
+}
+
 interface AdminUsersClientProps {
   users: User[]
+  currentAdminId: string
+  currentAdminRole: string
 }
 
 const ROLE_CONFIG: Record<string, { label: string; badge: string; icon: typeof Shield }> = {
@@ -56,35 +66,57 @@ function formatDate(dateString: string): string {
   })
 }
 
-export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps) {
+function getActionSummary(action: PendingAction) {
+  if (action.type === 'role') {
+    return `Change ${action.user.name}'s role to ${ROLE_CONFIG[action.value]?.label ?? action.value}?`
+  }
+
+  return `Change ${action.user.name}'s status to ${STATUS_CONFIG[action.value]?.label ?? action.value}?`
+}
+
+export function AdminUsersClient({
+  users: initialUsers,
+  currentAdminId,
+  currentAdminRole,
+}: AdminUsersClientProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState('ALL')
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
-  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; openUp: boolean } | null>(null)
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; openUp: boolean } | null>(
+    null,
+  )
   const [users, setUsers] = useState(initialUsers)
   const [loading, setLoading] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
   const dropdownBtnRefs = useRef<Record<string, HTMLButtonElement | null>>({})
 
-  const openDropdown = useCallback((userId: string) => {
-    if (activeDropdown === userId) {
-      setActiveDropdown(null)
-      setDropdownPos(null)
-      return
-    }
-    const btn = dropdownBtnRefs.current[userId]
-    if (btn) {
-      const rect = btn.getBoundingClientRect()
-      const spaceBelow = window.innerHeight - rect.bottom
-      const openUp = spaceBelow < 280
-      setDropdownPos({
-        top: openUp ? rect.top : rect.bottom + 4,
-        left: rect.right - 192, // 192 = w-48
-        openUp,
-      })
-    }
-    setActiveDropdown(userId)
-  }, [activeDropdown])
+  const openDropdown = useCallback(
+    (userId: string) => {
+      if (activeDropdown === userId) {
+        setActiveDropdown(null)
+        setDropdownPos(null)
+        return
+      }
+
+      const button = dropdownBtnRefs.current[userId]
+      if (button) {
+        const rect = button.getBoundingClientRect()
+        const spaceBelow = window.innerHeight - rect.bottom
+        const openUp = spaceBelow < 280
+
+        setDropdownPos({
+          top: openUp ? rect.top : rect.bottom + 4,
+          left: rect.right - 192,
+          openUp,
+        })
+      }
+
+      setActiveDropdown(userId)
+    },
+    [activeDropdown],
+  )
 
   const closeDropdown = useCallback(() => {
     setActiveDropdown(null)
@@ -103,48 +135,95 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
 
   const stats = {
     total: users.length,
-    active: users.filter((u) => u.status === 'ACTIVE').length,
-    suspended: users.filter((u) => u.status === 'SUSPENDED').length,
-    banned: users.filter((u) => u.status === 'BANNED').length,
+    active: users.filter((user) => user.status === 'ACTIVE').length,
+    suspended: users.filter((user) => user.status === 'SUSPENDED').length,
+    banned: users.filter((user) => user.status === 'BANNED').length,
   }
 
-  async function updateUser(userId: string, data: { role?: string; status?: string }) {
-    setLoading(userId)
+  function getUserAccess(user: User) {
+    const isSelf = user.id === currentAdminId
+    const canManage = !isSelf && canManageRole(currentAdminRole, user.role)
+    const assignableRoles = (['USER', 'MODERATOR', 'ADMIN', 'SUPER_ADMIN'] as const).filter(
+      (role) => role !== user.role && canAssignRole(currentAdminRole, role),
+    )
+    const canChangeStatus = canManage
+
+    return {
+      isSelf,
+      canManage,
+      canChangeStatus,
+      assignableRoles,
+    }
+  }
+
+  function openConfirm(user: User, type: 'role' | 'status', value: string) {
+    setErrorMessage(null)
+    setPendingAction({ user, type, value })
+    closeDropdown()
+  }
+
+  async function applyAction() {
+    if (!pendingAction) {
+      return
+    }
+
+    setLoading(pendingAction.user.id)
+    setErrorMessage(null)
+
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
+      const body =
+        pendingAction.type === 'role'
+          ? { role: pendingAction.value }
+          : { status: pendingAction.value }
+
+      const response = await fetch(`/api/admin/users/${pendingAction.user.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(body),
       })
-      if (res.ok) {
-        const updated = await res.json()
-        setUsers((prev) =>
-          prev.map((u) =>
-            u.id === userId
-              ? { ...u, role: updated.role ?? u.role, status: updated.status ?? u.status }
-              : u,
-          ),
-        )
+
+      const payload = (await response.json().catch(() => null)) as
+        | { role?: string; status?: string; error?: string }
+        | null
+
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Unable to update this user right now.')
       }
-    } catch {
-      // silently fail
+
+      setUsers((current) =>
+        current.map((user) =>
+          user.id === pendingAction.user.id
+            ? {
+                ...user,
+                role: payload?.role ?? user.role,
+                status: payload?.status ?? user.status,
+              }
+            : user,
+        ),
+      )
+      setPendingAction(null)
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to update this user.')
     } finally {
       setLoading(null)
-      closeDropdown()
     }
   }
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">Users</h1>
         <p className="mt-1 text-sm text-[var(--text-secondary)]">
-          Manage user accounts, roles, and permissions
+          Manage user accounts, roles, and permissions with safer admin guardrails.
         </p>
       </div>
 
-      {/* ── Quick Stats ── */}
+      {errorMessage && (
+        <div className="rounded-xl border border-[var(--error-500)]/30 bg-[var(--error-500)]/8 px-4 py-3 text-sm text-[var(--error-500)]">
+          {errorMessage}
+        </div>
+      )}
+
       <motion.div
         variants={staggerContainer}
         initial="initial"
@@ -166,26 +245,23 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
         ))}
       </motion.div>
 
-      {/* ── Filters ── */}
       <div className="card">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          {/* Search */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <input
               type="text"
-              placeholder="Search by name or email…"
+              placeholder="Search by name or email..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(event) => setSearchQuery(event.target.value)}
               className="input pl-10"
             />
           </div>
 
-          {/* Role filter */}
           <div className="relative">
             <select
               value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
+              onChange={(event) => setRoleFilter(event.target.value)}
               className="input appearance-none pr-8 sm:w-40"
             >
               <option value="ALL">All Roles</option>
@@ -197,11 +273,10 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
             <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
           </div>
 
-          {/* Status filter */}
           <div className="relative">
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(event) => setStatusFilter(event.target.value)}
               className="input appearance-none pr-8 sm:w-40"
             >
               <option value="ALL">All Status</option>
@@ -214,7 +289,6 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
         </div>
       </div>
 
-      {/* ── Users Table ── */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -248,6 +322,7 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
                   const roleInfo = ROLE_CONFIG[user.role] || ROLE_CONFIG.USER
                   const statusInfo = STATUS_CONFIG[user.status] || STATUS_CONFIG.ACTIVE
                   const RoleIcon = roleInfo.icon
+                  const access = getUserAccess(user)
 
                   return (
                     <tr
@@ -256,7 +331,6 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
                         loading === user.id ? 'opacity-50' : ''
                       }`}
                     >
-                      {/* User info */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <UserAvatar
@@ -273,11 +347,17 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
                             <p className="truncate text-xs text-[var(--text-tertiary)]">
                               {user.email}
                             </p>
+                            {!access.canManage && (
+                              <p className="mt-1 text-[11px] text-[var(--warning-500)]">
+                                {access.isSelf
+                                  ? 'Protected: your own account'
+                                  : 'Protected: equal or higher role'}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </td>
 
-                      {/* Role */}
                       <td className="px-5 py-4">
                         <span className={`badge ${roleInfo.badge} inline-flex items-center gap-1.5`}>
                           <RoleIcon className="h-3 w-3" />
@@ -285,7 +365,6 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
                         </span>
                       </td>
 
-                      {/* Status */}
                       <td className="px-5 py-4">
                         <span className="inline-flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                           <span className={`h-2 w-2 rounded-full ${statusInfo.dot}`} />
@@ -293,12 +372,10 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
                         </span>
                       </td>
 
-                      {/* Joined */}
                       <td className="px-5 py-4 text-[var(--text-tertiary)]">
                         {formatDate(user.createdAt)}
                       </td>
 
-                      {/* Actions */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-1">
                           <Link
@@ -309,9 +386,12 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
                             <Eye className="h-4 w-4" />
                           </Link>
                           <button
-                            ref={(el) => { dropdownBtnRefs.current[user.id] = el }}
+                            ref={(element) => {
+                              dropdownBtnRefs.current[user.id] = element
+                            }}
                             onClick={() => openDropdown(user.id)}
                             className="btn btn-ghost btn-sm !p-1.5"
+                            aria-label={`Open actions for ${user.name}`}
                           >
                             <MoreVertical className="h-4 w-4" />
                           </button>
@@ -328,7 +408,7 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
                       No users found
                     </p>
                     <p className="mt-1 text-xs text-[var(--text-tertiary)]">
-                      Try adjusting your search or filters
+                      Try adjusting your search or filters.
                     </p>
                   </td>
                 </tr>
@@ -337,96 +417,153 @@ export function AdminUsersClient({ users: initialUsers }: AdminUsersClientProps)
           </table>
         </div>
 
-        {/* Dropdown portal — rendered outside the overflow container */}
-        {activeDropdown && dropdownPos && (() => {
-          const user = users.find((u) => u.id === activeDropdown)
-          if (!user) return null
-          return (
-            <>
-              <div
-                className="fixed inset-0 z-[9998]"
-                onClick={closeDropdown}
-              />
-              <div
-                className="fixed z-[9999] w-48 rounded-lg border border-[var(--border)] bg-[var(--surface)] py-1 shadow-xl"
-                style={{
-                  top: dropdownPos.openUp ? undefined : dropdownPos.top,
-                  bottom: dropdownPos.openUp ? window.innerHeight - dropdownPos.top + 4 : undefined,
-                  left: dropdownPos.left,
-                }}
-              >
-                {/* Role changes */}
-                <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
-                  Change Role
-                </p>
-                {(['USER', 'MODERATOR', 'ADMIN'] as const).map((role) => (
-                  <button
-                    key={role}
-                    onClick={() => updateUser(user.id, { role })}
-                    disabled={user.role === role}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] disabled:opacity-30"
-                  >
-                    <UserCog className="h-3.5 w-3.5" />
-                    Set as {ROLE_CONFIG[role]?.label}
-                  </button>
-                ))}
+        {activeDropdown &&
+          dropdownPos &&
+          (() => {
+            const user = users.find((entry) => entry.id === activeDropdown)
 
-                <div className="my-1 border-t border-[var(--border)]" />
+            if (!user) {
+              return null
+            }
 
-                {/* Status changes */}
-                <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
-                  Status
-                </p>
-                {user.status !== 'ACTIVE' && (
-                  <button
-                    onClick={() => updateUser(user.id, { status: 'ACTIVE' })}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--success-500)] transition-colors hover:bg-[var(--surface-hover)]"
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Activate
-                  </button>
-                )}
-                {user.status !== 'SUSPENDED' && (
-                  <button
-                    onClick={() => updateUser(user.id, { status: 'SUSPENDED' })}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--warning-500)] transition-colors hover:bg-[var(--surface-hover)]"
-                  >
-                    <PauseCircle className="h-3.5 w-3.5" />
-                    Suspend
-                  </button>
-                )}
-                {user.status !== 'BANNED' && (
-                  <button
-                    onClick={() => updateUser(user.id, { status: 'BANNED' })}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--error-500)] transition-colors hover:bg-[var(--surface-hover)]"
-                  >
-                    <Ban className="h-3.5 w-3.5" />
-                    Ban User
-                  </button>
-                )}
+            const access = getUserAccess(user)
 
-                <div className="my-1 border-t border-[var(--border)]" />
-
-                <Link
-                  href={`/admin/users/${user.id}`}
-                  onClick={closeDropdown}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+            return (
+              <>
+                <div className="fixed inset-0 z-[9998]" onClick={closeDropdown} />
+                <div
+                  className="fixed z-[9999] w-48 rounded-lg border border-[var(--border)] bg-[var(--surface)] py-1 shadow-xl"
+                  style={{
+                    top: dropdownPos.openUp ? undefined : dropdownPos.top,
+                    bottom: dropdownPos.openUp
+                      ? window.innerHeight - dropdownPos.top + 4
+                      : undefined,
+                    left: dropdownPos.left,
+                  }}
                 >
-                  <Eye className="h-3.5 w-3.5" />
-                  View Details
-                </Link>
-              </div>
-            </>
-          )
-        })()}
+                  <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
+                    Change Role
+                  </p>
+                  {(['USER', 'MODERATOR', 'ADMIN', 'SUPER_ADMIN'] as const).map((role) => {
+                    const disabled =
+                      !access.canManage || !canAssignRole(currentAdminRole, role) || user.role === role
 
-        {/* Table footer */}
+                    return (
+                      <button
+                        key={role}
+                        onClick={() => openConfirm(user, 'role', role)}
+                        disabled={disabled}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-30"
+                      >
+                        <UserCog className="h-3.5 w-3.5" />
+                        Set as {ROLE_CONFIG[role]?.label}
+                      </button>
+                    )
+                  })}
+
+                  <div className="my-1 border-t border-[var(--border)]" />
+
+                  <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">
+                    Status
+                  </p>
+                  {user.status !== 'ACTIVE' && (
+                    <button
+                      onClick={() => openConfirm(user, 'status', 'ACTIVE')}
+                      disabled={!access.canChangeStatus}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--success-500)] transition-colors hover:bg-[var(--surface-hover)] disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Activate
+                    </button>
+                  )}
+                  {user.status !== 'SUSPENDED' && (
+                    <button
+                      onClick={() => openConfirm(user, 'status', 'SUSPENDED')}
+                      disabled={!access.canChangeStatus}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--warning-500)] transition-colors hover:bg-[var(--surface-hover)] disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                      <PauseCircle className="h-3.5 w-3.5" />
+                      Suspend
+                    </button>
+                  )}
+                  {user.status !== 'BANNED' && (
+                    <button
+                      onClick={() => openConfirm(user, 'status', 'BANNED')}
+                      disabled={!access.canChangeStatus}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--error-500)] transition-colors hover:bg-[var(--surface-hover)] disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                      <Ban className="h-3.5 w-3.5" />
+                      Ban User
+                    </button>
+                  )}
+
+                  <div className="my-1 border-t border-[var(--border)]" />
+
+                  <Link
+                    href={`/admin/users/${user.id}`}
+                    onClick={closeDropdown}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    View Details
+                  </Link>
+                </div>
+              </>
+            )
+          })()}
+
         <div className="flex items-center justify-between border-t border-[var(--border)] px-5 py-3">
           <p className="text-xs text-[var(--text-tertiary)]">
             Showing {filtered.length} of {users.length} users
           </p>
         </div>
       </motion.div>
+
+      {pendingAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6">
+          <div className="absolute inset-0" onClick={() => setPendingAction(null)} aria-hidden="true" />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="relative z-10 w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
+                  Confirm Action
+                </p>
+                <h2 className="mt-2 text-lg font-bold text-[var(--text-primary)]">
+                  {getActionSummary(pendingAction)}
+                </h2>
+              </div>
+              <button
+                onClick={() => setPendingAction(null)}
+                className="btn btn-ghost btn-sm !p-2"
+                aria-label="Close confirmation"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <p className="mt-3 text-sm text-[var(--text-secondary)]">
+              This action will be written to the audit log and enforced using the new role hierarchy checks.
+            </p>
+
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={applyAction}
+                disabled={loading === pendingAction.user.id}
+                className="btn btn-primary btn-sm"
+              >
+                {loading === pendingAction.user.id ? 'Applying...' : 'Confirm'}
+              </button>
+              <button onClick={() => setPendingAction(null)} className="btn btn-ghost btn-sm">
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }

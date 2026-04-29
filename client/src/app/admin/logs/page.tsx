@@ -1,29 +1,37 @@
-import { prisma } from '@arcado/db'
 import { AdminLogsClient } from '@/components/admin/AdminLogsClient'
+import { getAdminLogs, normalizeAdminLogFilters } from '@/lib/adminLogs'
 
-export default async function AdminLogsPage() {
-  const logs = await prisma.adminLog.findMany({
-    take: 100,
-    orderBy: { createdAt: 'desc' },
-    include: {
-      actor: {
-        select: { email: true, name: true, role: true },
-      },
-    },
+function getSingleValue(
+  value: string | string[] | undefined,
+): string | undefined {
+  return Array.isArray(value) ? value[0] : value
+}
+
+export default async function AdminLogsPage({
+  searchParams,
+}: {
+  searchParams: Record<string, string | string[] | undefined>
+}) {
+  const filters = normalizeAdminLogFilters({
+    page: getSingleValue(searchParams.page),
+    actor: getSingleValue(searchParams.actor),
+    action: getSingleValue(searchParams.action),
+    targetType: getSingleValue(searchParams.targetType),
+    dateFrom: getSingleValue(searchParams.dateFrom),
+    dateTo: getSingleValue(searchParams.dateTo),
   })
+
+  const result = await getAdminLogs(filters)
 
   return (
     <AdminLogsClient
-      logs={logs.map((log) => ({
-        id: log.id,
-        action: log.action,
-        actorName: log.actor.name ?? 'Unknown',
-        actorEmail: log.actor.email ?? '',
-        actorRole: log.actor.role,
-        targetType: log.targetType,
-        targetId: log.targetId,
-        createdAt: log.createdAt.toISOString(),
-      }))}
+      logs={result.logs}
+      filters={result.filters}
+      totalCount={result.totalCount}
+      totalPages={result.totalPages}
+      pageSize={result.pageSize}
+      availableActions={result.availableActions}
+      availableTargetTypes={result.availableTargetTypes}
     />
   )
 }

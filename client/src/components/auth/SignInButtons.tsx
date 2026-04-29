@@ -45,7 +45,7 @@ export function SignInButtons({ callbackUrl }: SignInButtonsProps) {
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => void signIn(provider.id, { callbackUrl })}
-          className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--border)] bg-[var(--surface)] px-6 py-3.5 text-sm font-medium text-[var(--text-primary)] transition-all duration-150 hover:border-[var(--border-strong)] hover:bg-[var(--surface-hover)] hover:shadow-sm cursor-pointer"
+          className="flex w-full items-center justify-center gap-3 rounded-[12px] border border-[var(--border)] bg-[var(--surface)] px-6 py-3.5 text-sm font-medium text-[var(--text-primary)] transition-all duration-150 hover:border-[var(--border-strong)] hover:bg-[var(--surface-hover)] hover:shadow-sm cursor-pointer"
         >
           Sign in with {provider.name}
           <provider.Icon size={18} />

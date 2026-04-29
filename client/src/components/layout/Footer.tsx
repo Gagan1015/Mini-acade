@@ -2,17 +2,7 @@
 
 import Link from 'next/link'
 import { motion } from 'motion/react'
-
-function LogoMarkSmall() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" width={18} height={18} className="text-[var(--text-tertiary)]">
-      <rect x="2" y="7" width="20" height="13" rx="4" stroke="currentColor" strokeWidth="1.5" fill="none" />
-      <circle cx="8" cy="13.5" r="1.2" fill="currentColor" opacity="0.5" />
-      <circle cx="16" cy="13.5" r="1.2" fill="currentColor" opacity="0.5" />
-      <path d="M9 3.5V7M15 3.5V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
-}
+import { LogoMark } from '@/components/ui/Logo'
 
 interface FooterProps {
   variant?: 'default' | 'marketing'
@@ -33,7 +23,7 @@ export function Footer({ variant = 'default' }: FooterProps) {
         <div className={`flex flex-col gap-8 ${isMarketing ? 'lg:flex-row lg:items-end lg:justify-between' : 'md:flex-row md:items-center md:justify-between'}`}>
           <div className="max-w-md">
             <div className="flex items-center gap-2.5 text-[var(--text-tertiary)]">
-              <LogoMarkSmall />
+              <LogoMark size={18} />
               <span className="text-sm font-medium tracking-tight">
                 &copy; {new Date().getFullYear()} Arcado
               </span>
@@ -46,7 +36,7 @@ export function Footer({ variant = 'default' }: FooterProps) {
             )}
           </div>
 
-          <nav className="flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-[var(--text-tertiary)]">
+          <nav aria-label="Footer" className="flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-[var(--text-tertiary)]">
             <Link href="/" className="transition-colors duration-200 hover:text-[var(--text-primary)]">
               Home
             </Link>

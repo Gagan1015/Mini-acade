@@ -57,6 +57,8 @@ export abstract class BaseGameRuntime implements IGameRuntime {
     }
   }
 
+  async dispose() {}
+
   onPlayerJoin(player: Player): GameEventResult {
     this.players.set(player.id, player)
     if (!this.scores.has(player.id)) {

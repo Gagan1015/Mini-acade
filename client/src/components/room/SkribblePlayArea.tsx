@@ -503,7 +503,7 @@ export function SkribblePlayArea({
               fontSize: '0.75rem',
               fontWeight: 600,
               background: isDrawer ? 'rgba(236,72,153,0.12)' : 'rgba(59,130,246,0.12)',
-              color: isDrawer ? '#EC4899' : '#3B82F6',
+              color: isDrawer ? 'var(--game-skribble)' : 'var(--primary-500)',
               border: `1px solid ${isDrawer ? 'rgba(236,72,153,0.2)' : 'rgba(59,130,246,0.2)'}`,
             }}
           >
@@ -542,7 +542,7 @@ export function SkribblePlayArea({
                   fontWeight: 700,
                   letterSpacing: '0.18em',
                   textTransform: 'uppercase',
-                  color: '#EC4899',
+                  color: 'var(--game-skribble)',
                 }}
               >
                 Choose a word to draw
@@ -603,7 +603,7 @@ export function SkribblePlayArea({
             fontWeight: 700,
             fontFamily: 'var(--font-mono)',
             letterSpacing: phase === 'choosing' ? '0.08em' : '0.35em',
-            color: isDrawer ? '#EC4899' : 'var(--text-primary)',
+            color: isDrawer ? 'var(--game-skribble)' : 'var(--text-primary)',
           }}
         >
           {wordDisplay}
@@ -669,7 +669,7 @@ export function SkribblePlayArea({
                       height: '24px',
                       borderRadius: '6px',
                       border: brushColor === color && tool === 'brush'
-                        ? '2px solid #EC4899'
+                        ? '2px solid var(--game-skribble)'
                         : '2px solid rgba(255,255,255,0.15)',
                       background: color,
                       cursor: 'pointer',
@@ -696,7 +696,7 @@ export function SkribblePlayArea({
                       height: '32px',
                       borderRadius: '8px',
                       border: brushWidth === size
-                        ? '2px solid #EC4899'
+                        ? '2px solid var(--game-skribble)'
                         : '1px solid rgba(255,255,255,0.1)',
                       background: brushWidth === size
                         ? 'rgba(236,72,153,0.1)'
@@ -730,7 +730,7 @@ export function SkribblePlayArea({
                     padding: '6px 12px',
                     borderRadius: '8px',
                     border: tool === 'brush'
-                      ? '2px solid #EC4899'
+                      ? '2px solid var(--game-skribble)'
                       : '1px solid rgba(255,255,255,0.1)',
                     background: tool === 'brush'
                       ? 'rgba(236,72,153,0.1)'
@@ -752,7 +752,7 @@ export function SkribblePlayArea({
                     padding: '6px 12px',
                     borderRadius: '8px',
                     border: tool === 'eraser'
-                      ? '2px solid #EC4899'
+                      ? '2px solid var(--game-skribble)'
                       : '1px solid rgba(255,255,255,0.1)',
                     background: tool === 'eraser'
                       ? 'rgba(236,72,153,0.1)'
@@ -775,7 +775,7 @@ export function SkribblePlayArea({
                     borderRadius: '8px',
                     border: '1px solid rgba(239,68,68,0.2)',
                     background: 'rgba(239,68,68,0.08)',
-                    color: '#EF4444',
+                    color: 'var(--error-500)',
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -940,7 +940,7 @@ export function SkribblePlayArea({
                           : msg.type === 'close'
                             ? '#EAB308'
                             : msg.type === 'system'
-                              ? '#3B82F6'
+                              ? 'var(--primary-500)'
                               : 'var(--text-secondary)',
                       background:
                         msg.type === 'correct'
@@ -999,7 +999,7 @@ export function SkribblePlayArea({
                     padding: '8px 14px',
                     borderRadius: '8px',
                     border: 'none',
-                    background: '#EC4899',
+                    background: 'var(--game-skribble)',
                     color: '#fff',
                     cursor: guessInput.trim() ? 'pointer' : 'not-allowed',
                     opacity: guessInput.trim() ? 1 : 0.5,
@@ -1052,7 +1052,7 @@ export function SkribblePlayArea({
                 fontWeight: 600,
                 textTransform: 'uppercase',
                 letterSpacing: '0.18em',
-                color: '#EC4899',
+                color: 'var(--game-skribble)',
                 marginBottom: '8px',
               }}
             >
@@ -1067,7 +1067,7 @@ export function SkribblePlayArea({
                 color: 'var(--text-primary)',
               }}
             >
-              The word was: <span style={{ color: '#EC4899' }}>{roundEndWord.toUpperCase()}</span>
+              The word was: <span style={{ color: 'var(--game-skribble)' }}>{roundEndWord.toUpperCase()}</span>
             </p>
             <p
               style={{

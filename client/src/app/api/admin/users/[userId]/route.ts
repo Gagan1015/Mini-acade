@@ -2,6 +2,7 @@ import { prisma } from '@arcado/db'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { createAdminLog, requireAdminApiSession } from '@/lib/admin'
+import { canAssignRole, canManageRole } from '@/lib/adminRoles'
 
 const allowedRoles = new Set(['USER', 'MODERATOR', 'ADMIN', 'SUPER_ADMIN'])
 const allowedStatuses = new Set(['ACTIVE', 'SUSPENDED', 'BANNED'])
@@ -133,24 +134,79 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
   }
 
+  if (!nextRole && !nextStatus) {
+    return NextResponse.json({ error: 'No changes requested' }, { status: 400 })
+  }
+
+  const targetUser = await prisma.user.findUnique({
+    where: { id: params.userId },
+    select: {
+      id: true,
+      role: true,
+      status: true,
+    },
+  })
+
+  if (!targetUser) {
+    return NextResponse.json({ error: 'User not found' }, { status: 404 })
+  }
+
+  const actorId = session.user.id
+  const actorRole = session.user.role
+
+  if (
+    targetUser.id === actorId &&
+    ((nextRole && nextRole !== targetUser.role) || (nextStatus && nextStatus !== targetUser.status))
+  ) {
+    return NextResponse.json(
+      { error: 'You cannot change your own admin role or account status.' },
+      { status: 403 },
+    )
+  }
+
+  if (!canManageRole(actorRole, targetUser.role)) {
+    return NextResponse.json(
+      { error: 'You cannot manage users with an equal or higher role.' },
+      { status: 403 },
+    )
+  }
+
+  if (nextRole && !canAssignRole(actorRole, nextRole)) {
+    return NextResponse.json(
+      { error: 'You cannot assign a role equal to or higher than your own.' },
+      { status: 403 },
+    )
+  }
+
+  const roleChanged = Boolean(nextRole && nextRole !== targetUser.role)
+  const statusChanged = Boolean(nextStatus && nextStatus !== targetUser.status)
+
+  if (!roleChanged && !statusChanged) {
+    return NextResponse.json({ error: 'No changes to apply.' }, { status: 400 })
+  }
+
   const updatedUser = await prisma.user.update({
     where: { id: params.userId },
     data: {
-      ...(nextRole ? { role: nextRole as 'USER' | 'MODERATOR' | 'ADMIN' | 'SUPER_ADMIN' } : {}),
-      ...(nextStatus
+      ...(roleChanged
+        ? { role: nextRole as 'USER' | 'MODERATOR' | 'ADMIN' | 'SUPER_ADMIN' }
+        : {}),
+      ...(statusChanged
         ? { status: nextStatus as 'ACTIVE' | 'SUSPENDED' | 'BANNED' }
         : {}),
     },
   })
 
   await createAdminLog({
-    actorId: session.user.id,
+    actorId,
     action: 'user.update',
     targetType: 'USER',
     targetId: updatedUser.id,
     details: {
-      role: nextRole,
-      status: nextStatus,
+      previousRole: targetUser.role,
+      nextRole: nextRole ?? targetUser.role,
+      previousStatus: targetUser.status,
+      nextStatus: nextStatus ?? targetUser.status,
     },
     ipAddress: request.headers.get('x-forwarded-for') ?? undefined,
     userAgent: request.headers.get('user-agent') ?? undefined,

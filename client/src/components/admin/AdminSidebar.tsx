@@ -8,10 +8,12 @@ import { motion, AnimatePresence } from 'motion/react'
 import {
   BarChart3,
   Gamepad2,
+  TrendingUp,
   Users,
   DoorOpen,
   FileText,
-  Settings,
+  ShieldAlert,
+  Megaphone,
   LogOut,
   Home,
   ChevronLeft,
@@ -20,6 +22,7 @@ import {
   X,
 } from 'lucide-react'
 import { UserAvatar } from '@/components/ui/UserAvatar'
+import { LogoMark, Wordmark } from '@/components/ui/Logo'
 
 interface AdminSidebarProps {
   userName: string
@@ -30,13 +33,16 @@ interface AdminSidebarProps {
 
 const mainNavItems = [
   { href: '/admin', label: 'Dashboard', icon: BarChart3 },
+  { href: '/admin/analytics', label: 'Analytics', icon: TrendingUp },
+  { href: '/admin/games', label: 'Games', icon: Gamepad2 },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/rooms', label: 'Rooms', icon: DoorOpen },
+  { href: '/admin/moderation', label: 'Moderation', icon: ShieldAlert },
   { href: '/admin/logs', label: 'Activity Logs', icon: FileText },
 ]
 
 const bottomNavItems = [
-  { href: '/admin/settings', label: 'Settings', icon: Settings },
+  { href: '/admin/settings', label: 'Announcements', icon: Megaphone },
 ]
 
 // â”€â”€ Context for sidebar state â”€â”€
@@ -66,8 +72,8 @@ export function AdminSidebar({ userName, userEmail: _userEmail, userImage, userR
       {/* Logo / Brand */}
       <div className={`border-b border-[var(--sidebar-border)] ${collapsed && !mobile ? 'px-2 py-3' : 'px-4'}`}>
         <div className={`flex h-16 items-center gap-3 ${collapsed && !mobile ? 'justify-center' : ''}`}>
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--primary-500)]/15">
-            <Gamepad2 className="h-5 w-5 text-[var(--primary-400)]" />
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[12px] bg-[var(--primary-500)]/15 text-[var(--primary-400)]">
+            <LogoMark size={20} />
           </div>
           {(!collapsed || mobile) && (
             <motion.div
@@ -76,7 +82,7 @@ export function AdminSidebar({ userName, userEmail: _userEmail, userImage, userR
               exit={{ opacity: 0, width: 0 }}
               className="flex-1 overflow-hidden"
             >
-              <p className="text-sm font-semibold text-[var(--sidebar-text)] whitespace-nowrap">Arcado</p>
+              <Wordmark size="md" className="block whitespace-nowrap text-[var(--sidebar-text)]" />
               <p className="text-xs text-[var(--sidebar-text-muted)] whitespace-nowrap">Admin Panel</p>
             </motion.div>
           )}

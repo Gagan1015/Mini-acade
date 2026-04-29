@@ -165,6 +165,7 @@ export interface IGameRuntime {
   initialize(): Promise<void>
   start(): Promise<GameEventResult>
   end(): Promise<GameEventResult>
+  dispose(): void | Promise<void>
   onPlayerJoin(player: Player): GameEventResult
   onPlayerLeave(playerId: UserId): GameEventResult
   onPlayerReconnect(playerId: UserId): GameEventResult
