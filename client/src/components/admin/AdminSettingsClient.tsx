@@ -78,6 +78,8 @@ export function AdminSettingsClient({ announcements: initialAnnouncements }: Adm
     type: 'info',
   })
   const [creatingAnnouncement, setCreatingAnnouncement] = useState(false)
+  const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null)
+  const [deletingAnnouncementId, setDeletingAnnouncementId] = useState<string | null>(null)
 
   // Toast
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
@@ -139,16 +141,22 @@ export function AdminSettingsClient({ announcements: initialAnnouncements }: Adm
   }
 
   async function deleteAnnouncement(id: string) {
+    setDeletingAnnouncementId(id)
     try {
       const res = await fetch(`/api/admin/announcements/${id}`, {
         method: 'DELETE',
       })
       if (res.ok) {
         setAnnouncements((prev) => prev.filter((a) => a.id !== id))
+        setAnnouncementToDelete(null)
         showToast('Announcement deleted')
+      } else {
+        showToast('Failed to delete announcement', 'error')
       }
     } catch {
       showToast('Failed to delete announcement', 'error')
+    } finally {
+      setDeletingAnnouncementId(null)
     }
   }
 
@@ -365,7 +373,7 @@ export function AdminSettingsClient({ announcements: initialAnnouncements }: Adm
 
                           {/* Delete */}
                           <button
-                            onClick={() => deleteAnnouncement(announcement.id)}
+                            onClick={() => setAnnouncementToDelete(announcement)}
                             className="btn btn-ghost btn-sm !p-1.5 text-[var(--text-tertiary)] hover:text-[var(--error-500)]"
                             title="Delete announcement"
                           >
@@ -390,7 +398,101 @@ export function AdminSettingsClient({ announcements: initialAnnouncements }: Adm
             </motion.div>
       </div>
 
-      {/* ── Toast ── */}
+      {/* Delete confirmation */}
+      <AnimatePresence>
+        {announcementToDelete && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-announcement-title"
+          >
+            <button
+              type="button"
+              aria-label="Close delete confirmation"
+              className="absolute inset-0"
+              onClick={() => {
+                if (!deletingAnnouncementId) setAnnouncementToDelete(null)
+              }}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, y: 14, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.98 }}
+              transition={{ duration: 0.18 }}
+              className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-2xl"
+            >
+              <div className="border-b border-[var(--border)] px-6 py-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--error-500)]/10 text-[var(--error-500)]">
+                      <AlertTriangle className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--error-500)]">
+                        Delete announcement
+                      </p>
+                      <h2 id="delete-announcement-title" className="mt-1 text-lg font-bold text-[var(--text-primary)]">
+                        Remove this announcement?
+                      </h2>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAnnouncementToDelete(null)}
+                    disabled={Boolean(deletingAnnouncementId)}
+                    className="btn btn-ghost btn-sm !p-2"
+                    aria-label="Close confirmation"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="px-6 py-5">
+                <p className="text-sm leading-6 text-[var(--text-secondary)]">
+                  This will permanently delete the announcement and remove it from the public banner feed.
+                </p>
+
+                <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+                  <p className="truncate text-sm font-semibold text-[var(--text-primary)]">
+                    {announcementToDelete.title}
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-sm text-[var(--text-secondary)]">
+                    {announcementToDelete.message}
+                  </p>
+                </div>
+
+                <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setAnnouncementToDelete(null)}
+                    disabled={Boolean(deletingAnnouncementId)}
+                    className="btn btn-ghost"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void deleteAnnouncement(announcementToDelete.id)}
+                    disabled={deletingAnnouncementId === announcementToDelete.id}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--error-500)] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {deletingAnnouncementId === announcementToDelete.id ? 'Deleting...' : 'Delete announcement'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast */}
       <AnimatePresence>
         {toast && (
           <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />

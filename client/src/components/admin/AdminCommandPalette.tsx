@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
 import {
@@ -57,7 +57,7 @@ type SearchResults = {
 type QuickAction = {
   label: string
   href: string
-  icon: React.ReactNode
+  icon: ReactNode
   description: string
 }
 
@@ -174,7 +174,7 @@ export function AdminCommandPalette() {
 
   /* ── Keyboard shortcut ── */
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
+    const handler = (e: globalThis.KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
         setOpen((prev) => !prev)
@@ -237,7 +237,7 @@ export function AdminCommandPalette() {
     router.push(href)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: ReactKeyboardEvent) => {
     if (e.key === 'Escape') {
       setOpen(false)
       return

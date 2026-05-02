@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
-import { Bell, UserPlus, DoorOpen, ShieldCheck, Clock } from 'lucide-react'
+import { Bell, UserPlus, DoorOpen, ShieldCheck, Clock, CheckCheck, Megaphone } from 'lucide-react'
 import { UserAvatar } from '@/components/ui/UserAvatar'
 
 type Notification = {
   id: string
-  type: 'new_user' | 'active_room' | 'admin_action'
+  type: 'new_user' | 'active_room' | 'admin_action' | 'announcement'
   title: string
   description: string
   image?: string | null
@@ -42,7 +42,30 @@ function NotifIcon({ type }: { type: Notification['type'] }) {
       return <div className={`${base} bg-[var(--primary-500)]/15 text-[var(--primary-500)]`}><DoorOpen className="h-4 w-4" /></div>
     case 'admin_action':
       return <div className={`${base} bg-[var(--warning-500)]/15 text-[var(--warning-500)]`}><ShieldCheck className="h-4 w-4" /></div>
+    case 'announcement':
+      return <div className={`${base} bg-[var(--error-500)]/15 text-[var(--error-500)]`}><Megaphone className="h-4 w-4" /></div>
   }
+}
+
+function CountBadge({
+  count,
+  icon,
+  label,
+  className,
+}: {
+  count: number
+  icon: ReactNode
+  label: string
+  className: string
+}) {
+  if (count <= 0) return null
+
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${className}`}>
+      {icon}
+      {count} {label}
+    </span>
+  )
 }
 
 export function AdminNotifications() {
@@ -54,7 +77,7 @@ export function AdminNotifications() {
   const panelRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
-  const totalCount = counts.activeRooms + counts.newUsers
+  const totalCount = counts.activeRooms + counts.newUsers + counts.recentActions + counts.announcements
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true)
@@ -103,12 +126,12 @@ export function AdminNotifications() {
     <div ref={panelRef} className="relative">
       <button
         onClick={handleToggle}
-        className="btn btn-ghost btn-sm relative"
+        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
         title="Notifications"
       >
         <Bell className="h-[18px] w-[18px]" />
         {totalCount > 0 && !seen && (
-          <span className="absolute right-1 top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--primary-500)] px-1 text-[10px] font-bold text-white ring-2 ring-[var(--background)]">
+          <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--primary-500)] px-1 text-[10px] font-bold text-white ring-2 ring-[var(--background)]">
             {totalCount > 9 ? '9+' : totalCount}
           </span>
         )}
@@ -125,16 +148,49 @@ export function AdminNotifications() {
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)]">Notifications</h3>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm font-semibold text-[var(--text-primary)]">Notifications</h3>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  <CountBadge
+                    count={counts.activeRooms}
+                    icon={<DoorOpen className="h-3 w-3" />}
+                    label="live"
+                    className="bg-[var(--primary-500)]/10 text-[var(--primary-500)]"
+                  />
+                  <CountBadge
+                    count={counts.newUsers}
+                    icon={<UserPlus className="h-3 w-3" />}
+                    label="new"
+                    className="bg-[var(--success-500)]/10 text-[var(--success-500)]"
+                  />
+                  <CountBadge
+                    count={counts.recentActions}
+                    icon={<ShieldCheck className="h-3 w-3" />}
+                    label="actions"
+                    className="bg-[var(--warning-500)]/10 text-[var(--warning-500)]"
+                  />
+                  <CountBadge
+                    count={counts.announcements}
+                    icon={<Megaphone className="h-3 w-3" />}
+                    label="announcements"
+                    className="bg-[var(--error-500)]/10 text-[var(--error-500)]"
+                  />
+                </div>
+              </div>
               <div className="flex items-center gap-2">
-                {counts.activeRooms > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[var(--primary-500)]/10 px-2 py-0.5 text-[10px] font-semibold text-[var(--primary-500)]">
-                    <DoorOpen className="h-3 w-3" />{counts.activeRooms} live
-                  </span>
+                {totalCount > 0 && (
+                  <button
+                    onClick={() => setSeen(true)}
+                    className="inline-flex items-center gap-1 text-xs text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]"
+                    title="Mark all as read"
+                  >
+                    <CheckCheck className="h-3.5 w-3.5" />
+                    Mark all read
+                  </button>
                 )}
                 <button
                   onClick={() => { fetchNotifications(); setSeen(false) }}
-                  className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+                  className="text-xs text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]"
                 >
                   Refresh
                 </button>

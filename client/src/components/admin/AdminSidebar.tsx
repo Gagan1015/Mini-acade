@@ -70,7 +70,7 @@ export function AdminSidebar({ userName, userEmail: _userEmail, userImage, userR
   const NavContent = ({ mobile = false }: { mobile?: boolean }) => (
     <>
       {/* Logo / Brand */}
-      <div className={`border-b border-[var(--sidebar-border)] ${collapsed && !mobile ? 'px-2 py-3' : 'px-4'}`}>
+      <div className={`border-b border-[var(--sidebar-border)] ${collapsed && !mobile ? 'px-2' : 'px-4'}`}>
         <div className={`flex h-16 items-center gap-3 ${collapsed && !mobile ? 'justify-center' : ''}`}>
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[12px] bg-[var(--primary-500)]/15 text-[var(--primary-400)]">
             <LogoMark size={20} />
@@ -106,22 +106,22 @@ export function AdminSidebar({ userName, userEmail: _userEmail, userImage, userR
             </button>
           )}
         </div>
-        {/* Desktop: expand toggle (collapsed state â€” centered below logo) */}
+      </div>
+
+      {/* Main navigation */}
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden p-3">
+        {/* Expand toggle when collapsed */}
         {!mobile && collapsed && (
-          <div className="flex justify-center pt-2">
+          <div className="mb-2 flex justify-center">
             <button
               onClick={() => setCollapsed(false)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--sidebar-text-muted)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text)]"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--sidebar-text-muted)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text)]"
               title="Expand sidebar"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         )}
-      </div>
-
-      {/* Main navigation */}
-      <nav className="flex-1 overflow-y-auto p-3">
         {(!collapsed || mobile) && (
           <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--sidebar-text-muted)]">
             Main
@@ -147,9 +147,6 @@ export function AdminSidebar({ userName, userEmail: _userEmail, userImage, userR
                 />
                 {(!collapsed || mobile) && (
                   <span className="whitespace-nowrap">{item.label}</span>
-                )}
-                {active && (!collapsed || mobile) && (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[var(--primary-400)]" />
                 )}
                 {/* Tooltip for collapsed */}
                 {collapsed && !mobile && (
@@ -216,12 +213,12 @@ export function AdminSidebar({ userName, userEmail: _userEmail, userImage, userR
 
       {/* User profile footer */}
       <div className="border-t border-[var(--sidebar-border)] p-3">
-        <div className={`flex items-center gap-3 ${collapsed && !mobile ? 'flex-col' : ''}`}>
+        <div className={`flex items-center ${collapsed && !mobile ? 'flex-col gap-2' : 'gap-3'}`}>
           <UserAvatar
             src={userImage}
             name={userName}
             alt={userName}
-            className="h-9 w-9 rounded-full ring-2 ring-[var(--sidebar-border)]"
+            className="h-9 w-9 flex-shrink-0 rounded-full ring-2 ring-[var(--sidebar-border)]"
             fallbackClassName="bg-[var(--primary-500)]/20 text-[var(--primary-400)]"
           />
           {(!collapsed || mobile) && (
@@ -232,7 +229,7 @@ export function AdminSidebar({ userName, userEmail: _userEmail, userImage, userR
           )}
           <button
             onClick={() => void signOut({ callbackUrl: '/' })}
-            className={`group relative rounded-lg p-1.5 text-[var(--sidebar-text-muted)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--error-500)] ${collapsed && !mobile ? '' : ''}`}
+            className="group relative flex-shrink-0 rounded-lg p-1.5 text-[var(--sidebar-text-muted)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--error-500)]"
             title="Sign out"
           >
             <LogOut className="h-4 w-4" />
@@ -253,7 +250,7 @@ export function AdminSidebar({ userName, userEmail: _userEmail, userImage, userR
       <motion.aside
         animate={{ width: sidebarWidth }}
         transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-        className="fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] lg:flex"
+        className="fixed inset-y-0 left-0 z-40 hidden flex-col overflow-hidden border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] lg:flex"
       >
         <NavContent />
       </motion.aside>

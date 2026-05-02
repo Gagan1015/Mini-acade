@@ -32,7 +32,7 @@ export function AdminTopBar({ userEmail: _userEmail }: AdminTopBarProps) {
       <div className="flex items-center gap-2">
         <button
           onClick={handleRefresh}
-          className="btn btn-ghost btn-sm"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
           title="Refresh data"
         >
           <RefreshCw className={`h-[18px] w-[18px] ${refreshing ? 'animate-spin' : ''}`} />

@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 import { Header } from './Header'
 import { Footer } from './Footer'
+import { AnnouncementBanner } from '@/components/ui/AnnouncementBanner'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -25,6 +26,7 @@ export function AppLayout({
         .join(' ')}
     >
       <Header variant={variant} />
+      <AnnouncementBanner variant={variant} />
       <main className="flex-1">{children}</main>
       {showFooter && <Footer variant={variant} />}
     </div>

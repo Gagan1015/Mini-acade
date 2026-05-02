@@ -80,6 +80,15 @@ export async function GET() {
       href: `/admin/rooms/${room.id}`,
       createdAt: room.createdAt.toISOString(),
     })),
+    // Active announcements
+    ...activeAnnouncements.map((announcement) => ({
+      id: `announcement-${announcement.id}`,
+      type: 'announcement' as const,
+      title: 'Active announcement',
+      description: announcement.title,
+      href: '/admin/settings',
+      createdAt: announcement.createdAt.toISOString(),
+    })),
     // Admin actions
     ...recentLogs.map((log) => ({
       id: `log-${log.id}`,
