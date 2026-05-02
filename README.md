@@ -1,6 +1,8 @@
 # Arcado
 
-![Arcado preview](client/public/og-image.png)
+<p align="center">
+  <img src="client/public/readme-banner.png" alt="Arcado - Play Together, Anywhere" width="760" />
+</p>
 
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -122,4 +124,3 @@ deploy/README.md
 ## Brand
 
 Arcado is designed around the feeling of starting a room in seconds and making the first round memorable. The name keeps the arcade spirit while fitting the product more cleanly than the older repository name.
-

@@ -29,6 +29,12 @@ pnpm-debug.log*
 !.vscode/settings.json
 !.vscode/extensions.json
 
+# Local AI assistant context
+.agent/
+.agents/
+.claude/
+skills-lock.json
+
 # OS
 .DS_Store
 Thumbs.db
