@@ -23,6 +23,11 @@ type NotifCounts = {
   announcements: number
 }
 
+type NotificationsResponse = {
+  notifications: Notification[]
+  counts: NotifCounts
+}
+
 function timeAgo(iso: string): string {
   const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
   if (seconds < 60) return 'just now'
@@ -37,13 +42,29 @@ function NotifIcon({ type }: { type: Notification['type'] }) {
   const base = 'flex h-8 w-8 items-center justify-center rounded-full'
   switch (type) {
     case 'new_user':
-      return <div className={`${base} bg-[var(--success-500)]/15 text-[var(--success-500)]`}><UserPlus className="h-4 w-4" /></div>
+      return (
+        <div className={`${base} bg-[var(--success-500)]/15 text-[var(--success-500)]`}>
+          <UserPlus className="h-4 w-4" />
+        </div>
+      )
     case 'active_room':
-      return <div className={`${base} bg-[var(--primary-500)]/15 text-[var(--primary-500)]`}><DoorOpen className="h-4 w-4" /></div>
+      return (
+        <div className={`${base} bg-[var(--primary-500)]/15 text-[var(--primary-500)]`}>
+          <DoorOpen className="h-4 w-4" />
+        </div>
+      )
     case 'admin_action':
-      return <div className={`${base} bg-[var(--warning-500)]/15 text-[var(--warning-500)]`}><ShieldCheck className="h-4 w-4" /></div>
+      return (
+        <div className={`${base} bg-[var(--warning-500)]/15 text-[var(--warning-500)]`}>
+          <ShieldCheck className="h-4 w-4" />
+        </div>
+      )
     case 'announcement':
-      return <div className={`${base} bg-[var(--error-500)]/15 text-[var(--error-500)]`}><Megaphone className="h-4 w-4" /></div>
+      return (
+        <div className={`${base} bg-[var(--error-500)]/15 text-[var(--error-500)]`}>
+          <Megaphone className="h-4 w-4" />
+        </div>
+      )
   }
 }
 
@@ -61,7 +82,9 @@ function CountBadge({
   if (count <= 0) return null
 
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${className}`}>
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${className}`}
+    >
       {icon}
       {count} {label}
     </span>
@@ -71,20 +94,26 @@ function CountBadge({
 export function AdminNotifications() {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
-  const [counts, setCounts] = useState<NotifCounts>({ activeRooms: 0, newUsers: 0, recentActions: 0, announcements: 0 })
+  const [counts, setCounts] = useState<NotifCounts>({
+    activeRooms: 0,
+    newUsers: 0,
+    recentActions: 0,
+    announcements: 0,
+  })
   const [loading, setLoading] = useState(false)
   const [seen, setSeen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
-  const totalCount = counts.activeRooms + counts.newUsers + counts.recentActions + counts.announcements
+  const totalCount =
+    counts.activeRooms + counts.newUsers + counts.recentActions + counts.announcements
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch('/api/admin/notifications')
       if (res.ok) {
-        const data = await res.json()
+        const data = (await res.json()) as NotificationsResponse
         setNotifications(data.notifications)
         setCounts(data.counts)
       }
