@@ -210,7 +210,14 @@ export class RoomService {
     }
 
     const connectedPlayers = Array.from(room.players.values()).filter((player) => player.isConnected)
-    const minPlayers = GAMES[room.gameId].minPlayers
+    const gameConfig = await this.getGameConfig(room.gameId)
+
+    if (gameConfig && !gameConfig.isEnabled) {
+      this.emitRoomError(input.socket, 'GAME_DISABLED', `${gameConfig.name} is currently disabled.`)
+      return false
+    }
+
+    const minPlayers = gameConfig?.minPlayers ?? GAMES[room.gameId].minPlayers
 
     if (connectedPlayers.length < minPlayers) {
       this.emitRoomError(
@@ -617,6 +624,21 @@ export class RoomService {
     }
 
     return room
+  }
+
+  private async getGameConfig(gameId: GameId) {
+    try {
+      return await prisma.gameConfig.findUnique({
+        where: { gameId },
+        select: {
+          name: true,
+          isEnabled: true,
+          minPlayers: true,
+        },
+      })
+    } catch {
+      return null
+    }
   }
 
   private async finalizeDisconnectGrace(roomCode: RoomCode, userId: UserId) {

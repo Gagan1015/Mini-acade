@@ -13,6 +13,7 @@ import {
   type TriviaDifficulty,
 } from '@arcado/shared'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { GameUnavailable } from '@/components/games/GameUnavailable'
 import { GAME_LIST, getGameInfo } from '@/lib/games'
 import { Spinner } from '@/components/ui/Animated'
 import { GameIcon } from '@/components/ui/GameIcons'
@@ -132,6 +133,11 @@ function IconClock({ size = 14 }: { size?: number }) {
 
 type TabType = 'create' | 'join'
 type PlayMode = 'solo' | 'multiplayer'
+type UnavailableGameState = {
+  gameName: string
+  message: string
+}
+
 const triviaDifficultyOptions: Array<{ value: TriviaDifficulty; label: string; description: string }> = [
   { value: 'easy', label: 'Chill', description: 'Easy going' },
   { value: 'medium', label: 'Classic', description: 'Balanced' },
@@ -290,6 +296,7 @@ function LobbyPageContent() {
   const [joinCode, setJoinCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [unavailableGame, setUnavailableGame] = useState<UnavailableGameState | null>(null)
 
   // Pre-select game from URL
   useEffect(() => {
@@ -345,11 +352,22 @@ function LobbyPageContent() {
                   triviaCategories: selectedTriviaCategories,
                   triviaDifficulty,
                 }
-              : undefined,
+              : selectedGame === 'skribble'
+                ? { rounds: Number(triviaRounds) }
+                : undefined,
         }),
       })
       const payload = await res.json()
       if (!res.ok || !payload.success || !payload.data) {
+        if (payload.error?.code === 'GAME_DISABLED') {
+          setUnavailableGame({
+            gameName: payload.error.gameName ?? selectedGameData?.name ?? 'This game',
+            message:
+              'This game has been turned off by an admin, so new multiplayer rooms cannot be created right now.',
+          })
+          return
+        }
+
         setError(payload.error?.message ?? 'Unable to create room right now.')
         return
       }
@@ -439,6 +457,16 @@ function LobbyPageContent() {
   }
 
   /* â”€â”€ Main lobby â”€â”€ */
+  if (unavailableGame) {
+    return (
+      <GameUnavailable
+        gameName={unavailableGame.gameName}
+        message={unavailableGame.message}
+        onBackToLobby={() => setUnavailableGame(null)}
+      />
+    )
+  }
+
   return (
     <AppLayout variant="marketing">
       <div className="marketing-rail-layout overflow-hidden bg-[var(--background)]">

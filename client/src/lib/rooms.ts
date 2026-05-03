@@ -10,6 +10,32 @@ import {
 } from '@arcado/shared'
 
 const ROOM_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+const SOLO_ONE_ROUND_GAMES = new Set<GameId>(['wordel', 'flagel'])
+
+export class GameUnavailableError extends Error {
+  constructor(
+    message: string,
+    readonly gameId: GameId,
+    readonly gameName: string
+  ) {
+    super(message)
+    this.name = 'GameUnavailableError'
+  }
+}
+
+export function isGameUnavailableError(error: unknown): error is GameUnavailableError {
+  return error instanceof GameUnavailableError
+}
+
+export async function getGameAvailability(gameId: GameId) {
+  const gameConfig = await getGameConfig(gameId)
+
+  return {
+    gameId,
+    name: gameConfig?.name ?? GAMES[gameId].name,
+    isEnabled: gameConfig?.isEnabled ?? true,
+  }
+}
 
 export async function createRoomForUser(input: {
   creatorId: string
@@ -18,7 +44,17 @@ export async function createRoomForUser(input: {
   settings?: GameSettings
 }) {
   const code = await generateUniqueRoomCode()
-  const maxPlayers = clampMaxPlayers(input.gameId, input.maxPlayers)
+  const gameConfig = await getGameConfig(input.gameId)
+  const maxPlayers = clampMaxPlayers(input.gameId, input.maxPlayers, gameConfig)
+  const settings = normalizeRoomSettings(input.gameId, maxPlayers, input.settings)
+
+  if (gameConfig && !gameConfig.isEnabled) {
+    throw new GameUnavailableError(
+      `${gameConfig.name} is currently disabled.`,
+      input.gameId,
+      gameConfig.name
+    )
+  }
 
   await prisma.room.create({
     data: {
@@ -26,7 +62,7 @@ export async function createRoomForUser(input: {
       gameId: input.gameId,
       creatorId: input.creatorId,
       maxPlayers,
-      settings: input.settings as Prisma.InputJsonValue | undefined,
+      settings: settings as Prisma.InputJsonValue | undefined,
       status: 'WAITING',
       isPrivate: true,
     },
@@ -47,6 +83,15 @@ export async function getOrCreateSoloRoomForUser(input: {
   settings?: GameSettings
   forceNew?: boolean
 }) {
+  const gameConfig = await getGameConfig(input.gameId)
+  if (gameConfig && !gameConfig.isEnabled) {
+    throw new GameUnavailableError(
+      `${gameConfig.name} is currently disabled.`,
+      input.gameId,
+      gameConfig.name
+    )
+  }
+
   const existingRoom = input.forceNew
     ? null
     : await prisma.room.findFirst({
@@ -226,14 +271,47 @@ async function generateUniqueRoomCode() {
   throw new Error('Unable to generate a unique room code.')
 }
 
-function clampMaxPlayers(gameId: GameId, maxPlayers?: number) {
+async function getGameConfig(gameId: GameId) {
+  return prisma.gameConfig.findUnique({
+    where: { gameId },
+    select: {
+      name: true,
+      isEnabled: true,
+      minPlayers: true,
+      maxPlayers: true,
+    },
+  })
+}
+
+function clampMaxPlayers(
+  gameId: GameId,
+  maxPlayers?: number,
+  gameConfig?: Awaited<ReturnType<typeof getGameConfig>>
+) {
   const game = GAMES[gameId]
+  const minPlayers = gameConfig?.minPlayers ?? game.minPlayers
+  const configuredMaxPlayers = gameConfig?.maxPlayers ?? game.maxPlayers
 
   if (!maxPlayers) {
-    return game.maxPlayers
+    return configuredMaxPlayers
   }
 
-  return Math.max(game.minPlayers, Math.min(game.maxPlayers, maxPlayers))
+  return Math.max(minPlayers, Math.min(configuredMaxPlayers, maxPlayers))
+}
+
+function normalizeRoomSettings(
+  gameId: GameId,
+  maxPlayers: number,
+  settings?: GameSettings
+): GameSettings | undefined {
+  if (maxPlayers === 1 && SOLO_ONE_ROUND_GAMES.has(gameId)) {
+    return {
+      ...settings,
+      rounds: 1,
+    }
+  }
+
+  return settings
 }
 
 function mapRoomStatus(status: string): Room['status'] {

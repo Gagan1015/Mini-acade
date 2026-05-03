@@ -1,9 +1,10 @@
 import { getServerSession } from 'next-auth'
 import { notFound, redirect } from 'next/navigation'
 
+import { GameUnavailable } from '@/components/games/GameUnavailable'
 import { RoomLobby } from '@/components/room/RoomLobby'
 import { authOptions } from '@/lib/auth'
-import { getRoomByCode } from '@/lib/rooms'
+import { getGameAvailability, getRoomByCode } from '@/lib/rooms'
 
 export default async function RoomPage({
   params,
@@ -22,6 +23,16 @@ export default async function RoomPage({
 
   if (!room) {
     notFound()
+  }
+
+  const gameAvailability = await getGameAvailability(room.gameId)
+  if (!gameAvailability.isEnabled) {
+    return (
+      <GameUnavailable
+        gameName={gameAvailability.name}
+        message="This game has been turned off by an admin, so this room cannot be played right now."
+      />
+    )
   }
 
   if (room.maxPlayers === 1) {

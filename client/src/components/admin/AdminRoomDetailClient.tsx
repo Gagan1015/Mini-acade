@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 
 import { GameIcon } from '@/components/ui/GameIcons'
+import { useToast } from '@/components/ui/Toast'
 import { staggerContainer, staggerItem } from '@/lib/motion'
 import type { AdminRoomDetail } from '@/lib/adminRooms'
 
@@ -94,6 +95,7 @@ export function AdminRoomDetailClient({
   adminLogs,
 }: AdminRoomDetailClientProps) {
   const router = useRouter()
+  const toast = useToast()
   const [forceEndReason, setForceEndReason] = useState('')
   const [showForceEndConfirm, setShowForceEndConfirm] = useState(false)
   const [isForceEnding, setIsForceEnding] = useState(false)
@@ -101,7 +103,6 @@ export function AdminRoomDetailClient({
   const [playerToRemove, setPlayerToRemove] = useState<RemovablePlayer | null>(null)
   const [isRemovingPlayer, setIsRemovingPlayer] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
-  const [actionSuccess, setActionSuccess] = useState<string | null>(null)
   const statusInfo = STATUS_CONFIG[room.status] ?? STATUS_CONFIG.WAITING
   const activePlayers = players.filter((player) => player.leftAt === null)
   const inactivePlayers = players.filter((player) => player.leftAt !== null)
@@ -117,7 +118,6 @@ export function AdminRoomDetailClient({
 
     setIsForceEnding(true)
     setActionError(null)
-    setActionSuccess(null)
 
     try {
       const response = await fetch(`/api/admin/rooms/${room.id}/force-end`, {
@@ -137,7 +137,7 @@ export function AdminRoomDetailClient({
         return
       }
 
-      setActionSuccess('Room force-ended successfully. Connected players were sent back to the lobby.')
+      toast.success('Room force-ended successfully. Connected players were sent back to the lobby.')
       setShowForceEndConfirm(false)
       setForceEndReason('')
       startTransition(() => {
@@ -166,7 +166,6 @@ export function AdminRoomDetailClient({
 
     setIsRemovingPlayer(true)
     setActionError(null)
-    setActionSuccess(null)
 
     try {
       const response = await fetch(`/api/admin/rooms/${room.id}/remove-player`, {
@@ -201,7 +200,7 @@ export function AdminRoomDetailClient({
           ? `${targetName} was removed and host control transferred automatically.`
           : `${targetName} was removed from the room successfully.`
 
-      setActionSuccess(successMessage)
+      toast.success(successMessage)
       setPlayerToRemove(null)
       setRemovePlayerReason('')
       startTransition(() => {
@@ -286,7 +285,6 @@ export function AdminRoomDetailClient({
               type="button"
               onClick={() => {
                 setActionError(null)
-                setActionSuccess(null)
                 setShowForceEndConfirm(true)
               }}
               disabled={!canForceEnd || isForceEnding}
@@ -298,19 +296,7 @@ export function AdminRoomDetailClient({
         </div>
       </motion.div>
 
-      {(actionError || actionSuccess) && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`rounded-xl border px-4 py-3 text-sm ${
-            actionError
-              ? 'border-[var(--error-500)]/25 bg-[var(--error-500)]/8 text-[var(--error-500)]'
-              : 'border-[var(--success-500)]/25 bg-[var(--success-500)]/8 text-[var(--success-500)]'
-          }`}
-        >
-          {actionError ?? actionSuccess}
-        </motion.div>
-      )}
+
 
       {showForceEndConfirm && (
         <motion.div
@@ -546,7 +532,6 @@ export function AdminRoomDetailClient({
                           return
                         }
                         setActionError(null)
-                        setActionSuccess(null)
                         setRemovePlayerReason('')
                         setPlayerToRemove(player)
                       }}

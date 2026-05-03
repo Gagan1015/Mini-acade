@@ -13,6 +13,7 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { staggerContainer, staggerItem } from '@/lib/motion'
+import { useToast } from '@/components/ui/Toast'
 
 /* ── Types ── */
 
@@ -38,37 +39,11 @@ const ANNOUNCEMENT_TYPE_CONFIG: Record<string, { icon: typeof Info; color: strin
   success: { icon: CheckCircle2, color: 'var(--success-500)', label: 'Success' },
 }
 
-/* ── Toast ── */
-
-function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 50, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 20, scale: 0.95 }}
-      className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 rounded-xl border px-4 py-3 shadow-xl backdrop-blur-sm ${
-        type === 'success'
-          ? 'border-[var(--success-500)]/20 bg-[var(--surface)]'
-          : 'border-[var(--error-500)]/20 bg-[var(--surface)]'
-      }`}
-    >
-      {type === 'success' ? (
-        <CheckCircle2 className="h-5 w-5 text-[var(--success-500)]" />
-      ) : (
-        <AlertCircle className="h-5 w-5 text-[var(--error-500)]" />
-      )}
-      <span className="text-sm font-medium text-[var(--text-primary)]">{message}</span>
-      <button onClick={onClose} className="ml-2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
-        <X className="h-4 w-4" />
-      </button>
-    </motion.div>
-  )
-}
-
 /* ── Main Component ── */
 
 export function AdminSettingsClient({ announcements: initialAnnouncements }: AdminSettingsClientProps) {
   const [announcements, setAnnouncements] = useState(initialAnnouncements)
+  const toast = useToast()
 
   // Announcement form
   const [showNewAnnouncement, setShowNewAnnouncement] = useState(false)
@@ -80,14 +55,6 @@ export function AdminSettingsClient({ announcements: initialAnnouncements }: Adm
   const [creatingAnnouncement, setCreatingAnnouncement] = useState(false)
   const [announcementToDelete, setAnnouncementToDelete] = useState<Announcement | null>(null)
   const [deletingAnnouncementId, setDeletingAnnouncementId] = useState<string | null>(null)
-
-  // Toast
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
-
-  function showToast(message: string, type: 'success' | 'error' = 'success') {
-    setToast({ message, type })
-    setTimeout(() => setToast(null), 3000)
-  }
 
   /* ── Announcement Actions ── */
 
@@ -113,12 +80,12 @@ export function AdminSettingsClient({ announcements: initialAnnouncements }: Adm
         ])
         setNewAnnouncement({ title: '', message: '', type: 'info' })
         setShowNewAnnouncement(false)
-        showToast('Announcement created')
+        toast.success('Announcement created')
       } else {
-        showToast('Failed to create announcement', 'error')
+        toast.error('Failed to create announcement')
       }
     } catch {
-      showToast('Failed to create announcement', 'error')
+      toast.error('Failed to create announcement')
     } finally {
       setCreatingAnnouncement(false)
     }
@@ -133,10 +100,10 @@ export function AdminSettingsClient({ announcements: initialAnnouncements }: Adm
       })
       if (res.ok) {
         setAnnouncements((prev) => prev.map((a) => (a.id === id ? { ...a, isActive } : a)))
-        showToast(`Announcement ${isActive ? 'activated' : 'deactivated'}`)
+        toast.success(`Announcement ${isActive ? 'activated' : 'deactivated'}`)
       }
     } catch {
-      showToast('Failed to update announcement', 'error')
+      toast.error('Failed to update announcement')
     }
   }
 
@@ -149,12 +116,12 @@ export function AdminSettingsClient({ announcements: initialAnnouncements }: Adm
       if (res.ok) {
         setAnnouncements((prev) => prev.filter((a) => a.id !== id))
         setAnnouncementToDelete(null)
-        showToast('Announcement deleted')
+        toast.success('Announcement deleted')
       } else {
-        showToast('Failed to delete announcement', 'error')
+        toast.error('Failed to delete announcement')
       }
     } catch {
-      showToast('Failed to delete announcement', 'error')
+      toast.error('Failed to delete announcement')
     } finally {
       setDeletingAnnouncementId(null)
     }
@@ -492,12 +459,7 @@ export function AdminSettingsClient({ announcements: initialAnnouncements }: Adm
         )}
       </AnimatePresence>
 
-      {/* Toast */}
-      <AnimatePresence>
-        {toast && (
-          <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-        )}
-      </AnimatePresence>
+
     </div>
   )
 }

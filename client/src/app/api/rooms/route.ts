@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { gameIdSchema, triviaCategoryListSchema, triviaCategorySchema, triviaDifficultySchema } from '@arcado/shared'
 
 import { requireSession } from '@/lib/admin'
-import { createRoomForUser } from '@/lib/rooms'
+import { createRoomForUser, isGameUnavailableError } from '@/lib/rooms'
 
 const createRoomSchema = z.object({
   gameId: gameIdSchema,
@@ -15,6 +15,7 @@ const createRoomSchema = z.object({
       triviaCategory: triviaCategorySchema.optional(),
       triviaCategories: triviaCategoryListSchema.optional(),
       triviaDifficulty: triviaDifficultySchema.optional(),
+      triviaTimeLimit: z.number().int().min(5).max(120).optional(),
     })
     .optional(),
 })
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
       creatorId: session.user.id,
       gameId: input.gameId,
       maxPlayers: input.maxPlayers,
-      settings: input.gameId === 'trivia' ? input.settings : undefined,
+      settings: input.settings,
     })
 
     return NextResponse.json({
@@ -47,6 +48,21 @@ export async function POST(request: Request) {
           },
         },
         { status: 400 }
+      )
+    }
+
+    if (isGameUnavailableError(error)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'GAME_DISABLED',
+            message: error.message,
+            gameId: error.gameId,
+            gameName: error.gameName,
+          },
+        },
+        { status: 403 }
       )
     }
 

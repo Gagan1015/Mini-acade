@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 
 import { GameIcon } from '@/components/ui/GameIcons'
+import { useToast } from '@/components/ui/Toast'
 
 interface GameConfig {
   id: string
@@ -199,6 +200,7 @@ export function AdminGamesClient({
 }: AdminGamesClientProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const toast = useToast()
   const [gameConfigs, setGameConfigs] = useState(initialGameConfigs)
   const [draftFilters, setDraftFilters] = useState(filters)
   const [selectedQuestion, setSelectedQuestion] = useState<TriviaQuestionItem | null>(null)
@@ -208,9 +210,6 @@ export function AdminGamesClient({
   const [questionStatusDraft, setQuestionStatusDraft] = useState('')
   const [questionStatusNote, setQuestionStatusNote] = useState('')
   const [gameEdits, setGameEdits] = useState<Record<string, Partial<GameConfig>>>({})
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(
-    null,
-  )
 
   const restrictedCountLabel = useMemo(() => {
     if (summary.restrictedQuestions === 0) {
@@ -277,7 +276,6 @@ export function AdminGamesClient({
 
   async function toggleGame(gameId: string, isEnabled: boolean) {
     setSavingGame(gameId)
-    setFeedback(null)
 
     try {
       const response = await fetch(`/api/admin/games/${gameId}`, {
@@ -292,25 +290,16 @@ export function AdminGamesClient({
         | null
 
       if (!response.ok) {
-        setFeedback({
-          type: 'error',
-          message: payload?.error ?? 'Unable to update game availability.',
-        })
+        toast.error(payload?.error ?? 'Unable to update game availability.')
         return
       }
 
       setGameConfigs((current) =>
         current.map((game) => (game.gameId === gameId ? { ...game, ...(payload ?? {}) } : game)),
       )
-      setFeedback({
-        type: 'success',
-        message: `${gameId} ${isEnabled ? 'enabled' : 'disabled'} successfully.`,
-      })
+      toast.success(`${gameId} ${isEnabled ? 'enabled' : 'disabled'} successfully.`)
     } catch {
-      setFeedback({
-        type: 'error',
-        message: 'Unable to update game availability.',
-      })
+      toast.error('Unable to update game availability.')
     } finally {
       setSavingGame(null)
     }
@@ -323,7 +312,6 @@ export function AdminGamesClient({
     }
 
     setSavingGame(gameId)
-    setFeedback(null)
 
     try {
       const response = await fetch(`/api/admin/games/${gameId}`, {
@@ -338,10 +326,7 @@ export function AdminGamesClient({
         | null
 
       if (!response.ok) {
-        setFeedback({
-          type: 'error',
-          message: payload?.error ?? 'Unable to save game configuration.',
-        })
+        toast.error(payload?.error ?? 'Unable to save game configuration.')
         return
       }
 
@@ -354,15 +339,9 @@ export function AdminGamesClient({
         return next
       })
       setEditingGame(null)
-      setFeedback({
-        type: 'success',
-        message: `${gameId} settings saved.`,
-      })
+      toast.success(`${gameId} settings saved.`)
     } catch {
-      setFeedback({
-        type: 'error',
-        message: 'Unable to save game configuration.',
-      })
+      toast.error('Unable to save game configuration.')
     } finally {
       setSavingGame(null)
     }
@@ -372,7 +351,6 @@ export function AdminGamesClient({
     setSelectedQuestion(question)
     setQuestionStatusDraft(question.status)
     setQuestionStatusNote('')
-    setFeedback(null)
   }
 
   async function updateQuestionStatus() {
@@ -381,7 +359,7 @@ export function AdminGamesClient({
     }
 
     setUpdatingQuestionId(selectedQuestion.id)
-    setFeedback(null)
+
 
     try {
       const response = await fetch(`/api/admin/trivia-questions/${selectedQuestion.id}`, {
@@ -404,10 +382,7 @@ export function AdminGamesClient({
         | null
 
       if (!response.ok) {
-        setFeedback({
-          type: 'error',
-          message: payload?.error ?? 'Unable to update trivia question status.',
-        })
+        toast.error(payload?.error ?? 'Unable to update trivia question status.')
         return
       }
 
@@ -421,19 +396,13 @@ export function AdminGamesClient({
           : null,
       )
 
-      setFeedback({
-        type: 'success',
-        message: 'Trivia question lifecycle updated successfully.',
-      })
+      toast.success('Trivia question lifecycle updated successfully.')
 
       startTransition(() => {
         router.refresh()
       })
     } catch {
-      setFeedback({
-        type: 'error',
-        message: 'Unable to update trivia question status.',
-      })
+      toast.error('Unable to update trivia question status.')
     } finally {
       setUpdatingQuestionId(null)
     }
@@ -448,17 +417,7 @@ export function AdminGamesClient({
         </p>
       </div>
 
-      {feedback && (
-        <div
-          className={`rounded-xl border px-4 py-3 text-sm ${
-            feedback.type === 'error'
-              ? 'border-[var(--error-500)]/25 bg-[var(--error-500)]/8 text-[var(--error-500)]'
-              : 'border-[var(--success-500)]/25 bg-[var(--success-500)]/8 text-[var(--success-500)]'
-          }`}
-        >
-          {feedback.message}
-        </div>
-      )}
+
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {[
@@ -491,6 +450,7 @@ export function AdminGamesClient({
             const color = GAME_COLORS[game.gameId] || 'var(--primary-500)'
             const isEditing = editingGame === game.gameId
             const isSaving = savingGame === game.gameId
+            const supportsRoundTime = game.gameId !== 'wordel' && game.gameId !== 'flagel'
             const edits = gameEdits[game.gameId] || {}
             const currentValues = {
               minPlayers: edits.minPlayers ?? game.minPlayers,
@@ -590,7 +550,11 @@ export function AdminGamesClient({
                 </div>
 
                 {isEditing ? (
-                  <div className="mt-5 grid grid-cols-2 gap-4 border-t border-[var(--border)] pt-5 sm:grid-cols-4">
+                  <div
+                    className={`mt-5 grid grid-cols-2 gap-4 border-t border-[var(--border)] pt-5 ${
+                      supportsRoundTime ? 'sm:grid-cols-4' : 'sm:grid-cols-3'
+                    }`}
+                  >
                     <div>
                       <label className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-[var(--text-tertiary)]">
                         <Users className="h-3.5 w-3.5" />
@@ -642,22 +606,24 @@ export function AdminGamesClient({
                       />
                     </div>
 
-                    <div>
-                      <label className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-[var(--text-tertiary)]">
-                        <Clock className="h-3.5 w-3.5" />
-                        Round Time
-                      </label>
-                      <input
-                        type="number"
-                        min={10}
-                        max={300}
-                        value={currentValues.roundTime}
-                        onChange={(event) =>
-                          updateGameEdit(game.gameId, 'roundTime', Number(event.target.value))
-                        }
-                        className="input text-center"
-                      />
-                    </div>
+                    {supportsRoundTime && (
+                      <div>
+                        <label className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-[var(--text-tertiary)]">
+                          <Clock className="h-3.5 w-3.5" />
+                          Round Time
+                        </label>
+                        <input
+                          type="number"
+                          min={10}
+                          max={300}
+                          value={currentValues.roundTime}
+                          onChange={(event) =>
+                            updateGameEdit(game.gameId, 'roundTime', Number(event.target.value))
+                          }
+                          className="input text-center"
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -669,10 +635,12 @@ export function AdminGamesClient({
                       <Layers className="mr-1 h-3 w-3" />
                       {game.defaultRounds} rounds
                     </span>
-                    <span className="badge badge-primary">
-                      <Clock className="mr-1 h-3 w-3" />
-                      {game.roundTime}s
-                    </span>
+                    {supportsRoundTime && (
+                      <span className="badge badge-primary">
+                        <Clock className="mr-1 h-3 w-3" />
+                        {game.roundTime}s
+                      </span>
+                    )}
                   </div>
                 )}
               </motion.div>

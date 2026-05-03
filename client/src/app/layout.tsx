@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import Script from 'next/script'
 
 import { AuthProvider } from '@/components/providers/AuthProvider'
+import { ToastProvider } from '@/components/ui/Toast'
 
 import './globals.css'
 
@@ -210,7 +211,9 @@ export default function RootLayout({
             })();
           `}
         </Script>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   )

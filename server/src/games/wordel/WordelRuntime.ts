@@ -26,13 +26,14 @@ type PlayerWordelState = {
 }
 
 export class WordelRuntime extends BaseGameRuntime {
-  private readonly maxAttempts = 6
+  private readonly maxAttempts: number
   private readonly wordLength = 5
   private readonly playerState = new Map<UserId, PlayerWordelState>()
   private secretWord = 'APPLE'
 
   constructor(io: Server, config: GameConfig, roomService: RoomService) {
     super(io, config, roomService)
+    this.maxAttempts = readPositiveInteger(config.settings?.customSettings?.maxAttempts, 6)
   }
 
   async initialize() {
@@ -46,9 +47,15 @@ export class WordelRuntime extends BaseGameRuntime {
   }
 
   async start(): Promise<GameEventResult> {
+    this.currentRound = 0
+    return this.startNextRound()
+  }
+
+  private async startNextRound(): Promise<GameEventResult> {
     this.phase = 'playing'
-    this.currentRound = 1
+    this.currentRound += 1
     this.secretWord = pickWord()
+    this.resetPlayerState()
     await this.updateRoomPresenceStatus('playing')
 
     return {
@@ -131,10 +138,9 @@ export class WordelRuntime extends BaseGameRuntime {
     if (guessResult.isCorrect) {
       playerState.solved = true
       playerState.finished = true
-      this.setPlayerScore(playerId, this.maxAttempts - guessResult.attemptsUsed + 1)
+      this.addPlayerScore(playerId, this.maxAttempts - guessResult.attemptsUsed + 1)
     } else if (guessResult.attemptsUsed >= this.maxAttempts) {
       playerState.finished = true
-      this.setPlayerScore(playerId, 0)
     }
 
     const result: GameEventResult = {
@@ -159,24 +165,8 @@ export class WordelRuntime extends BaseGameRuntime {
     }
 
     if (this.allPlayersFinished()) {
-      this.phase = 'roundEnd'
-
-      result.broadcast?.push({
-        event: WORDEL_EVENTS.ROUND_ENDED,
-        to: 'room',
-        data: {
-          correctWord: this.secretWord,
-          playerResults: Array.from(this.playerState.entries()).map(([activePlayerId, state]) => ({
-            playerId: activePlayerId,
-            solved: state.solved,
-            attempts: state.guesses.length,
-            pointsEarned: this.scores.get(activePlayerId) ?? 0,
-          })),
-        },
-      })
-
-      const endResult = await this.end()
-      result.broadcast?.push(...(endResult.broadcast ?? []))
+      const roundResult = await this.finishRound()
+      result.broadcast?.push(...(roundResult.broadcast ?? []))
     }
 
     await this.updateRoomPresenceStatus(this.phase)
@@ -252,4 +242,55 @@ export class WordelRuntime extends BaseGameRuntime {
   private allPlayersFinished() {
     return Array.from(this.playerState.values()).every((state) => state.finished)
   }
+
+  private async finishRound(): Promise<GameEventResult> {
+    this.phase = 'roundEnd'
+
+    const result: GameEventResult = {
+      success: true,
+      broadcast: [
+        {
+          event: WORDEL_EVENTS.ROUND_ENDED,
+          to: 'room',
+          data: {
+            correctWord: this.secretWord,
+            playerResults: Array.from(this.playerState.entries()).map(([activePlayerId, state]) => ({
+              playerId: activePlayerId,
+              solved: state.solved,
+              attempts: state.guesses.length,
+              pointsEarned: this.scores.get(activePlayerId) ?? 0,
+            })),
+          },
+        },
+      ],
+    }
+
+    if (this.currentRound >= this.totalRounds) {
+      const endResult = await this.end()
+      result.broadcast?.push(...(endResult.broadcast ?? []))
+      return result
+    }
+
+    const nextRoundResult = await this.startNextRound()
+    result.broadcast?.push(...(nextRoundResult.broadcast ?? []))
+    return result
+  }
+
+  private resetPlayerState() {
+    for (const playerId of this.players.keys()) {
+      this.playerState.set(playerId, {
+        guesses: [],
+        solved: false,
+        finished: false,
+      })
+    }
+  }
+
+  private addPlayerScore(playerId: UserId, points: number) {
+    this.setPlayerScore(playerId, (this.scores.get(playerId) ?? 0) + points)
+  }
+}
+
+function readPositiveInteger(value: unknown, fallback: number) {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : fallback
 }

@@ -398,12 +398,12 @@ export function WordelPlayArea({
                         // flipKey forces re-mount so framer replays the animation
                         key={isFlipping ? `flip-${flipKey}-${colIndex}` : `${rowIndex}-${colIndex}`}
                         style={{
-                          width: '62px',
-                          height: '62px',
+                          width: 'clamp(48px, 13vw, 62px)',
+                          height: 'clamp(48px, 13vw, 62px)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '2rem',
+                          fontSize: 'clamp(1.5rem, 5vw, 2rem)',
                           fontWeight: 700,
                           fontFamily: 'var(--font-sans)',
                           textTransform: 'uppercase',
@@ -499,7 +499,19 @@ export function WordelPlayArea({
                     whileTap={{ scale: 0.97 }}
                     type="button"
                     onClick={onPlayAgain}
-                    className="btn btn-primary mt-2 px-8 py-2.5"
+                    style={{
+                      marginTop: '8px',
+                      padding: '10px 32px',
+                      borderRadius: '12px',
+                      border: 'none',
+                      background: COLORS.correct,
+                      color: '#ffffff',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
+                      fontFamily: 'var(--font-sans)',
+                      cursor: 'pointer',
+                      letterSpacing: '0.025em',
+                    }}
                   >
                     Play Again
                   </motion.button>
@@ -513,8 +525,8 @@ export function WordelPlayArea({
             style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '8px',
-              padding: '0 8px',
+              gap: '6px',
+              padding: '0 4px',
               maxWidth: '500px',
               width: '100%',
               marginTop: '20px',
@@ -525,7 +537,7 @@ export function WordelPlayArea({
                 key={rowIndex}
                 style={{
                   display: 'flex',
-                  gap: '6px',
+                  gap: 'clamp(4px, 1vw, 6px)',
                   justifyContent: 'center',
                 }}
               >
@@ -546,13 +558,12 @@ export function WordelPlayArea({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        height: '58px',
-                        minWidth: isWide ? '65px' : '43px',
-                        maxWidth: isWide ? '65px' : undefined,
-                        flex: isWide ? 'none' : '1',
+                        height: 'clamp(46px, 12vw, 58px)',
+                        flex: isWide ? '1.5' : '1',
+                        minWidth: 0,
                         borderRadius: '4px',
                         border: 'none',
-                        fontSize: isWide ? '0.7rem' : '0.85rem',
+                        fontSize: isWide ? 'clamp(0.6rem, 2.5vw, 0.7rem)' : 'clamp(0.75rem, 3vw, 0.85rem)',
                         fontWeight: 700,
                         fontFamily: 'var(--font-sans)',
                         textTransform: 'uppercase',

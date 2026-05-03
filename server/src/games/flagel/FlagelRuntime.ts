@@ -29,16 +29,18 @@ type PlayerFlagelState = {
   skipped: boolean
 }
 
-const MAX_ATTEMPTS = 6
+const DEFAULT_MAX_ATTEMPTS = 6
 const POINTS_BY_ATTEMPT = [1000, 800, 600, 400, 200, 100] as const
 
 export class FlagelRuntime extends BaseGameRuntime {
+  private readonly maxAttempts: number
   private readonly playerState = new Map<UserId, PlayerFlagelState>()
   private readonly usedCountryCodes = new Set<string>()
   private secretCountry: Country | null = null
 
   constructor(io: Server, config: GameConfig, roomService: RoomService) {
     super(io, config, roomService)
+    this.maxAttempts = readPositiveInteger(config.settings?.customSettings?.maxAttempts, DEFAULT_MAX_ATTEMPTS)
   }
 
   async initialize() {
@@ -48,9 +50,15 @@ export class FlagelRuntime extends BaseGameRuntime {
   }
 
   async start(): Promise<GameEventResult> {
+    this.currentRound = 0
+    return this.startNextRound()
+  }
+
+  private async startNextRound(): Promise<GameEventResult> {
     this.phase = 'playing'
-    this.currentRound = 1
+    this.currentRound += 1
     this.secretCountry = pickRandomCountry(this.usedCountryCodes)
+    this.resetPlayerState()
     console.info('[flagel] round started', {
       roomCode: this.roomCode,
       countryCode: this.secretCountry.code,
@@ -71,8 +79,8 @@ export class FlagelRuntime extends BaseGameRuntime {
             totalRounds: this.totalRounds,
             flagEmoji: this.secretCountry.flagEmoji,
             flagImageUrl: this.secretCountry.flagImageUrl,
-            maxAttempts: MAX_ATTEMPTS,
-            hintsAvailable: MAX_ATTEMPTS - 1,
+            maxAttempts: this.maxAttempts,
+            hintsAvailable: this.maxAttempts - 1,
           },
         },
       ],
@@ -125,8 +133,8 @@ export class FlagelRuntime extends BaseGameRuntime {
       totalRounds: this.totalRounds,
       flagEmoji: this.secretCountry?.flagEmoji,
       flagImageUrl: this.secretCountry?.flagImageUrl,
-      maxAttempts: MAX_ATTEMPTS,
-      hintsAvailable: Math.max(0, MAX_ATTEMPTS - (state?.guesses.length ?? 0) - 1),
+      maxAttempts: this.maxAttempts,
+      hintsAvailable: Math.max(0, this.maxAttempts - (state?.guesses.length ?? 0) - 1),
       guesses: state?.guesses ?? [],
       playerStatuses: Array.from(this.playerState.entries()).map(([activePlayerId, playerState]) => ({
         playerId: activePlayerId,
@@ -162,7 +170,7 @@ export class FlagelRuntime extends BaseGameRuntime {
 
     return {
       gameType: 'flagel',
-      maxAttempts: MAX_ATTEMPTS,
+      maxAttempts: this.maxAttempts,
       correctCountry: this.secretCountry.name,
       countryCode: this.secretCountry.code,
       flagEmoji: this.secretCountry.flagEmoji ?? null,
@@ -223,7 +231,7 @@ export class FlagelRuntime extends BaseGameRuntime {
       distance: isCorrect ? 0 : calculateDistanceKm(guessedCountry, this.secretCountry),
       direction: isCorrect ? undefined : getDirectionHint(guessedCountry, this.secretCountry),
       attemptsUsed,
-      maxAttempts: MAX_ATTEMPTS,
+      maxAttempts: this.maxAttempts,
     }
 
     playerState.guessedCountryCodes.add(guessedCountry.code)
@@ -232,10 +240,9 @@ export class FlagelRuntime extends BaseGameRuntime {
     if (isCorrect) {
       playerState.solved = true
       playerState.finished = true
-      this.setPlayerScore(playerId, POINTS_BY_ATTEMPT[attemptsUsed - 1] ?? 0)
-    } else if (attemptsUsed >= MAX_ATTEMPTS) {
+      this.addPlayerScore(playerId, getPointsForAttempt(attemptsUsed))
+    } else if (attemptsUsed >= this.maxAttempts) {
       playerState.finished = true
-      this.setPlayerScore(playerId, 0)
     }
 
     const result: GameEventResult = {
@@ -294,7 +301,6 @@ export class FlagelRuntime extends BaseGameRuntime {
 
     playerState.skipped = true
     playerState.finished = true
-    this.setPlayerScore(playerId, 0)
 
     const result: GameEventResult = {
       success: true,
@@ -348,13 +354,29 @@ export class FlagelRuntime extends BaseGameRuntime {
       ],
     }
 
-    const endResult = await this.end()
-    roundEndResult.broadcast?.push(...(endResult.broadcast ?? []))
+    if (this.currentRound >= this.totalRounds) {
+      const endResult = await this.end()
+      roundEndResult.broadcast?.push(...(endResult.broadcast ?? []))
+      return roundEndResult
+    }
+
+    const nextRoundResult = await this.startNextRound()
+    roundEndResult.broadcast?.push(...(nextRoundResult.broadcast ?? []))
     return roundEndResult
   }
 
   private allPlayersFinished() {
     return Array.from(this.playerState.values()).every((state) => state.finished)
+  }
+
+  private resetPlayerState() {
+    for (const playerId of this.players.keys()) {
+      this.playerState.set(playerId, createPlayerFlagelState())
+    }
+  }
+
+  private addPlayerScore(playerId: UserId, points: number) {
+    this.setPlayerScore(playerId, (this.scores.get(playerId) ?? 0) + points)
   }
 }
 
@@ -366,4 +388,12 @@ function createPlayerFlagelState(): PlayerFlagelState {
     finished: false,
     skipped: false,
   }
+}
+
+function getPointsForAttempt(attemptsUsed: number) {
+  return POINTS_BY_ATTEMPT[attemptsUsed - 1] ?? 0
+}
+
+function readPositiveInteger(value: unknown, fallback: number) {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : fallback
 }

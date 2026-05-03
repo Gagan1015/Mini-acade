@@ -21,6 +21,26 @@ import { WordelRuntime } from './wordel/WordelRuntime'
 type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>
 type TypedIo = Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>
 
+const FALLBACK_ROUNDS: Record<string, number> = {
+  wordel: 1,
+  flagel: 1,
+  trivia: 10,
+  skribble: 1,
+}
+
+const SOLO_ONE_ROUND_GAMES = new Set(['wordel', 'flagel'])
+
+async function getAdminGameDefaults(gameId: string) {
+  try {
+    return await prisma.gameConfig.findUnique({
+      where: { gameId },
+      select: { defaultRounds: true, roundTime: true },
+    })
+  } catch {
+    return null
+  }
+}
+
 async function getTriviaSettings(room: Room): Promise<GameSettings> {
   const configuredCategories =
     room.settings?.triviaCategories?.length
@@ -31,24 +51,49 @@ async function getTriviaSettings(room: Room): Promise<GameSettings> {
 
   // Fall back to the admin-configured round time when the host hasn't
   // overridden it via room settings.
-  let adminRoundTime: number | undefined
-  try {
-    const adminConfig = await prisma.gameConfig.findUnique({
-      where: { gameId: 'trivia' },
-      select: { roundTime: true, defaultRounds: true },
-    })
-    adminRoundTime = adminConfig?.roundTime ?? undefined
-  } catch {
-    // If the lookup fails for any reason, simply fall back to runtime defaults.
-  }
+  const adminConfig = await getAdminGameDefaults('trivia')
+  const adminRoundTime = adminConfig?.roundTime ?? undefined
 
   return {
-    rounds: room.settings?.rounds ?? 10,
+    rounds: getConfiguredRounds(room, adminConfig?.defaultRounds, FALLBACK_ROUNDS.trivia),
     maxPlayers: room.maxPlayers,
     triviaCategory: room.settings?.triviaCategory,
     triviaCategories: configuredCategories,
     triviaDifficulty: room.settings?.triviaDifficulty,
     triviaTimeLimit: room.settings?.triviaTimeLimit ?? adminRoundTime,
+  }
+}
+
+async function getConfiguredGameSettings(
+  room: Room,
+  fallbackRounds: number
+): Promise<GameSettings> {
+  const adminConfig = await getAdminGameDefaults(room.gameId)
+
+  return {
+    rounds: getConfiguredRounds(room, adminConfig?.defaultRounds, fallbackRounds),
+    roundTime: adminConfig?.roundTime,
+    maxPlayers: room.maxPlayers,
+  }
+}
+
+function getConfiguredRounds(
+  room: Room,
+  adminDefaultRounds: number | undefined,
+  fallbackRounds: number
+) {
+  if (room.maxPlayers === 1 && SOLO_ONE_ROUND_GAMES.has(room.gameId)) {
+    return 1
+  }
+
+  return room.settings?.rounds ?? adminDefaultRounds ?? fallbackRounds
+}
+
+function withoutRoundTimer(settings: GameSettings): GameSettings {
+  return {
+    rounds: settings.rounds,
+    maxPlayers: settings.maxPlayers,
+    customSettings: settings.customSettings,
   }
 }
 
@@ -99,6 +144,18 @@ export class GameManager {
       }
     }
 
+    this.logDebug('createGame:settings', {
+      roomCode: room.code,
+      gameId: room.gameId,
+      roomSettings: room.settings,
+      playerCount: room.players.length,
+    })
+
+    const configuredSettings =
+      room.gameId === 'trivia'
+        ? await getTriviaSettings(room)
+        : await getConfiguredGameSettings(room, FALLBACK_ROUNDS[room.gameId] ?? 1)
+
     const runtime =
       room.gameId === 'wordel'
         ? new WordelRuntime(
@@ -107,10 +164,7 @@ export class GameManager {
               gameId: room.gameId,
               roomCode: room.code,
               players: room.players,
-              settings: {
-                rounds: 1,
-                maxPlayers: room.maxPlayers,
-              },
+              settings: withoutRoundTimer(configuredSettings),
             },
             this.roomService
           )
@@ -122,7 +176,8 @@ export class GameManager {
                 roomCode: room.code,
                 players: room.players,
                 settings: {
-                  rounds: room.players.length,
+                  rounds: configuredSettings.rounds ?? room.players.length,
+                  roundTime: configuredSettings.roundTime,
                   maxPlayers: room.maxPlayers,
                 },
               },
@@ -135,10 +190,7 @@ export class GameManager {
                 gameId: room.gameId,
                 roomCode: room.code,
                 players: room.players,
-                settings: {
-                  rounds: 1,
-                  maxPlayers: room.maxPlayers,
-                },
+                settings: withoutRoundTimer(configuredSettings),
               },
               this.roomService
             )
@@ -148,7 +200,7 @@ export class GameManager {
               gameId: room.gameId,
               roomCode: room.code,
               players: room.players,
-              settings: await getTriviaSettings(room),
+              settings: configuredSettings,
             },
             this.roomService
           )

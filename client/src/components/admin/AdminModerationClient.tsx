@@ -19,6 +19,8 @@ import {
   X,
 } from 'lucide-react'
 
+import { useToast } from '@/components/ui/Toast'
+
 type ModerationItem = {
   id: string
   contentType: string
@@ -210,13 +212,13 @@ export function AdminModerationClient({
 }: AdminModerationClientProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const toast = useToast()
   const [draftFilters, setDraftFilters] = useState(filters)
   const [selectedItem, setSelectedItem] = useState<ModerationItem | null>(null)
   const [pendingAction, setPendingAction] = useState<ModerationAction | null>(null)
   const [reasonCode, setReasonCode] = useState('report_threshold')
   const [note, setNote] = useState('')
   const [actionError, setActionError] = useState<string | null>(null)
-  const [actionSuccess, setActionSuccess] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const escalatedCount = useMemo(
@@ -278,7 +280,6 @@ export function AdminModerationClient({
     setReasonCode('report_threshold')
     setNote('')
     setActionError(null)
-    setActionSuccess(null)
   }
 
   async function submitAction() {
@@ -288,7 +289,6 @@ export function AdminModerationClient({
 
     setIsSubmitting(true)
     setActionError(null)
-    setActionSuccess(null)
 
     try {
       const response = await fetch(`/api/admin/moderation/${selectedItem.id}`, {
@@ -317,7 +317,7 @@ export function AdminModerationClient({
         return
       }
 
-      setActionSuccess(`${ACTION_CONFIG[pendingAction].label} action saved to the moderation log.`)
+      toast.success(`${ACTION_CONFIG[pendingAction].label} action saved to the moderation log.`)
       setPendingAction(null)
       startTransition(() => {
         router.refresh()
@@ -340,17 +340,7 @@ export function AdminModerationClient({
         </p>
       </div>
 
-      {(actionError || actionSuccess) && (
-        <div
-          className={`rounded-xl border px-4 py-3 text-sm ${
-            actionError
-              ? 'border-[var(--error-500)]/25 bg-[var(--error-500)]/8 text-[var(--error-500)]'
-              : 'border-[var(--success-500)]/25 bg-[var(--success-500)]/8 text-[var(--success-500)]'
-          }`}
-        >
-          {actionError ?? actionSuccess}
-        </div>
-      )}
+
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
@@ -727,7 +717,6 @@ export function AdminModerationClient({
                         onClick={() => {
                           setPendingAction(action)
                           setActionError(null)
-                          setActionSuccess(null)
                         }}
                         className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${
                           pendingAction === action
@@ -788,6 +777,12 @@ export function AdminModerationClient({
                         className="input min-h-[112px] resize-none"
                       />
                     </label>
+
+                    {actionError && (
+                      <p className="mt-4 rounded-xl border border-[var(--danger-500)]/30 bg-[var(--danger-500)]/10 px-3 py-2 text-sm font-medium text-[var(--danger-500)]">
+                        {actionError}
+                      </p>
+                    )}
 
                     <div className="mt-4 flex gap-2">
                       <button

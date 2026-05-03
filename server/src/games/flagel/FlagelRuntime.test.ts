@@ -34,7 +34,7 @@ class TestFlagelRuntime extends FlagelRuntime {
   }
 }
 
-function createRuntime() {
+function createRuntime(settings: GameConfig['settings'] = { rounds: 1 }) {
   const config: GameConfig = {
     gameId: 'flagel',
     roomCode: 'ABC123',
@@ -54,9 +54,7 @@ function createRuntime() {
         score: 0,
       },
     ],
-    settings: {
-      rounds: 1,
-    },
+    settings,
   }
 
   const io = {
@@ -174,4 +172,37 @@ test('FlagelRuntime ends the match once the last player finishes by skipping', a
 
   assert.ok(roundEndedBroadcast)
   assert.ok(gameEndedBroadcast)
+})
+
+test('FlagelRuntime starts another round when configured for multiple rounds', async () => {
+  const runtime = createRuntime({ rounds: 2 })
+  await runtime.initialize()
+  await runtime.start()
+  runtime.setSecretCountryForTest(GERMANY)
+
+  await runtime.onClientEvent('user-1', FLAGEL_EVENTS.SUBMIT_GUESS, {
+    roomCode: 'ABC123',
+    guess: 'Germany',
+  })
+
+  const roundOneComplete = await runtime.onClientEvent('user-2', FLAGEL_EVENTS.SUBMIT_GUESS, {
+    roomCode: 'ABC123',
+    guess: 'Germany',
+  })
+
+  assert.equal(roundOneComplete.success, true)
+  assert.equal(runtime.getSnapshot().phase, 'playing')
+  assert.equal(runtime.getSnapshot().currentRound, 2)
+
+  const nextRoundBroadcast = roundOneComplete.broadcast?.find(
+    (entry) =>
+      entry.event === FLAGEL_EVENTS.ROUND_STARTED &&
+      (entry.data as { roundNumber: number }).roundNumber === 2
+  )
+  const finalBroadcast = roundOneComplete.broadcast?.find(
+    (entry) => entry.event === FLAGEL_EVENTS.GAME_ENDED
+  )
+
+  assert.ok(nextRoundBroadcast)
+  assert.equal(finalBroadcast, undefined)
 })

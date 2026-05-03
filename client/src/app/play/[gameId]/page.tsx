@@ -13,8 +13,13 @@ import {
 } from '@arcado/shared'
 
 import { RoomLobby } from '@/components/room/RoomLobby'
+import { GameUnavailable } from '@/components/games/GameUnavailable'
 import { authOptions } from '@/lib/auth'
-import { getOrCreateSoloRoomForUser, getRoomByCode } from '@/lib/rooms'
+import {
+  getOrCreateSoloRoomForUser,
+  getRoomByCode,
+  isGameUnavailableError,
+} from '@/lib/rooms'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -52,7 +57,22 @@ export default async function SoloPlayPage({
     gameId: params.gameId,
     settings: soloSettings,
     forceNew: shouldForceNewRoom,
+  }).catch((error) => {
+    if (isGameUnavailableError(error)) {
+      return error
+    }
+
+    throw error
   })
+
+  if (isGameUnavailableError(soloSession)) {
+    return (
+      <GameUnavailable
+        gameName={soloSession.gameName}
+        message="This game has been turned off by an admin, so new solo sessions cannot be started right now."
+      />
+    )
+  }
 
   const room = await getRoomByCode(soloSession.roomCode)
 

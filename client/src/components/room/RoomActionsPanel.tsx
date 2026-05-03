@@ -130,30 +130,39 @@ export function RoomActionsPanel() {
   const [triviaTimeLimit, setTriviaTimeLimit] = useState(20)
   const [selectedTriviaCategories, setSelectedTriviaCategories] = useState<TriviaCategory[]>(defaultTriviaCategories)
   const [triviaDifficulty, setTriviaDifficulty] = useState<TriviaDifficulty>('medium')
+  const [skribbleRounds, setSkribbleRounds] = useState(3)
   const [joinCode, setJoinCode] = useState('')
   const [createError, setCreateError] = useState<string | null>(null)
   const [joinError, setJoinError] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [isJoining, setIsJoining] = useState(false)
   const [showTriviaSettings, setShowTriviaSettings] = useState(false)
+  const [showSkribbleSettings, setShowSkribbleSettings] = useState(false)
 
   const selectedGame = useMemo(() => GAMES[gameId], [gameId])
   const selectedGameInfo = useMemo(() => getGameInfo(gameId), [gameId])
 
   async function handleCreateRoom() {
     try {
+      const buildSettings = () => {
+        if (gameId === 'trivia') {
+          return {
+            rounds: triviaRounds,
+            triviaCategories: selectedTriviaCategories,
+            triviaDifficulty,
+            triviaTimeLimit,
+          }
+        }
+        if (gameId === 'skribble') {
+          return { rounds: skribbleRounds }
+        }
+        return undefined
+      }
+
       if (GAMES[gameId].minPlayers <= 1 && Number(maxPlayers) === 1) {
         router.push(
           buildSoloPlayUrl(gameId, {
-            settings:
-              gameId === 'trivia'
-                ? {
-                    rounds: triviaRounds,
-                    triviaCategories: selectedTriviaCategories,
-                    triviaDifficulty,
-                    triviaTimeLimit,
-                  }
-                : undefined,
+            settings: buildSettings(),
           })
         )
         return
@@ -167,15 +176,7 @@ export function RoomActionsPanel() {
         body: JSON.stringify({
           gameId,
           maxPlayers: Number(maxPlayers),
-          settings:
-            gameId === 'trivia'
-              ? {
-                  rounds: triviaRounds,
-                  triviaCategories: selectedTriviaCategories,
-                  triviaDifficulty,
-                  triviaTimeLimit,
-                }
-              : undefined,
+          settings: buildSettings(),
         }),
       })
       const payload = await response.json() as {
@@ -284,7 +285,7 @@ export function RoomActionsPanel() {
           </div>
         </label>
 
-        {/* Trivia Settings â€“ Compact Summary + Gear */}
+        {/* Trivia Settings – Compact Summary + Gear */}
         {gameId === 'trivia' && (
           <div className="mb-5">
             <button
@@ -299,6 +300,30 @@ export function RoomActionsPanel() {
                 <p className="text-sm font-semibold text-[var(--text-primary)]">Trivia Settings</p>
                 <p className="mt-0.5 text-[11px] text-[var(--text-tertiary)] truncate">
                   {triviaRounds} questions {'\u00B7'} {triviaTimeLimit}s per Q {'\u00B7'} {difficultyLabel} {'\u00B7'} {categoryLabel}
+                </p>
+              </div>
+              <span className="shrink-0 text-[var(--text-tertiary)] transition-transform group-hover:rotate-45">
+                <IconGear size={14} />
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* Skribble Settings – Compact Summary + Gear */}
+        {gameId === 'skribble' && (
+          <div className="mb-5">
+            <button
+              type="button"
+              onClick={() => setShowSkribbleSettings(true)}
+              className="flex w-full items-center gap-3 rounded-2xl border border-[var(--border)]/60 bg-[var(--surface)]/30 px-4 py-3.5 text-left transition-all hover:border-[var(--game-skribble)]/40 hover:bg-[var(--game-skribble)]/[0.03] group cursor-pointer"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--game-skribble)]/10 text-[var(--game-skribble)] transition-transform group-hover:scale-105">
+                <IconGear size={18} />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-[var(--text-primary)]">Skribble Settings</p>
+                <p className="mt-0.5 text-[11px] text-[var(--text-tertiary)] truncate">
+                  {skribbleRounds} {skribbleRounds === 1 ? 'round' : 'rounds'} {'\u00B7'} Each player draws {skribbleRounds > 1 ? 'multiple times' : 'once'}
                 </p>
               </div>
               <span className="shrink-0 text-[var(--text-tertiary)] transition-transform group-hover:rotate-45">
@@ -354,6 +379,17 @@ export function RoomActionsPanel() {
             difficulty={triviaDifficulty}
             onDifficultyChange={setTriviaDifficulty}
             onClose={() => setShowTriviaSettings(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Skribble Settings Modal */}
+      <AnimatePresence>
+        {showSkribbleSettings && (
+          <SkribbleSettingsModal
+            rounds={skribbleRounds}
+            onRoundsChange={setSkribbleRounds}
+            onClose={() => setShowSkribbleSettings(false)}
           />
         )}
       </AnimatePresence>
@@ -624,6 +660,169 @@ function TriviaSettingsModal({
             type="button"
             onClick={onClose}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--game-trivia)] px-6 py-3.5 text-sm font-semibold text-white shadow-lg transition-shadow hover:shadow-xl cursor-pointer"
+          >
+            <IconCheck size={14} />
+            Done
+          </motion.button>
+        </div>
+      </motion.div>
+    </motion.div>,
+    document.body
+  )
+}
+
+function SkribbleSettingsModal({
+  rounds,
+  onRoundsChange,
+  onClose,
+}: {
+  rounds: number
+  onRoundsChange: (v: number) => void
+  onClose: () => void
+}) {
+  if (typeof document === 'undefined') return null
+
+  const roundPresets = [
+    { value: 1, label: 'Quick', desc: 'One draw each' },
+    { value: 3, label: 'Standard', desc: 'Three rounds' },
+    { value: 5, label: 'Marathon', desc: 'Five rounds' },
+    { value: 8, label: 'Epic', desc: 'Eight rounds' },
+  ]
+
+  return createPortal(
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: 30 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.92, y: 30 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        className="relative z-10 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl border border-[var(--border)] bg-[var(--background)] shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="relative overflow-hidden rounded-t-3xl bg-gradient-to-br from-[var(--game-skribble)]/15 via-[var(--game-skribble)]/5 to-transparent px-6 pb-5 pt-6">
+          <div className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-[var(--game-skribble)]/10 blur-2xl" />
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] cursor-pointer"
+          >
+            <IconX size={14} />
+          </button>
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--game-skribble)]/15 text-[var(--game-skribble)]">
+              <IconGear size={20} />
+            </span>
+            <div>
+              <h2 className="font-display text-lg font-bold text-[var(--text-primary)]">Skribble Settings</h2>
+              <p className="text-xs text-[var(--text-secondary)]">Configure your drawing game</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-5 space-y-6">
+
+          {/* Rounds — Plus/Minus Stepper */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">Rounds</p>
+                <p className="text-[11px] text-[var(--text-tertiary)]">How many drawing turns per player</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-center gap-1 rounded-2xl border border-[var(--border)]/50 bg-[var(--surface)]/30 p-2">
+              <button
+                type="button"
+                onClick={() => onRoundsChange(Math.max(1, rounds - 1))}
+                disabled={rounds <= 1}
+                className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border)]/50 bg-[var(--background)] text-[var(--text-secondary)] transition-all hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <IconMinus size={16} />
+              </button>
+              <div className="flex-1 text-center">
+                <motion.p
+                  key={rounds}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="font-display text-3xl font-bold text-[var(--text-primary)]"
+                >
+                  {rounds}
+                </motion.p>
+                <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-[var(--text-tertiary)]">{rounds === 1 ? 'Round' : 'Rounds'}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onRoundsChange(Math.min(10, rounds + 1))}
+                disabled={rounds >= 10}
+                className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border)]/50 bg-[var(--background)] text-[var(--text-secondary)] transition-all hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <IconPlus size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Presets */}
+          <div>
+            <p className="mb-3 text-sm font-semibold text-[var(--text-primary)]">Quick Presets</p>
+            <div className="grid grid-cols-2 gap-2">
+              {roundPresets.map((preset) => {
+                const isSelected = rounds === preset.value
+                return (
+                  <button
+                    key={preset.value}
+                    type="button"
+                    onClick={() => onRoundsChange(preset.value)}
+                    className={`relative rounded-xl border px-3 py-3 text-center transition-all cursor-pointer ${
+                      isSelected
+                        ? 'border-[var(--game-skribble)]/50 bg-[var(--game-skribble)]/10 shadow-sm'
+                        : 'border-[var(--border)]/50 bg-[var(--surface)]/30 hover:border-[var(--border-strong)]/60 hover:bg-[var(--surface-hover)]'
+                    }`}
+                  >
+                    {isSelected && (
+                      <motion.span
+                        layoutId="skribble-round-indicator"
+                        className="absolute inset-0 rounded-xl border-2 border-[var(--game-skribble)]/40"
+                      />
+                    )}
+                    <p className={`font-mono text-base font-bold ${
+                      isSelected ? 'text-[var(--game-skribble)]' : 'text-[var(--text-primary)]'
+                    }`}>
+                      {preset.value}
+                    </p>
+                    <p className={`text-[10px] ${isSelected ? 'text-[var(--game-skribble)]/70' : 'text-[var(--text-tertiary)]'}`}>
+                      {preset.desc}
+                    </p>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Info */}
+          <div className="rounded-xl border border-[var(--game-skribble)]/15 bg-[var(--game-skribble)]/5 px-4 py-3">
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              <span className="font-semibold text-[var(--game-skribble)]">{rounds} {rounds === 1 ? 'round' : 'rounds'}</span> means
+              each player will get <span className="font-semibold">{rounds}</span> {rounds === 1 ? 'turn' : 'turns'} to draw.
+              The total number of drawing turns will be <span className="font-semibold">{rounds} × number of players</span>.
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-[var(--border)] px-6 py-4">
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            type="button"
+            onClick={onClose}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--game-skribble)] px-6 py-3.5 text-sm font-semibold text-white shadow-lg transition-shadow hover:shadow-xl cursor-pointer"
           >
             <IconCheck size={14} />
             Done

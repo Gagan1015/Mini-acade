@@ -161,6 +161,20 @@ type SkribbleUiState = {
   roundEndWord: string | null
 }
 
+function createRoundPlayerStatuses(playerIds: string[], scores: Record<string, number>) {
+  return Object.fromEntries(
+    playerIds.map((playerId) => [
+      playerId,
+      {
+        attemptCount: 0,
+        solved: false,
+        finished: false,
+        score: scores[playerId] ?? 0,
+      },
+    ])
+  )
+}
+
 export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions) {
   const socketRef = useRef<AppSocket | null>(null)
   const notificationIdRef = useRef(0)
@@ -463,8 +477,10 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
         wordLength: payload.wordLength ?? 5,
         maxAttempts: payload.maxAttempts ?? 6,
         guesses: [],
-        playerStatuses: createEmptyPlayerStatuses(Object.keys(previousState.playerStatuses)),
-        scores: createEmptyScores(Object.keys(previousState.playerStatuses)),
+        playerStatuses: createRoundPlayerStatuses(
+          Object.keys(previousState.playerStatuses),
+          previousState.scores
+        ),
         correctWord: payload.correctWord,
         finalScores: [],
       }))
@@ -754,6 +770,10 @@ export function useRoom({ roomCode, currentUserId, initialRoom }: UseRoomOptions
         maxAttempts: payload.maxAttempts ?? 6,
         hintsAvailable: payload.hintsAvailable,
         guesses: [],
+        playerStatuses: createRoundPlayerStatuses(
+          Object.keys(previousState.playerStatuses),
+          previousState.scores
+        ),
         finalScores: [],
         correctCountry: undefined,
         countryCode: undefined,

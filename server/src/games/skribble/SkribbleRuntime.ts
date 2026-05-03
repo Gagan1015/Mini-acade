@@ -68,7 +68,14 @@ export class SkribbleRuntime extends BaseGameRuntime {
 
   constructor(io: Server, config: GameConfig, roomService: RoomService) {
     super(io, config, roomService)
-    this.totalRounds = config.settings?.rounds ?? config.players.length
+    const perPlayerRounds = config.settings?.rounds ?? 1
+    this.totalRounds = perPlayerRounds * config.players.length
+    console.info('[SkribbleRuntime] constructor', {
+      configSettingsRounds: config.settings?.rounds,
+      perPlayerRounds,
+      playerCount: config.players.length,
+      totalRounds: this.totalRounds,
+    })
   }
 
   async initialize() {

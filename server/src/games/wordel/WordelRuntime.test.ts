@@ -33,7 +33,7 @@ class TestWordelRuntime extends WordelRuntime {
   }
 }
 
-function createRuntime() {
+function createRuntime(settings: GameConfig['settings'] = { rounds: 1 }) {
   const config: GameConfig = {
     gameId: 'wordel',
     roomCode: 'ABC123',
@@ -53,9 +53,7 @@ function createRuntime() {
         score: 0,
       },
     ],
-    settings: {
-      rounds: 1,
-    },
+    settings,
   }
 
   const io = {
@@ -145,4 +143,37 @@ test('WordelRuntime ends the match once every player is finished', async () => {
   )
 
   assert.ok(finalBroadcast)
+})
+
+test('WordelRuntime starts another round when configured for multiple rounds', async () => {
+  const runtime = createRuntime({ rounds: 2 })
+  await runtime.initialize()
+  await runtime.start()
+  runtime.setSecretWordForTest('APPLE')
+
+  await runtime.onClientEvent('user-1', WORDEL_EVENTS.SUBMIT_GUESS, {
+    roomCode: 'ABC123',
+    guess: 'APPLE',
+  })
+
+  const roundOneComplete = await runtime.onClientEvent('user-2', WORDEL_EVENTS.SUBMIT_GUESS, {
+    roomCode: 'ABC123',
+    guess: 'APPLE',
+  })
+
+  assert.equal(roundOneComplete.success, true)
+  assert.equal(runtime.getSnapshot().phase, 'playing')
+  assert.equal(runtime.getSnapshot().currentRound, 2)
+
+  const nextRoundBroadcast = roundOneComplete.broadcast?.find(
+    (entry) =>
+      entry.event === WORDEL_EVENTS.ROUND_STARTED &&
+      (entry.data as { roundNumber: number }).roundNumber === 2
+  )
+  const finalBroadcast = roundOneComplete.broadcast?.find(
+    (entry) => entry.event === WORDEL_EVENTS.GAME_ENDED
+  )
+
+  assert.ok(nextRoundBroadcast)
+  assert.equal(finalBroadcast, undefined)
 })
