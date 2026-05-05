@@ -39,6 +39,7 @@ function deriveCookieDomain(): string | undefined {
 const cookieDomain = deriveCookieDomain()
 
 export const authOptions: NextAuthOptions = {
+  debug: true,
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: 'database',
@@ -84,29 +85,37 @@ export const authOptions: NextAuthOptions = {
   },
   events: {
     async createUser({ user }) {
-      const email = user.email?.toLowerCase()
-      if (!email) {
-        return
-      }
+      try {
+        const email = user.email?.toLowerCase()
+        if (!email) {
+          return
+        }
 
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          role: adminEmails.includes(email) ? 'ADMIN' : 'USER',
-          status: 'ACTIVE',
-        },
-      })
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            role: adminEmails.includes(email) ? 'ADMIN' : 'USER',
+            status: 'ACTIVE',
+          },
+        })
+      } catch (error) {
+        console.error('[auth] createUser event failed:', error)
+      }
     },
     async signIn({ user }) {
-      const email = user.email?.toLowerCase()
+      try {
+        const email = user.email?.toLowerCase()
 
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          lastLoginAt: new Date(),
-          ...(email && adminEmails.includes(email) ? { role: 'ADMIN' } : {}),
-        },
-      })
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            lastLoginAt: new Date(),
+            ...(email && adminEmails.includes(email) ? { role: 'ADMIN' } : {}),
+          },
+        })
+      } catch (error) {
+        console.error('[auth] signIn event failed:', error)
+      }
     },
   },
   pages: {

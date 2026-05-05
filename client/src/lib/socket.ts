@@ -6,11 +6,19 @@ import type { ClientToServerEvents, ServerToClientEvents } from '@arcado/shared'
 export type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>
 
 export function createSocket() {
-  const socketUrl = process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:3001'
+  const socketUrl =
+    readPublicEnv(process.env.NEXT_PUBLIC_WS_URL) ??
+    readPublicEnv(process.env.NEXT_PUBLIC_API_URL) ??
+    'http://localhost:3001'
 
   return io(socketUrl, {
     autoConnect: false,
     transports: ['websocket'],
     withCredentials: true,
   }) as AppSocket
+}
+
+function readPublicEnv(value: string | undefined) {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : undefined
 }
