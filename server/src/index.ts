@@ -89,6 +89,24 @@ app.get('/health', (_req, res) => {
   })
 })
 
+app.get('/health/db', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    res.json({
+      status: 'ok',
+      database: 'ok',
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error('[health][db] failed', error)
+    res.status(503).json({
+      status: 'error',
+      database: 'unavailable',
+      timestamp: new Date().toISOString(),
+    })
+  }
+})
+
 app.post('/admin/rooms/:roomCode/force-end', async (req, res) => {
   try {
     const session = await getAdminSession(req.headers.cookie)

@@ -86,7 +86,31 @@ aws ec2 authorize-security-group-ingress --group-id $rdsSgId --region $region `
   --protocol tcp --port 5432 --source-group $sgId
 ```
 
-### 4. Launch the EC2 instance
+### 4. Give EC2 read access to the RDS secret
+
+Production deploys do not keep a handwritten database password in `.env.prod`.
+Instead, the EC2 host reads the RDS-managed Secrets Manager secret, renders
+`/srv/arcado/.env.prod.generated`, and gives that generated env file to Docker
+Compose. Attach an instance profile to the EC2 instance with permission to read
+only the RDS master secret ARN shown in the RDS console:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "secretsmanager:GetSecretValue",
+      "Resource": "arn:aws:secretsmanager:ap-south-1:123456789012:secret:rds!db-REPLACE_ME"
+    }
+  ]
+}
+```
+
+If the secret uses a customer-managed KMS key, also allow `kms:Decrypt` for
+that key.
+
+### 5. Launch the EC2 instance
 
 ```powershell
 $instanceId = aws ec2 run-instances `
@@ -105,7 +129,7 @@ $instanceId = aws ec2 run-instances `
 aws ec2 wait instance-running --instance-ids $instanceId --region $region
 ```
 
-### 5. Allocate + attach an Elastic IP
+### 6. Allocate + attach an Elastic IP
 
 ```powershell
 $allocId = aws ec2 allocate-address --domain vpc --region $region `
@@ -117,7 +141,7 @@ $eip = aws ec2 describe-addresses --allocation-ids $allocId --region $region `
 echo "EIP: $eip"
 ```
 
-### 6. Point DNS at the EIP
+### 7. Point DNS at the EIP
 
 In Route53, edit (or create) two A records in your `gagankumar.me` hosted zone:
 
@@ -129,7 +153,7 @@ In Route53, edit (or create) two A records in your `gagankumar.me` hosted zone:
 Wait ~60 seconds for DNS propagation before the first `docker compose up`, or
 Caddy's first ACME attempt will fail and retry.
 
-### 7. Provision the app on the box
+### 8. Provision the app on the box
 
 Give the bootstrap script a minute to finish (`cloud-init` can take 2–3 min),
 then SSH in:
@@ -141,22 +165,28 @@ ssh -i arcado-ec2.pem ubuntu@<EIP>
 cd /srv/arcado
 git clone https://github.com/<you>/arcado.git .
 cp deploy/ec2/.env.prod.example .env.prod
-nano .env.prod                    # fill in real values
-docker compose -f deploy/ec2/docker-compose.prod.yml \
-               --env-file /srv/arcado/.env.prod \
-               up -d --build
+chmod 600 .env.prod
+nano .env.prod                    # fill in stable values and RDS_MASTER_SECRET_ARN
+bash deploy/ec2/deploy-prod.sh
+sudo bash deploy/ec2/install-db-secret-refresh.sh
 docker compose -f deploy/ec2/docker-compose.prod.yml logs -f
 ```
 
 The first build pulls base images and compiles Next.js, which takes 4–8
 minutes on t3.small. After that, incremental `up -d --build` is under a
-minute for most changes.
+minute for most changes. `deploy-prod.sh` fetches the current RDS secret,
+generates `/srv/arcado/.env.prod.generated`, tests `select 1` against RDS, and
+only then replaces the running containers.
+`install-db-secret-refresh.sh` adds a systemd timer that re-checks the RDS
+secret every 5 minutes and restarts the app containers with the refreshed env
+if AWS rotates the password between deploys.
 
-### 8. Smoke test
+### 9. Smoke test
 
 ```bash
 curl -I https://arcado.gagankumar.me
 curl https://api.arcado.gagankumar.me/health
+curl https://api.arcado.gagankumar.me/health/db
 ```
 
 Open the site in a browser, sign in, check that the Socket.IO connection
@@ -167,7 +197,7 @@ upgrades to `wss://api.arcado.gagankumar.me` in the network tab.
 ## CI/CD (GitHub Actions)
 
 The workflow at `.github/workflows/deploy.yml` SSHes into the box on every
-push to `main` and re-runs `git pull && docker compose up -d --build`. Add
+push to `main` and runs `deploy/ec2/deploy-prod.sh`. Add
 these three secrets in **GitHub → Repo → Settings → Secrets and variables → Actions**:
 
 | Secret | Value |
@@ -177,7 +207,8 @@ these three secrets in **GitHub → Repo → Settings → Secrets and variables 
 | `EC2_SSH_KEY` | the **full contents** of `arcado-ec2.pem` including the `-----BEGIN/END-----` lines |
 
 Trigger a manual run from the **Actions** tab to verify before merging any
-real change.
+real change. Broken or stale DB credentials fail before app containers are
+replaced.
 
 ---
 
@@ -188,25 +219,25 @@ From your laptop, on any branch:
 ```bash
 ssh -i arcado-ec2.pem ubuntu@<EIP> \
   "cd /srv/arcado && git fetch --all && git checkout <branch> && \
-   docker compose -f deploy/ec2/docker-compose.prod.yml --env-file /srv/arcado/.env.prod up -d --build"
+   bash deploy/ec2/deploy-prod.sh"
 ```
 
 ---
 
 ## Running DB migrations
 
-`prisma db push` from the box uses the same `.env.prod`:
+`prisma db push` from the box should use the generated env file:
 
 ```bash
 ssh -i arcado-ec2.pem ubuntu@<EIP>
 cd /srv/arcado
-docker compose -f deploy/ec2/docker-compose.prod.yml run --rm \
-  -e DATABASE_URL="$(grep ^DATABASE_URL .env.prod | cut -d= -f2-)" \
+python3 deploy/ec2/render-prod-env.py --source /srv/arcado/.env.prod --output /srv/arcado/.env.prod.generated
+docker compose -f deploy/ec2/docker-compose.prod.yml --env-file /srv/arcado/.env.prod.generated run --rm \
   server npx prisma db push --schema /app/db/prisma/schema.prisma
 ```
 
 Or, if you'd rather run it from your laptop, temporarily allowlist your IP on
-the RDS SG (same as the original runbook's step 5) and run
+the RDS SG (same as step 3) and run
 `pnpm --filter @arcado/db db:push` locally.
 
 ---
@@ -229,6 +260,12 @@ docker compose -f deploy/ec2/docker-compose.prod.yml logs -f caddy
 # restart a single container
 docker compose -f deploy/ec2/docker-compose.prod.yml restart server
 
+# re-render the env file from Secrets Manager and verify DB auth
+bash deploy/ec2/deploy-prod.sh
+
+# check automatic secret refresh timer
+systemctl list-timers arcado-db-secret-refresh.timer --no-pager
+
 # disk cleanup (if the box fills up)
 docker system prune -af --volumes
 
@@ -250,4 +287,6 @@ docker stats --no-stream
 - **RDS still private**: the RDS security group now allows 5432 only from the
   EC2 SG. RDS is never exposed to the internet.
 - **Backups**: RDS handles DB backups. For `.env.prod`, keep a copy in your
-  password manager; everything else on the box is reproducible from git.
+  password manager; it should contain the RDS secret ARN, not the database
+  password. The generated `.env.prod.generated` file is recreated on every
+  deploy and should not be edited by hand.

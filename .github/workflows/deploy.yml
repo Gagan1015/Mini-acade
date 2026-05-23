@@ -27,8 +27,4 @@ jobs:
             cd /srv/arcado
             git fetch --all --prune
             git reset --hard origin/main
-            docker compose -f deploy/ec2/docker-compose.prod.yml \
-                           --env-file /srv/arcado/.env.prod \
-                           up -d --build
-            docker image prune -f
-            docker compose -f deploy/ec2/docker-compose.prod.yml ps
+            bash deploy/ec2/deploy-prod.sh

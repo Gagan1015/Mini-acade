@@ -9,7 +9,16 @@ set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
-apt-get install -y ca-certificates curl gnupg git ufw
+apt-get install -y ca-certificates curl gnupg git python3 unzip ufw
+
+# AWS CLI is used by deploy/ec2/render-prod-env.py to pull the current RDS
+# password from Secrets Manager before Docker Compose replaces containers.
+if ! command -v aws >/dev/null 2>&1; then
+  curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+  unzip -q /tmp/awscliv2.zip -d /tmp
+  /tmp/aws/install
+  rm -rf /tmp/aws /tmp/awscliv2.zip
+fi
 
 # Docker official repo.
 install -m 0755 -d /etc/apt/keyrings

@@ -1,0 +1,207 @@
+#!/usr/bin/env python3
+"""Render a deploy-time env file with the current RDS password.
+
+The source .env.prod should contain stable app settings plus
+RDS_MASTER_SECRET_ARN. This script fetches the AWSCURRENT secret value from
+AWS Secrets Manager and writes a generated env file containing DATABASE_URL.
+It never prints the database password.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+from urllib.parse import parse_qsl, quote, urlencode, urlparse
+
+
+def parse_env(path: Path) -> tuple[dict[str, str], list[str]]:
+    env: dict[str, str] = {}
+    lines = path.read_text(encoding="utf-8").splitlines()
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        env[key] = value
+
+    return env, lines
+
+
+def get_secret(secret_id: str, region: str | None) -> dict[str, object]:
+    command = [
+        "aws",
+        "secretsmanager",
+        "get-secret-value",
+        "--secret-id",
+        secret_id,
+        "--query",
+        "SecretString",
+        "--output",
+        "text",
+    ]
+    if region:
+        command.extend(["--region", region])
+
+    try:
+        result = subprocess.run(
+            command,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+    except FileNotFoundError:
+        raise SystemExit("ERROR: aws CLI is not installed on this host.")
+    except subprocess.CalledProcessError as error:
+        stderr = error.stderr.strip()
+        message = f"ERROR: unable to read RDS secret {secret_id!r}"
+        if stderr:
+            message = f"{message}: {stderr}"
+        raise SystemExit(message)
+
+    secret_string = result.stdout.strip()
+    if not secret_string or secret_string == "None":
+        raise SystemExit("ERROR: Secrets Manager returned an empty SecretString.")
+
+    try:
+        secret = json.loads(secret_string)
+    except json.JSONDecodeError as error:
+        raise SystemExit(f"ERROR: RDS secret is not JSON: {error}") from error
+
+    if not isinstance(secret, dict):
+        raise SystemExit("ERROR: RDS secret JSON must be an object.")
+
+    return secret
+
+
+def existing_database_url_parts(env: dict[str, str]) -> tuple[str | None, int | None, str | None, dict[str, str]]:
+    raw_url = env.get("DATABASE_URL")
+    if not raw_url:
+        return None, None, None, {}
+
+    parsed = urlparse(raw_url)
+    database = parsed.path.lstrip("/") or None
+    port = parsed.port
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    return parsed.hostname, port, database, query
+
+
+def required_string(source: dict[str, object], key: str) -> str:
+    value = source.get(key)
+    if value is None or str(value).strip() == "":
+        raise SystemExit(f"ERROR: RDS secret is missing required key {key!r}.")
+    return str(value)
+
+
+def build_database_url(env: dict[str, str], secret: dict[str, object]) -> str:
+    existing_host, existing_port, existing_db, existing_query = existing_database_url_parts(env)
+
+    username = required_string(secret, "username")
+    password = required_string(secret, "password")
+    host = str(secret.get("host") or env.get("RDS_HOST") or existing_host or "").strip()
+    if not host:
+        raise SystemExit("ERROR: RDS host not found. Set RDS_HOST or include host in the RDS secret.")
+
+    port_value = secret.get("port") or env.get("RDS_PORT") or existing_port or 5432
+    try:
+        port = int(str(port_value))
+    except ValueError as error:
+        raise SystemExit(f"ERROR: invalid RDS port {port_value!r}.") from error
+
+    database = (
+        env.get("DATABASE_NAME")
+        or str(secret.get("dbname") or "")
+        or existing_db
+        or "arcado"
+    )
+
+    query: dict[str, str] = {}
+    query.update(existing_query)
+    query["schema"] = env.get("DATABASE_SCHEMA", query.get("schema", "public"))
+    query["sslmode"] = env.get("DATABASE_SSLMODE", query.get("sslmode", "require"))
+    query["connect_timeout"] = env.get("DATABASE_CONNECT_TIMEOUT", query.get("connect_timeout", "10"))
+
+    extra_query = env.get("DATABASE_EXTRA_QUERY", "").strip()
+    if extra_query:
+        query.update(dict(parse_qsl(extra_query.lstrip("?"), keep_blank_values=True)))
+
+    auth = f"{quote(username, safe='')}:{quote(password, safe='')}"
+    host_part = f"[{host}]" if ":" in host and not host.startswith("[") else host
+    return f"postgresql://{auth}@{host_part}:{port}/{quote(database, safe='')}?{urlencode(query)}"
+
+
+def render_lines(source_lines: list[str], database_url: str) -> list[str]:
+    rendered: list[str] = [
+        "# Generated by deploy/ec2/render-prod-env.py.",
+        "# Do not edit this file by hand; edit .env.prod instead.",
+    ]
+    replaced_database_url = False
+
+    for line in source_lines:
+        stripped = line.strip()
+        if stripped.startswith("DATABASE_URL="):
+            rendered.append(f"DATABASE_URL={database_url}")
+            replaced_database_url = True
+        else:
+            rendered.append(line)
+
+    if not replaced_database_url:
+        rendered.extend(["", f"DATABASE_URL={database_url}"])
+
+    return rendered
+
+
+def write_private_env(path: Path, lines: list[str]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    if os.name == "posix":
+        path.chmod(0o600)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Render Arcado production env from AWS Secrets Manager.")
+    parser.add_argument("--source", default="/srv/arcado/.env.prod", help="Stable source env file.")
+    parser.add_argument("--output", default="/srv/arcado/.env.prod.generated", help="Generated env file for Docker Compose.")
+    args = parser.parse_args()
+
+    source_path = Path(args.source)
+    output_path = Path(args.output)
+
+    if not source_path.exists():
+        raise SystemExit(f"ERROR: source env file does not exist: {source_path}")
+
+    env, source_lines = parse_env(source_path)
+    secret_id = env.get("RDS_MASTER_SECRET_ARN") or env.get("RDS_SECRET_ARN")
+
+    if secret_id:
+        secret = get_secret(secret_id, env.get("AWS_REGION"))
+        database_url = build_database_url(env, secret)
+        rendered = render_lines(source_lines, database_url)
+        write_private_env(output_path, rendered)
+        print(f"Rendered {output_path} with DATABASE_URL from AWS Secrets Manager.")
+        return 0
+
+    if env.get("DATABASE_URL"):
+        rendered = render_lines(source_lines, env["DATABASE_URL"])
+        write_private_env(output_path, rendered)
+        print(
+            f"Rendered {output_path} from existing DATABASE_URL. "
+            "Set RDS_MASTER_SECRET_ARN to stop relying on a static password."
+        )
+        return 0
+
+    raise SystemExit("ERROR: set RDS_MASTER_SECRET_ARN or DATABASE_URL in the source env file.")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
