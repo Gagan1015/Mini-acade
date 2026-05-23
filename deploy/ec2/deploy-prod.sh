@@ -11,6 +11,11 @@ if [[ ! -f "$source_env" && -f "$repo_root/.env.prod" ]]; then
   source_env="$repo_root/.env.prod"
 fi
 
+if ! command -v aws >/dev/null 2>&1; then
+  echo "AWS CLI is missing; installing it with sudo..."
+  sudo bash "$repo_root/deploy/ec2/install-aws-cli.sh"
+fi
+
 psql_database_url='db_url_for_psql="$(printf "%s" "$DATABASE_URL" | sed -E "s/([?&])schema=[^&]*&?/\1/; s/[?&]$//; s/\?&/?/")"; psql "$db_url_for_psql" -v ON_ERROR_STOP=1 -Atqc "select 1" >/dev/null'
 
 check_server_db_health() {

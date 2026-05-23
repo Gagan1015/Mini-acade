@@ -180,6 +180,8 @@ only then replaces the running containers.
 `install-db-secret-refresh.sh` adds a systemd timer that re-checks the RDS
 secret every 5 minutes and restarts the app containers with the refreshed env
 if AWS rotates the password between deploys.
+On older EC2 instances, `deploy-prod.sh` installs AWS CLI automatically with
+`sudo` before reading Secrets Manager.
 
 ### 9. Smoke test
 
