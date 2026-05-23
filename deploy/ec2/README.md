@@ -110,6 +110,10 @@ only the RDS master secret ARN shown in the RDS console:
 If the secret uses a customer-managed KMS key, also allow `kms:Decrypt` for
 that key.
 
+If you want the simpler static-password path, skip this IAM step and keep only
+`DATABASE_URL=postgresql://...` in `.env.prod`. Do not set
+`RDS_MASTER_SECRET_ARN`.
+
 ### 5. Launch the EC2 instance
 
 ```powershell
